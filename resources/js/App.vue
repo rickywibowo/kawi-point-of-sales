@@ -1,15 +1,18 @@
 <script setup>
 import { onMounted, onUnmounted } from 'vue';
 import { useFoundationStore } from './stores/foundation';
+import { useInventoryStore } from './stores/inventory';
 import { useMasterDataStore } from './stores/masterData';
 
 const foundation = useFoundationStore();
+const inventory = useInventoryStore();
 const masterData = useMasterDataStore();
 
 const quickStats = [
     { label: 'Penjualan Hari Ini', value: 'Rp 0', tone: 'emerald' },
     { label: 'Transaksi', value: '0', tone: 'sky' },
     { label: 'Produk Aktif', value: masterData.activeProductCount, tone: 'amber' },
+    { label: 'Nilai Stok', value: `Rp ${inventory.totalStockValue.toLocaleString('id-ID')}`, tone: 'emerald' },
 ];
 
 const modules = [
@@ -76,7 +79,7 @@ onUnmounted(() => {
                         <p><span class="block text-zinc-500">Shift</span>{{ foundation.shift }}</p>
                     </div>
 
-                    <div class="mt-8 grid gap-4 sm:grid-cols-3">
+                    <div class="mt-8 grid gap-4 sm:grid-cols-4">
                         <article
                             v-for="stat in quickStats"
                             :key="stat.label"
@@ -85,6 +88,24 @@ onUnmounted(() => {
                             <p class="text-sm text-zinc-400">{{ stat.label }}</p>
                             <p class="mt-3 text-2xl font-semibold">{{ stat.value }}</p>
                         </article>
+                    </div>
+
+                    <div class="mt-6 rounded-md border border-white/10 bg-zinc-950/70 p-4">
+                        <div class="flex flex-wrap items-center justify-between gap-3">
+                            <h3 class="text-sm font-semibold text-zinc-300">Inventory Ledger</h3>
+                            <span class="text-xs text-zinc-500">{{ inventory.warehouse }}</span>
+                        </div>
+                        <div class="mt-4 grid gap-3 sm:grid-cols-2">
+                            <article
+                                v-for="stock in inventory.stockBalances"
+                                :key="stock.product"
+                                class="rounded-md border border-white/10 bg-white/[0.03] p-3"
+                            >
+                                <p class="text-sm font-medium">{{ stock.product }}</p>
+                                <p class="mt-2 text-xl font-semibold">{{ stock.quantity }} {{ stock.unit }}</p>
+                                <p class="mt-1 text-xs text-zinc-500">Rp {{ stock.value.toLocaleString('id-ID') }}</p>
+                            </article>
+                        </div>
                     </div>
                 </section>
 

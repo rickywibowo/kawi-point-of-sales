@@ -1,0 +1,20 @@
+import { defineStore } from 'pinia';
+
+export const useInventoryStore = defineStore('inventory', {
+    state: () => ({
+        warehouse: 'Gudang Cabang Utama',
+        recipes: [{ name: 'Recipe KAWI Rice Bowl', cost: 9000 }],
+        stockBalances: [
+            { product: 'KAWI Rice Bowl', quantity: 25, unit: 'PCS', value: 450000 },
+            { product: 'KAWI Iced Coffee', quantity: 40, unit: 'PCS', value: 360000 },
+        ],
+        recentMovements: [
+            { reference: 'OPENING-STOCK', type: 'opening_balance', quantity: 65 },
+        ],
+    }),
+
+    getters: {
+        totalStockValue: (state) => state.stockBalances.reduce((total, item) => total + item.value, 0),
+        lowStockCount: (state) => state.stockBalances.filter((item) => item.quantity <= 5).length,
+    },
+});
