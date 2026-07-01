@@ -70,7 +70,7 @@ Status: complete.
 
 ### Tahap 6 - Accounting
 
-Status: in progress, implementasi awal selesai.
+Status: complete.
 
 - Schema accounting period, chart of accounts, journal entry, dan journal line dibuat.
 - Model dan relationship accounting dibuat.
@@ -80,6 +80,18 @@ Status: in progress, implementasi awal selesai.
 - Seeder chart of accounts dibuat.
 - Vue Pinia store accounting dibuat.
 - Automated test accounting dibuat.
+
+### Tahap 7 - Offline Mode
+
+Status: in progress, implementasi awal selesai.
+
+- Schema offline sync batch dan conflict dibuat.
+- Backend service offline sales sync dibuat.
+- Endpoint sync sales dan conflict review dibuat.
+- IndexedDB helper native dibuat.
+- Vue Pinia store offline queue/status dibuat.
+- Seeder conflict demo dibuat.
+- Automated test offline sync dibuat.
 
 ## Cara Track Mundur
 

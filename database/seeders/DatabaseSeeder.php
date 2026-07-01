@@ -20,5 +20,6 @@ class DatabaseSeeder extends Seeder
         $this->call(InventorySeeder::class);
         $this->call(PosSeeder::class);
         $this->call(PurchasingSeeder::class);
+        $this->call(OfflineSeeder::class);
     }
 }

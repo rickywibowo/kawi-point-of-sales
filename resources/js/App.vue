@@ -4,6 +4,7 @@ import { useAccountingStore } from './stores/accounting';
 import { useFoundationStore } from './stores/foundation';
 import { useInventoryStore } from './stores/inventory';
 import { useMasterDataStore } from './stores/masterData';
+import { useOfflineStore } from './stores/offline';
 import { usePosStore } from './stores/pos';
 import { usePurchasingStore } from './stores/purchasing';
 
@@ -11,6 +12,7 @@ const accounting = useAccountingStore();
 const foundation = useFoundationStore();
 const inventory = useInventoryStore();
 const masterData = useMasterDataStore();
+const offline = useOfflineStore();
 const pos = usePosStore();
 const purchasing = usePurchasingStore();
 
@@ -33,15 +35,21 @@ const modules = [
 ];
 
 const updateOnlineStatus = () => foundation.setOnlineStatus(navigator.onLine);
+const updateOfflineStatus = () => offline.setOnlineStatus(navigator.onLine);
 
 onMounted(() => {
     window.addEventListener('online', updateOnlineStatus);
     window.addEventListener('offline', updateOnlineStatus);
+    window.addEventListener('online', updateOfflineStatus);
+    window.addEventListener('offline', updateOfflineStatus);
+    offline.loadQueue();
 });
 
 onUnmounted(() => {
     window.removeEventListener('online', updateOnlineStatus);
     window.removeEventListener('offline', updateOnlineStatus);
+    window.removeEventListener('online', updateOfflineStatus);
+    window.removeEventListener('offline', updateOfflineStatus);
 });
 </script>
 
@@ -178,7 +186,7 @@ onUnmounted(() => {
                     <div class="flex items-start justify-between gap-4">
                         <h2 class="text-lg font-semibold">Modul POS</h2>
                         <span class="rounded-md bg-zinc-800 px-2 py-1 text-xs text-zinc-300">
-                            {{ foundation.unsyncedTransactions }} unsynced
+                            {{ offline.queuedCount }} unsynced
                         </span>
                     </div>
                     <div class="mt-5 grid grid-cols-2 gap-3">
@@ -209,6 +217,22 @@ onUnmounted(() => {
                                     </p>
                                 </div>
                             </article>
+                        </div>
+                    </div>
+
+                    <div class="mt-6 border-t border-white/10 pt-5">
+                        <h3 class="text-sm font-semibold text-zinc-300">Offline Sync</h3>
+                        <div class="mt-3 grid gap-3 text-sm">
+                            <div class="rounded-md border border-white/10 bg-white/[0.03] p-3">
+                                <p class="text-zinc-400">Status</p>
+                                <p class="mt-1 font-medium" :class="offline.isOnline ? 'text-emerald-200' : 'text-amber-200'">
+                                    {{ offline.isOnline ? 'Online' : 'Offline' }}
+                                </p>
+                            </div>
+                            <div class="rounded-md border border-white/10 bg-white/[0.03] p-3">
+                                <p class="text-zinc-400">Queue / Conflict</p>
+                                <p class="mt-1 font-medium">{{ offline.queuedCount }} / {{ offline.conflictCount }}</p>
+                            </div>
                         </div>
                     </div>
                 </aside>
