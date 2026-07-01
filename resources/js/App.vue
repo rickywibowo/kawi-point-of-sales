@@ -3,10 +3,12 @@ import { onMounted, onUnmounted } from 'vue';
 import { useFoundationStore } from './stores/foundation';
 import { useInventoryStore } from './stores/inventory';
 import { useMasterDataStore } from './stores/masterData';
+import { usePosStore } from './stores/pos';
 
 const foundation = useFoundationStore();
 const inventory = useInventoryStore();
 const masterData = useMasterDataStore();
+const pos = usePosStore();
 
 const quickStats = [
     { label: 'Penjualan Hari Ini', value: 'Rp 0', tone: 'emerald' },
@@ -105,6 +107,29 @@ onUnmounted(() => {
                                 <p class="mt-2 text-xl font-semibold">{{ stock.quantity }} {{ stock.unit }}</p>
                                 <p class="mt-1 text-xs text-zinc-500">Rp {{ stock.value.toLocaleString('id-ID') }}</p>
                             </article>
+                        </div>
+                    </div>
+
+                    <div class="mt-6 rounded-md border border-white/10 bg-zinc-950/70 p-4">
+                        <div class="flex flex-wrap items-center justify-between gap-3">
+                            <h3 class="text-sm font-semibold text-zinc-300">POS Cart</h3>
+                            <span class="text-xs text-zinc-500">{{ pos.shift.number }} / {{ pos.shift.status }}</span>
+                        </div>
+                        <div class="mt-4 grid gap-3 sm:grid-cols-[1fr_auto]">
+                            <div class="space-y-2">
+                                <div
+                                    v-for="item in pos.cart"
+                                    :key="item.name"
+                                    class="flex items-center justify-between rounded-md border border-white/10 bg-white/[0.03] px-3 py-2 text-sm"
+                                >
+                                    <span>{{ item.quantity }}x {{ item.name }}</span>
+                                    <span>Rp {{ (item.quantity * item.price).toLocaleString('id-ID') }}</span>
+                                </div>
+                            </div>
+                            <div class="rounded-md border border-emerald-300/30 bg-emerald-300/10 p-3 text-right">
+                                <p class="text-xs text-emerald-100">Subtotal</p>
+                                <p class="mt-1 text-xl font-semibold text-emerald-100">Rp {{ pos.subtotal.toLocaleString('id-ID') }}</p>
+                            </div>
                         </div>
                     </div>
                 </section>

@@ -31,7 +31,7 @@ Status: complete.
 
 ### Tahap 3 - Recipe dan Inventory
 
-Status: in progress, implementasi awal selesai.
+Status: complete.
 
 - Schema recipe, recipe item, unit conversion, warehouse, stock ledger, stock balance, adjustment, opname, dan transfer dibuat.
 - Model dan relationship inventory dibuat.
@@ -41,6 +41,19 @@ Status: in progress, implementasi awal selesai.
 - Seeder inventory demo dibuat.
 - Vue Pinia store inventory dibuat.
 - Automated test inventory dibuat.
+
+### Tahap 4 - POS
+
+Status: in progress, implementasi awal selesai.
+
+- Schema shift kasir, cash movement, sale, sale item, modifier item, payment, dan held transaction dibuat.
+- Model dan relationship POS dibuat.
+- Service layer `PosService` dibuat untuk open/close shift, hold transaction, dan complete sale.
+- Sale posting menulis stock ledger `sales_consumption` dan update stock balance.
+- Request validation dan API endpoint POS dibuat.
+- Seeder POS demo dibuat.
+- Vue Pinia store POS dibuat.
+- Automated test POS dibuat.
 
 ## Cara Track Mundur
 

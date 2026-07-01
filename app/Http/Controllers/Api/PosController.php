@@ -1,0 +1,44 @@
+<?php
+
+namespace App\Http\Controllers\Api;
+
+use App\Http\Controllers\Controller;
+use App\Models\HeldTransaction;
+use App\Models\Product;
+use App\Models\Sale;
+use App\Models\Warehouse;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
+
+class PosController extends Controller
+{
+    public function index(Request $request): JsonResponse
+    {
+        $business = $request->attributes->get('business');
+        $branch = $request->attributes->get('branch');
+
+        abort_unless($branch, 422, 'Branch context is required for POS.');
+
+        return response()->json([
+            'products' => Product::query()
+                ->forBusiness($business->id)
+                ->with(['category', 'tax', 'branchPrices', 'modifierGroups.modifiers'])
+                ->where('is_active', true)
+                ->orderBy('name')
+                ->get(),
+            'warehouses' => Warehouse::query()->forTenant($business->id, $branch->id)->where('is_active', true)->get(),
+            'held_transactions' => HeldTransaction::query()
+                ->forTenant($business->id, $branch->id)
+                ->whereNull('resumed_at')
+                ->latest('held_at')
+                ->get(),
+            'today_sales' => Sale::query()
+                ->forTenant($business->id, $branch->id)
+                ->with('payments')
+                ->whereDate('sold_at', now()->toDateString())
+                ->latest('sold_at')
+                ->limit(20)
+                ->get(),
+        ]);
+    }
+}

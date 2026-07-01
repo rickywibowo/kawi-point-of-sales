@@ -17,5 +17,6 @@ class DatabaseSeeder extends Seeder
         $this->call(KawiFoundationSeeder::class);
         $this->call(MasterDataSeeder::class);
         $this->call(InventorySeeder::class);
+        $this->call(PosSeeder::class);
     }
 }
