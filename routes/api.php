@@ -8,6 +8,9 @@ use App\Http\Controllers\Api\InventoryController;
 use App\Http\Controllers\Api\MasterDataController;
 use App\Http\Controllers\Api\PosController;
 use App\Http\Controllers\Api\ProductController;
+use App\Http\Controllers\Api\GoodsReceiptController;
+use App\Http\Controllers\Api\PurchaseOrderController;
+use App\Http\Controllers\Api\PurchasingController;
 use App\Http\Controllers\Api\RecipeController;
 use App\Http\Controllers\Api\SaleController;
 use App\Http\Controllers\Api\StockAdjustmentController;
@@ -46,4 +49,13 @@ Route::middleware(['auth:sanctum', 'tenant'])->group(function (): void {
         ->middleware('permission:sales.create');
     Route::post('/held-transactions', [HeldTransactionController::class, 'store'])
         ->middleware('permission:sales.create');
+
+    Route::get('/purchasing', [PurchasingController::class, 'index'])
+        ->middleware('permission:purchases.manage');
+    Route::post('/purchase-orders', [PurchaseOrderController::class, 'store'])
+        ->middleware('permission:purchases.manage');
+    Route::post('/purchase-orders/{purchaseOrder}/approve', [PurchaseOrderController::class, 'approve'])
+        ->middleware('permission:purchases.manage');
+    Route::post('/goods-receipts', [GoodsReceiptController::class, 'store'])
+        ->middleware('permission:purchases.manage');
 });

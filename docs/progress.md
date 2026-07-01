@@ -44,7 +44,7 @@ Status: complete.
 
 ### Tahap 4 - POS
 
-Status: in progress, implementasi awal selesai.
+Status: complete.
 
 - Schema shift kasir, cash movement, sale, sale item, modifier item, payment, dan held transaction dibuat.
 - Model dan relationship POS dibuat.
@@ -54,6 +54,19 @@ Status: in progress, implementasi awal selesai.
 - Seeder POS demo dibuat.
 - Vue Pinia store POS dibuat.
 - Automated test POS dibuat.
+
+### Tahap 5 - Purchasing
+
+Status: in progress, implementasi awal selesai.
+
+- Schema purchase order, goods receipt, purchase return, dan supplier payable dibuat.
+- Model dan relationship purchasing dibuat.
+- Service layer `PurchasingService` dibuat untuk create PO, approve PO, dan post goods receipt.
+- Goods receipt menulis stock ledger `purchase_receipt` dan update stock balance.
+- API endpoint purchasing dibuat.
+- Seeder purchasing demo dibuat.
+- Vue Pinia store purchasing dibuat.
+- Automated test purchasing dibuat.
 
 ## Cara Track Mundur
 
