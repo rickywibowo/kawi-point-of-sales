@@ -1,13 +1,15 @@
 <script setup>
 import { onMounted, onUnmounted } from 'vue';
 import { useFoundationStore } from './stores/foundation';
+import { useMasterDataStore } from './stores/masterData';
 
 const foundation = useFoundationStore();
+const masterData = useMasterDataStore();
 
 const quickStats = [
     { label: 'Penjualan Hari Ini', value: 'Rp 0', tone: 'emerald' },
     { label: 'Transaksi', value: '0', tone: 'sky' },
-    { label: 'Produk Aktif', value: '0', tone: 'amber' },
+    { label: 'Produk Aktif', value: masterData.activeProductCount, tone: 'amber' },
 ];
 
 const modules = [
@@ -101,6 +103,27 @@ onUnmounted(() => {
                         >
                             {{ module }}
                         </button>
+                    </div>
+
+                    <div class="mt-6 border-t border-white/10 pt-5">
+                        <h3 class="text-sm font-semibold text-zinc-300">Master Data</h3>
+                        <div class="mt-3 space-y-3">
+                            <article
+                                v-for="product in masterData.products"
+                                :key="product.sku"
+                                class="rounded-md border border-white/10 bg-white/[0.03] p-3"
+                            >
+                                <div class="flex items-start justify-between gap-3">
+                                    <div>
+                                        <p class="text-sm font-medium">{{ product.name }}</p>
+                                        <p class="mt-1 text-xs uppercase text-zinc-500">{{ product.sku }} / {{ product.type }}</p>
+                                    </div>
+                                    <p class="text-sm text-emerald-200">
+                                        Rp {{ product.price.toLocaleString('id-ID') }}
+                                    </p>
+                                </div>
+                            </article>
+                        </div>
                     </div>
                 </aside>
             </div>
