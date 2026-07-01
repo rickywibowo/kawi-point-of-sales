@@ -12,6 +12,7 @@ use App\Models\StockLedger;
 use App\Models\Supplier;
 use App\Models\SupplierPayable;
 use App\Models\Warehouse;
+use App\Services\Accounting\AccountingService;
 use App\Services\Audit\AuditLogger;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -20,7 +21,10 @@ use Illuminate\Validation\ValidationException;
 
 class PurchasingService
 {
-    public function __construct(private readonly AuditLogger $audit)
+    public function __construct(
+        private readonly AuditLogger $audit,
+        private readonly AccountingService $accounting,
+    )
     {
     }
 
@@ -133,6 +137,7 @@ class PurchasingService
             ]);
 
             $receipt->load(['supplier', 'warehouse', 'items.product']);
+            $this->accounting->postGoodsReceiptJournal($receipt, $request);
             $this->audit->record('goods_receipt.posted', $receipt, after: $receipt->toArray(), request: $request);
 
             return $receipt;

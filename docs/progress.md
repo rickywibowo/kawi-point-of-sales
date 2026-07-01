@@ -57,7 +57,7 @@ Status: complete.
 
 ### Tahap 5 - Purchasing
 
-Status: in progress, implementasi awal selesai.
+Status: complete.
 
 - Schema purchase order, goods receipt, purchase return, dan supplier payable dibuat.
 - Model dan relationship purchasing dibuat.
@@ -67,6 +67,19 @@ Status: in progress, implementasi awal selesai.
 - Seeder purchasing demo dibuat.
 - Vue Pinia store purchasing dibuat.
 - Automated test purchasing dibuat.
+
+### Tahap 6 - Accounting
+
+Status: in progress, implementasi awal selesai.
+
+- Schema accounting period, chart of accounts, journal entry, dan journal line dibuat.
+- Model dan relationship accounting dibuat.
+- Service layer `AccountingService` dibuat untuk manual journal, trial balance, P&L, dan auto journal.
+- Auto journal POS sale dan goods receipt dibuat.
+- API endpoint accounting dibuat.
+- Seeder chart of accounts dibuat.
+- Vue Pinia store accounting dibuat.
+- Automated test accounting dibuat.
 
 ## Cara Track Mundur
 

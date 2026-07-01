@@ -1,11 +1,13 @@
 <script setup>
 import { onMounted, onUnmounted } from 'vue';
+import { useAccountingStore } from './stores/accounting';
 import { useFoundationStore } from './stores/foundation';
 import { useInventoryStore } from './stores/inventory';
 import { useMasterDataStore } from './stores/masterData';
 import { usePosStore } from './stores/pos';
 import { usePurchasingStore } from './stores/purchasing';
 
+const accounting = useAccountingStore();
 const foundation = useFoundationStore();
 const inventory = useInventoryStore();
 const masterData = useMasterDataStore();
@@ -18,6 +20,7 @@ const quickStats = [
     { label: 'Produk Aktif', value: masterData.activeProductCount, tone: 'amber' },
     { label: 'Nilai Stok', value: `Rp ${inventory.totalStockValue.toLocaleString('id-ID')}`, tone: 'emerald' },
     { label: 'PO Aktif', value: purchasing.openOrderCount, tone: 'sky' },
+    { label: 'Akun COA', value: accounting.accountCount, tone: 'amber' },
 ];
 
 const modules = [
@@ -149,6 +152,23 @@ onUnmounted(() => {
                             >
                                 <span>{{ order.number }} / {{ order.supplier }}</span>
                                 <span>Rp {{ order.total.toLocaleString('id-ID') }}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mt-6 rounded-md border border-white/10 bg-zinc-950/70 p-4">
+                        <div class="flex flex-wrap items-center justify-between gap-3">
+                            <h3 class="text-sm font-semibold text-zinc-300">Accounting</h3>
+                            <span class="text-xs text-emerald-200">{{ accounting.trialBalanceStatus }}</span>
+                        </div>
+                        <div class="mt-4 grid gap-2 sm:grid-cols-2">
+                            <div
+                                v-for="account in accounting.accounts"
+                                :key="account.code"
+                                class="rounded-md border border-white/10 bg-white/[0.03] px-3 py-2 text-sm"
+                            >
+                                <p class="font-medium">{{ account.code }} - {{ account.name }}</p>
+                                <p class="mt-1 text-xs text-zinc-500">{{ account.type }}</p>
                             </div>
                         </div>
                     </div>

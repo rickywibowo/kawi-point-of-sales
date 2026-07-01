@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\AccountingController;
 use App\Http\Controllers\Api\CashierShiftController;
 use App\Http\Controllers\Api\CategoryController;
 use App\Http\Controllers\Api\HeldTransactionController;
@@ -58,4 +59,9 @@ Route::middleware(['auth:sanctum', 'tenant'])->group(function (): void {
         ->middleware('permission:purchases.manage');
     Route::post('/goods-receipts', [GoodsReceiptController::class, 'store'])
         ->middleware('permission:purchases.manage');
+
+    Route::get('/accounting', [AccountingController::class, 'index'])
+        ->middleware('permission:accounting.manage');
+    Route::post('/journal-entries', [AccountingController::class, 'store'])
+        ->middleware('permission:accounting.manage');
 });
