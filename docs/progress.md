@@ -224,6 +224,22 @@ Status: complete.
 - Dokumentasi Tahap 18 dibuat.
 - Automated test receipt dibuat.
 
+## 2026-07-03
+
+### Tahap 19 - Operational Expenses
+
+Status: complete.
+
+- Tabel `operational_expenses` dibuat untuk pencatatan pengeluaran outlet.
+- Model, request validation, service, dan endpoint operational expense dibuat.
+- Endpoint `POST /api/operational-expenses` dibuat dengan permission `accounting.manage`.
+- Posting expense otomatis membuat jurnal debit beban dan kredit kas.
+- Accounting index mengembalikan daftar operational expenses terbaru.
+- Report dashboard menampilkan ringkasan expense dan total per kategori.
+- Vue Pinia store accounting dan dashboard accounting diperbarui.
+- Dokumentasi Tahap 19 dibuat.
+- Automated test operational expense dibuat.
+
 ## Cara Track Mundur
 
 - Setiap tahap disimpan dalam commit terpisah.

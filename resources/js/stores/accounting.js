@@ -23,10 +23,15 @@ export const useAccountingStore = defineStore('accounting', {
             netCashFlow: 0,
             endingCashBalance: 0,
         },
+        operationalExpenses: [
+            { number: 'EXP-DEMO-001', category: 'Utilities', amount: 125000 },
+            { number: 'EXP-DEMO-002', category: 'Packaging', amount: 87000 },
+        ],
     }),
 
     getters: {
         accountCount: (state) => state.accounts.length,
         statementStatus: (state) => state.balanceSheet.isBalanced ? 'statements balanced' : 'review needed',
+        expenseTotal: (state) => state.operationalExpenses.reduce((total, expense) => total + expense.amount, 0),
     },
 });

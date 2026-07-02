@@ -5,6 +5,7 @@ namespace App\Services\Reports;
 use App\Models\Business;
 use App\Models\GoodsReceipt;
 use App\Models\JournalEntry;
+use App\Models\OperationalExpense;
 use App\Models\Product;
 use App\Models\PurchaseOrder;
 use App\Models\Sale;
@@ -40,6 +41,7 @@ class ReportService
             'stock' => $this->stockSummary($business->id, $branchId),
             'stock_movements' => $this->stockMovements($business->id, $branchId, $from, $to),
             'purchasing' => $this->purchasingSummary($business->id, $branchId, $from, $to),
+            'expenses' => $this->expenseSummary($business->id, $branchId, $from, $to),
             'accounting' => [
                 'trial_balance' => $this->accounting->trialBalance($business->id),
                 'profit_and_loss' => $this->accounting->profitAndLoss($business->id),
@@ -173,6 +175,24 @@ class ReportService
                 ->when($branchId, fn ($query) => $query->where('branch_id', $branchId))
                 ->where('status', 'open')
                 ->sum(DB::raw('amount - paid_amount')), 2),
+        ];
+    }
+
+    public function expenseSummary(int $businessId, ?int $branchId, Carbon $from, Carbon $to): array
+    {
+        $query = OperationalExpense::query()
+            ->where('business_id', $businessId)
+            ->when($branchId, fn ($query) => $query->where('branch_id', $branchId))
+            ->whereBetween('expense_date', [$from->toDateString(), $to->toDateString()]);
+
+        return [
+            'expense_count' => (clone $query)->count(),
+            'total' => round((float) (clone $query)->sum('amount'), 2),
+            'by_category' => (clone $query)
+                ->select('category', DB::raw('sum(amount) as amount'))
+                ->groupBy('category')
+                ->orderByDesc('amount')
+                ->get(),
         ];
     }
 

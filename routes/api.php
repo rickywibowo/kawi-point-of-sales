@@ -10,6 +10,7 @@ use App\Http\Controllers\Api\HeldTransactionController;
 use App\Http\Controllers\Api\InventoryController;
 use App\Http\Controllers\Api\MasterDataController;
 use App\Http\Controllers\Api\OfflineSyncController;
+use App\Http\Controllers\Api\OperationalExpenseController;
 use App\Http\Controllers\Api\PosController;
 use App\Http\Controllers\Api\ProductController;
 use App\Http\Controllers\Api\ProductionController;
@@ -107,6 +108,8 @@ Route::middleware(['auth:sanctum', 'tenant'])->group(function (): void {
     Route::get('/accounting', [AccountingController::class, 'index'])
         ->middleware('permission:accounting.manage');
     Route::post('/journal-entries', [AccountingController::class, 'store'])
+        ->middleware('permission:accounting.manage');
+    Route::post('/operational-expenses', [OperationalExpenseController::class, 'store'])
         ->middleware('permission:accounting.manage');
 
     Route::post('/offline/sales/sync', [OfflineSyncController::class, 'syncSales'])

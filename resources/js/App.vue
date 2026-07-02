@@ -235,6 +235,14 @@ onUnmounted(() => {
                                 <p class="text-zinc-400">Cash Flow</p>
                                 <p class="mt-1 font-semibold">Rp {{ accounting.cashFlow.netCashFlow.toLocaleString('id-ID') }}</p>
                             </div>
+                            <div class="rounded-md border border-white/10 bg-white/[0.03] p-3 text-sm">
+                                <p class="text-zinc-400">Operational Expense</p>
+                                <p class="mt-1 font-semibold">Rp {{ accounting.expenseTotal.toLocaleString('id-ID') }}</p>
+                            </div>
+                            <div class="rounded-md border border-white/10 bg-white/[0.03] p-3 text-sm">
+                                <p class="text-zinc-400">Expense Terakhir</p>
+                                <p class="mt-1 font-semibold">{{ accounting.operationalExpenses[0]?.number }}</p>
+                            </div>
                         </div>
                     </div>
 

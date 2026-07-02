@@ -134,7 +134,69 @@ class AccountingTest extends TestCase
                 'general_ledger',
                 'balance_sheet',
                 'cash_flow',
+                'operational_expenses',
             ]);
+    }
+
+    public function test_user_can_post_operational_expense_with_auto_journal(): void
+    {
+        $this->seed(DatabaseSeeder::class);
+        [$user, $business, $branch] = $this->context();
+        $expenseAccount = Account::query()->where('business_id', $business->id)->where('code', '6100')->firstOrFail();
+        $cashAccount = Account::query()->where('business_id', $business->id)->where('code', '1100')->firstOrFail();
+
+        $this->actingAs($user, 'sanctum')
+            ->withHeaders(['X-Business-Id' => $business->uuid, 'X-Branch-Id' => $branch->uuid])
+            ->postJson('/api/operational-expenses', [
+                'expense_number' => 'EXP-ACC-001',
+                'expense_date' => '2026-07-03',
+                'account_id' => $expenseAccount->id,
+                'cash_account_id' => $cashAccount->id,
+                'category' => 'Utilities',
+                'payee' => 'PLN',
+                'description' => 'Token listrik outlet',
+                'amount' => 125000,
+                'payment_method' => 'cash',
+            ])
+            ->assertCreated()
+            ->assertJsonPath('operational_expense.expense_number', 'EXP-ACC-001')
+            ->assertJsonPath('operational_expense.amount', '125000.00');
+
+        $journal = JournalEntry::query()
+            ->where('journal_number', 'JE-EXP-EXP-ACC-001')
+            ->with('lines.account')
+            ->firstOrFail();
+
+        $this->assertSame('posted', $journal->status);
+        $this->assertSame('125000.00', (string) $journal->total_debit);
+        $this->assertSame('125000.00', (string) $journal->total_credit);
+        $this->assertTrue($journal->lines->contains(fn ($line) => $line->account->code === '6100' && (string) $line->debit === '125000.00'));
+        $this->assertTrue($journal->lines->contains(fn ($line) => $line->account->code === '1100' && (string) $line->credit === '125000.00'));
+        $this->assertDatabaseHas('audit_logs', ['action' => 'expense.posted']);
+    }
+
+    public function test_operational_expense_rejects_account_outside_active_business(): void
+    {
+        $this->seed(DatabaseSeeder::class);
+        [$user, $business, $branch] = $this->context();
+        $otherBusiness = Business::query()->create(['name' => 'Other Business', 'uuid' => (string) Str::uuid()]);
+        $otherExpenseAccount = Account::query()->create([
+            'business_id' => $otherBusiness->id,
+            'code' => '6100',
+            'name' => 'Other Expense',
+            'type' => 'expense',
+            'normal_balance' => 'debit',
+        ]);
+
+        $this->actingAs($user, 'sanctum')
+            ->withHeaders(['X-Business-Id' => $business->uuid, 'X-Branch-Id' => $branch->uuid])
+            ->postJson('/api/operational-expenses', [
+                'expense_number' => 'EXP-ACC-BAD',
+                'account_id' => $otherExpenseAccount->id,
+                'amount' => 50000,
+            ])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors(['account_id']);
     }
 
     public function test_accounting_statements_include_general_ledger_balance_sheet_and_cash_flow(): void
