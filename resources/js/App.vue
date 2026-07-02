@@ -7,6 +7,7 @@ import { useMasterDataStore } from './stores/masterData';
 import { useOfflineStore } from './stores/offline';
 import { usePosStore } from './stores/pos';
 import { usePurchasingStore } from './stores/purchasing';
+import { useReportsStore } from './stores/reports';
 
 const accounting = useAccountingStore();
 const foundation = useFoundationStore();
@@ -15,6 +16,7 @@ const masterData = useMasterDataStore();
 const offline = useOfflineStore();
 const pos = usePosStore();
 const purchasing = usePurchasingStore();
+const reports = useReportsStore();
 
 const quickStats = [
     { label: 'Penjualan Hari Ini', value: 'Rp 0', tone: 'emerald' },
@@ -23,6 +25,7 @@ const quickStats = [
     { label: 'Nilai Stok', value: `Rp ${inventory.totalStockValue.toLocaleString('id-ID')}`, tone: 'emerald' },
     { label: 'PO Aktif', value: purchasing.openOrderCount, tone: 'sky' },
     { label: 'Akun COA', value: accounting.accountCount, tone: 'amber' },
+    { label: 'Laporan', value: reports.period, tone: 'emerald' },
 ];
 
 const modules = [
@@ -177,6 +180,23 @@ onUnmounted(() => {
                             >
                                 <p class="font-medium">{{ account.code }} - {{ account.name }}</p>
                                 <p class="mt-1 text-xs text-zinc-500">{{ account.type }}</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mt-6 rounded-md border border-white/10 bg-zinc-950/70 p-4">
+                        <div class="flex flex-wrap items-center justify-between gap-3">
+                            <h3 class="text-sm font-semibold text-zinc-300">Reports</h3>
+                            <span class="text-xs text-zinc-500">{{ reports.period }}</span>
+                        </div>
+                        <div class="mt-4 grid gap-3 sm:grid-cols-3">
+                            <div
+                                v-for="card in reports.reportCards"
+                                :key="card.label"
+                                class="rounded-md border border-white/10 bg-white/[0.03] p-3 text-sm"
+                            >
+                                <p class="text-zinc-400">{{ card.label }}</p>
+                                <p class="mt-1 font-semibold">Rp {{ card.value.toLocaleString('id-ID') }}</p>
                             </div>
                         </div>
                     </div>

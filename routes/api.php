@@ -14,6 +14,7 @@ use App\Http\Controllers\Api\GoodsReceiptController;
 use App\Http\Controllers\Api\PurchaseOrderController;
 use App\Http\Controllers\Api\PurchasingController;
 use App\Http\Controllers\Api\RecipeController;
+use App\Http\Controllers\Api\ReportController;
 use App\Http\Controllers\Api\SaleController;
 use App\Http\Controllers\Api\StockAdjustmentController;
 use Illuminate\Support\Facades\Route;
@@ -70,4 +71,7 @@ Route::middleware(['auth:sanctum', 'tenant'])->group(function (): void {
         ->middleware('permission:sales.create');
     Route::get('/offline/conflicts', [OfflineSyncController::class, 'conflicts'])
         ->middleware('permission:sales.create');
+
+    Route::get('/reports', [ReportController::class, 'index'])
+        ->middleware('permission:reports.view');
 });

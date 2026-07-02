@@ -83,7 +83,7 @@ Status: complete.
 
 ### Tahap 7 - Offline Mode
 
-Status: in progress, implementasi awal selesai.
+Status: complete.
 
 - Schema offline sync batch dan conflict dibuat.
 - Backend service offline sales sync dibuat.
@@ -92,6 +92,17 @@ Status: in progress, implementasi awal selesai.
 - Vue Pinia store offline queue/status dibuat.
 - Seeder conflict demo dibuat.
 - Automated test offline sync dibuat.
+
+### Tahap 8 - Reports
+
+Status: in progress, implementasi awal selesai.
+
+- Service layer `ReportService` dibuat untuk agregasi sales, stock, purchasing, dan accounting.
+- Endpoint `GET /api/reports` dibuat.
+- Laporan mendukung filter tanggal dan branch context.
+- Vue Pinia store reports dibuat.
+- Dokumentasi Tahap 8 dibuat.
+- Automated test reports dibuat.
 
 ## Cara Track Mundur
 
