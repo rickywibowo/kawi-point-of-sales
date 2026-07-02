@@ -186,6 +186,19 @@ Status: complete.
 - Dokumentasi Tahap 15 dibuat.
 - Automated test audit review dan tenant isolation dibuat.
 
+### Tahap 16 - Purchase Returns
+
+Status: complete.
+
+- Tabel `purchase_return_items` dibuat.
+- Endpoint `POST /api/purchase-returns` dibuat.
+- Posting retur membuat ledger `purchase_return` dan mengurangi stock balance.
+- Posting retur mengurangi supplier payable terkait goods receipt.
+- Validasi retur terhadap goods receipt item dan quantity received dibuat.
+- Vue Pinia store purchasing dan dashboard retur diperbarui.
+- Dokumentasi Tahap 16 dibuat.
+- Automated test purchase return dibuat.
+
 ## Cara Track Mundur
 
 - Setiap tahap disimpan dalam commit terpisah.

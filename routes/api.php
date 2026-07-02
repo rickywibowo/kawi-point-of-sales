@@ -15,6 +15,7 @@ use App\Http\Controllers\Api\ProductController;
 use App\Http\Controllers\Api\GoodsReceiptController;
 use App\Http\Controllers\Api\HealthController;
 use App\Http\Controllers\Api\PurchaseOrderController;
+use App\Http\Controllers\Api\PurchaseReturnController;
 use App\Http\Controllers\Api\PurchasingController;
 use App\Http\Controllers\Api\RecipeController;
 use App\Http\Controllers\Api\ReportController;
@@ -94,6 +95,8 @@ Route::middleware(['auth:sanctum', 'tenant'])->group(function (): void {
     Route::post('/purchase-orders/{purchaseOrder}/approve', [PurchaseOrderController::class, 'approve'])
         ->middleware('permission:purchases.manage');
     Route::post('/goods-receipts', [GoodsReceiptController::class, 'store'])
+        ->middleware('permission:purchases.manage');
+    Route::post('/purchase-returns', [PurchaseReturnController::class, 'store'])
         ->middleware('permission:purchases.manage');
 
     Route::get('/accounting', [AccountingController::class, 'index'])

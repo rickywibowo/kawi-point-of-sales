@@ -7,6 +7,7 @@ use App\Models\GoodsReceipt;
 use App\Models\Product;
 use App\Models\PurchaseOrder;
 use App\Models\PurchaseOrderItem;
+use App\Models\PurchaseReturn;
 use App\Models\StockBalance;
 use App\Models\StockLedger;
 use App\Models\Supplier;
@@ -144,6 +145,58 @@ class PurchasingService
         });
     }
 
+    public function postPurchaseReturn(Business $business, ?int $branchId, array $data, Request $request): PurchaseReturn
+    {
+        $this->assertSupplier($business->id, $data['supplier_id']);
+        $receipt = GoodsReceipt::query()
+            ->where('business_id', $business->id)
+            ->where('supplier_id', $data['supplier_id'])
+            ->whereKey($data['goods_receipt_id'])
+            ->with('items')
+            ->first();
+
+        if (! $receipt) {
+            throw ValidationException::withMessages(['goods_receipt_id' => ['The selected goods receipt is outside the active business or supplier.']]);
+        }
+
+        foreach ($data['items'] as $index => $item) {
+            $this->assertProduct($business->id, $item['product_id'], "items.$index.product_id");
+            $this->assertReceiptItem($receipt, $item, $index);
+        }
+
+        return DB::transaction(function () use ($business, $branchId, $receipt, $data, $request): PurchaseReturn {
+            [$items, $subtotal, $taxTotal] = $this->calculateItems($data['items'], 'quantity_returned');
+
+            $return = PurchaseReturn::query()->create([
+                'business_id' => $business->id,
+                'branch_id' => $branchId ?? $receipt->branch_id,
+                'supplier_id' => $data['supplier_id'],
+                'goods_receipt_id' => $receipt->id,
+                'uuid' => (string) Str::uuid(),
+                'return_number' => $data['return_number'],
+                'status' => 'posted',
+                'return_date' => $data['return_date'] ?? now()->toDateString(),
+                'grand_total' => $subtotal + $taxTotal,
+                'reason' => $data['reason'] ?? null,
+            ]);
+
+            foreach ($items as $index => $item) {
+                $item['goods_receipt_item_id'] = $data['items'][$index]['goods_receipt_item_id'] ?? null;
+                $item['quantity_returned'] = $data['items'][$index]['quantity_returned'];
+                unset($item['quantity_received'], $item['quantity_ordered']);
+                $returnItem = $return->items()->create($item + ['reason' => $data['items'][$index]['reason'] ?? null]);
+                $this->recordPurchaseReturn($business->id, $return->branch_id, $receipt->warehouse_id, $returnItem, $return, $request->user()?->id);
+            }
+
+            $this->applyPayableReturn($business->id, $receipt->id, (float) $return->grand_total);
+
+            $return->load('items.product');
+            $this->audit->record('purchase_return.posted', $return, after: $return->toArray(), request: $request);
+
+            return $return;
+        });
+    }
+
     private function calculateItems(array $inputItems, string $quantityField): array
     {
         $items = [];
@@ -210,6 +263,62 @@ class PurchasingService
         ]);
     }
 
+    private function recordPurchaseReturn(int $businessId, ?int $branchId, int $warehouseId, $returnItem, PurchaseReturn $return, ?int $userId): void
+    {
+        StockLedger::query()->create([
+            'business_id' => $businessId,
+            'branch_id' => $branchId,
+            'warehouse_id' => $warehouseId,
+            'product_id' => $returnItem->product_id,
+            'unit_of_measure_id' => $returnItem->unit_of_measure_id,
+            'uuid' => (string) Str::uuid(),
+            'movement_type' => 'purchase_return',
+            'quantity_in' => 0,
+            'quantity_out' => $returnItem->quantity_returned,
+            'unit_cost' => $returnItem->unit_cost,
+            'total_cost' => (float) $returnItem->quantity_returned * (float) $returnItem->unit_cost,
+            'source_type' => PurchaseReturn::class,
+            'source_id' => $return->id,
+            'reference_number' => $return->return_number,
+            'notes' => $returnItem->reason ?? $return->reason,
+            'occurred_at' => now(),
+            'created_by' => $userId,
+        ]);
+
+        $balance = StockBalance::query()->firstOrCreate(
+            ['warehouse_id' => $warehouseId, 'product_id' => $returnItem->product_id],
+            ['business_id' => $businessId, 'branch_id' => $branchId, 'quantity_on_hand' => 0, 'average_cost' => 0, 'stock_value' => 0],
+        );
+
+        $newQuantity = max((float) $balance->quantity_on_hand - (float) $returnItem->quantity_returned, 0);
+        $newValue = max((float) $balance->stock_value - ((float) $returnItem->quantity_returned * (float) $returnItem->unit_cost), 0);
+
+        $balance->update([
+            'quantity_on_hand' => $newQuantity,
+            'average_cost' => $newQuantity > 0 ? round($newValue / $newQuantity, 2) : 0,
+            'stock_value' => round($newValue, 2),
+        ]);
+    }
+
+    private function applyPayableReturn(int $businessId, int $receiptId, float $returnTotal): void
+    {
+        $payable = SupplierPayable::query()
+            ->where('business_id', $businessId)
+            ->where('goods_receipt_id', $receiptId)
+            ->first();
+
+        if (! $payable) {
+            return;
+        }
+
+        $newAmount = max((float) $payable->amount - $returnTotal, 0);
+
+        $payable->update([
+            'amount' => round($newAmount, 2),
+            'status' => $newAmount <= (float) $payable->paid_amount ? 'closed' : $payable->status,
+        ]);
+    }
+
     private function assertSupplier(int $businessId, int $supplierId): void
     {
         if (! Supplier::query()->forBusiness($businessId)->whereKey($supplierId)->exists()) {
@@ -236,6 +345,23 @@ class PurchasingService
     {
         if (! Product::query()->forBusiness($businessId)->whereKey($productId)->exists()) {
             throw ValidationException::withMessages([$field => ['The selected product is outside the active business.']]);
+        }
+    }
+
+    private function assertReceiptItem(GoodsReceipt $receipt, array $item, int $index): void
+    {
+        if (empty($item['goods_receipt_item_id'])) {
+            return;
+        }
+
+        $receiptItem = $receipt->items->firstWhere('id', $item['goods_receipt_item_id']);
+
+        if (! $receiptItem || (int) $receiptItem->product_id !== (int) $item['product_id']) {
+            throw ValidationException::withMessages(["items.$index.goods_receipt_item_id" => ['The selected receipt item does not match this goods receipt.']]);
+        }
+
+        if ((float) $item['quantity_returned'] > (float) $receiptItem->quantity_received) {
+            throw ValidationException::withMessages(["items.$index.quantity_returned" => ['Returned quantity cannot exceed received quantity.']]);
         }
     }
 }

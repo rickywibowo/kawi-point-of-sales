@@ -4,9 +4,11 @@ namespace Tests\Feature\Purchasing;
 
 use App\Models\Branch;
 use App\Models\Business;
+use App\Models\GoodsReceipt;
 use App\Models\Product;
 use App\Models\PurchaseOrder;
 use App\Models\StockBalance;
+use App\Models\SupplierPayable;
 use App\Models\Supplier;
 use App\Models\User;
 use App\Models\Warehouse;
@@ -100,6 +102,72 @@ class PurchasingTest extends TestCase
             ->assertJsonValidationErrors(['items.0.product_id']);
     }
 
+    public function test_purchase_return_posts_stock_out_and_reduces_supplier_payable(): void
+    {
+        $this->seed(DatabaseSeeder::class);
+        [$user, $business, $branch, $supplier, $warehouse, $product] = $this->context();
+
+        $receiptId = $this->postGoodsReceipt($user, $business, $branch, $supplier, $warehouse, $product, 'GR-RETURN-001', 5);
+        $receipt = GoodsReceipt::query()->with('items')->findOrFail($receiptId);
+        $before = (float) StockBalance::query()->where('warehouse_id', $warehouse->id)->where('product_id', $product->id)->firstOrFail()->quantity_on_hand;
+
+        $this->actingAs($user, 'sanctum')
+            ->withHeaders(['X-Business-Id' => $business->uuid, 'X-Branch-Id' => $branch->uuid])
+            ->postJson('/api/purchase-returns', [
+                'supplier_id' => $supplier->id,
+                'goods_receipt_id' => $receipt->id,
+                'return_number' => 'PR-TEST-001',
+                'reason' => 'Barang rusak',
+                'items' => [
+                    [
+                        'goods_receipt_item_id' => $receipt->items->first()->id,
+                        'product_id' => $product->id,
+                        'quantity_returned' => 2,
+                        'unit_cost' => 9000,
+                        'tax_rate' => 11,
+                    ],
+                ],
+            ])
+            ->assertCreated()
+            ->assertJsonPath('purchase_return.status', 'posted')
+            ->assertJsonPath('purchase_return.grand_total', '19980.00');
+
+        $after = (float) StockBalance::query()->where('warehouse_id', $warehouse->id)->where('product_id', $product->id)->firstOrFail()->quantity_on_hand;
+        $payable = SupplierPayable::query()->where('goods_receipt_id', $receipt->id)->firstOrFail();
+
+        $this->assertSame($before - 2, $after);
+        $this->assertSame('29970.00', (string) $payable->amount);
+        $this->assertDatabaseHas('stock_ledgers', ['reference_number' => 'PR-TEST-001', 'movement_type' => 'purchase_return']);
+        $this->assertDatabaseHas('audit_logs', ['action' => 'purchase_return.posted']);
+    }
+
+    public function test_purchase_return_rejects_quantity_above_received_quantity(): void
+    {
+        $this->seed(DatabaseSeeder::class);
+        [$user, $business, $branch, $supplier, $warehouse, $product] = $this->context();
+
+        $receiptId = $this->postGoodsReceipt($user, $business, $branch, $supplier, $warehouse, $product, 'GR-RETURN-INVALID', 1);
+        $receipt = GoodsReceipt::query()->with('items')->findOrFail($receiptId);
+
+        $this->actingAs($user, 'sanctum')
+            ->withHeaders(['X-Business-Id' => $business->uuid, 'X-Branch-Id' => $branch->uuid])
+            ->postJson('/api/purchase-returns', [
+                'supplier_id' => $supplier->id,
+                'goods_receipt_id' => $receipt->id,
+                'return_number' => 'PR-INVALID-001',
+                'items' => [
+                    [
+                        'goods_receipt_item_id' => $receipt->items->first()->id,
+                        'product_id' => $product->id,
+                        'quantity_returned' => 2,
+                        'unit_cost' => 9000,
+                    ],
+                ],
+            ])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors(['items.0.quantity_returned']);
+    }
+
     private function context(): array
     {
         $user = User::query()->where('email', 'owner@kawi.test')->firstOrFail();
@@ -110,5 +178,21 @@ class PurchasingTest extends TestCase
         $product = Product::query()->where('business_id', $business->id)->where('sku', 'KAWI-COFFEE-001')->firstOrFail();
 
         return [$user, $business, $branch, $supplier, $warehouse, $product];
+    }
+
+    private function postGoodsReceipt(User $user, Business $business, Branch $branch, Supplier $supplier, Warehouse $warehouse, Product $product, string $number, int $quantity): int
+    {
+        return $this->actingAs($user, 'sanctum')
+            ->withHeaders(['X-Business-Id' => $business->uuid, 'X-Branch-Id' => $branch->uuid])
+            ->postJson('/api/goods-receipts', [
+                'supplier_id' => $supplier->id,
+                'warehouse_id' => $warehouse->id,
+                'receipt_number' => $number,
+                'items' => [
+                    ['product_id' => $product->id, 'quantity_received' => $quantity, 'unit_cost' => 9000, 'tax_rate' => 11],
+                ],
+            ])
+            ->assertCreated()
+            ->json('goods_receipt.id');
     }
 }
