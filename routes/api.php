@@ -21,6 +21,7 @@ use App\Http\Controllers\Api\SaleController;
 use App\Http\Controllers\Api\StockAdjustmentController;
 use App\Http\Controllers\Api\StockOpnameController;
 use App\Http\Controllers\Api\StockTransferController;
+use App\Http\Controllers\Api\UserAccessController;
 use Illuminate\Support\Facades\Route;
 
 Route::post('/auth/login', [AuthController::class, 'login']);
@@ -32,6 +33,13 @@ Route::middleware(['auth:sanctum', 'tenant'])->group(function (): void {
 
     Route::get('/foundation/permissions/reports', fn () => response()->json(['allowed' => true]))
         ->middleware('permission:reports.view');
+
+    Route::get('/user-access', [UserAccessController::class, 'index'])
+        ->middleware('permission:users.manage');
+    Route::post('/user-access/users', [UserAccessController::class, 'store'])
+        ->middleware('permission:users.manage');
+    Route::post('/user-access/users/{user}/roles', [UserAccessController::class, 'assignRole'])
+        ->middleware('permission:users.manage');
 
     Route::get('/master-data', [MasterDataController::class, 'index'])
         ->middleware('permission:inventory.view');

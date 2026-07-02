@@ -9,6 +9,7 @@ import { useOfflineStore } from './stores/offline';
 import { usePosStore } from './stores/pos';
 import { usePurchasingStore } from './stores/purchasing';
 import { useReportsStore } from './stores/reports';
+import { useUserAccessStore } from './stores/userAccess';
 
 const accounting = useAccountingStore();
 const customers = useCustomersStore();
@@ -19,6 +20,7 @@ const offline = useOfflineStore();
 const pos = usePosStore();
 const purchasing = usePurchasingStore();
 const reports = useReportsStore();
+const userAccess = useUserAccessStore();
 
 const quickStats = [
     { label: 'Penjualan Hari Ini', value: 'Rp 0', tone: 'emerald' },
@@ -29,6 +31,7 @@ const quickStats = [
     { label: 'Akun COA', value: accounting.accountCount, tone: 'amber' },
     { label: 'Laporan', value: reports.period, tone: 'emerald' },
     { label: 'Pelanggan', value: customers.customerCount, tone: 'sky' },
+    { label: 'User', value: userAccess.userCount, tone: 'amber' },
 ];
 
 const modules = [
@@ -267,6 +270,27 @@ onUnmounted(() => {
                                     {{ customer.transactionCount }} transaksi / Rp {{ customer.lifetimeSpend.toLocaleString('id-ID') }}
                                 </p>
                             </article>
+                        </div>
+                    </div>
+
+                    <div class="mt-6 rounded-md border border-white/10 bg-zinc-950/70 p-4">
+                        <div class="flex flex-wrap items-center justify-between gap-3">
+                            <h3 class="text-sm font-semibold text-zinc-300">User Access</h3>
+                            <span class="text-xs text-zinc-500">{{ userAccess.permissionCount }} permissions</span>
+                        </div>
+                        <div class="mt-4 grid gap-3 sm:grid-cols-3">
+                            <div class="rounded-md border border-white/10 bg-white/[0.03] p-3 text-sm">
+                                <p class="text-zinc-400">Users</p>
+                                <p class="mt-1 font-semibold">{{ userAccess.userCount }}</p>
+                            </div>
+                            <div class="rounded-md border border-white/10 bg-white/[0.03] p-3 text-sm">
+                                <p class="text-zinc-400">Roles</p>
+                                <p class="mt-1 font-semibold">{{ userAccess.roleCount }}</p>
+                            </div>
+                            <div class="rounded-md border border-white/10 bg-white/[0.03] p-3 text-sm">
+                                <p class="text-zinc-400">Owner</p>
+                                <p class="mt-1 font-semibold">{{ userAccess.users[0]?.name }}</p>
+                            </div>
                         </div>
                     </div>
                 </section>

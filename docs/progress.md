@@ -162,6 +162,18 @@ Status: complete.
 - Dokumentasi Tahap 13 dibuat.
 - Automated test accounting statements dibuat.
 
+### Tahap 14 - User & RBAC Administration
+
+Status: complete.
+
+- Service layer `UserAccessService` dibuat untuk directory user access, invite user, dan assign role.
+- Endpoint user access dibuat dengan permission `users.manage`.
+- Validasi tenant isolation untuk user, role, dan branch dibuat.
+- Audit log `user.invited` dan `role.assigned` dibuat.
+- Vue Pinia store user access dan panel dashboard User Access dibuat.
+- Dokumentasi Tahap 14 dibuat.
+- Automated test user/RBAC administration dibuat.
+
 ## Cara Track Mundur
 
 - Setiap tahap disimpan dalam commit terpisah.
