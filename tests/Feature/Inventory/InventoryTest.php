@@ -5,6 +5,7 @@ namespace Tests\Feature\Inventory;
 use App\Models\Branch;
 use App\Models\Business;
 use App\Models\Product;
+use App\Models\Recipe;
 use App\Models\StockBalance;
 use App\Models\StockLedger;
 use App\Models\User;
@@ -217,6 +218,74 @@ class InventoryTest extends TestCase
             ])
             ->assertUnprocessable()
             ->assertJsonValidationErrors(['to_warehouse_id']);
+    }
+
+    public function test_production_order_consumes_ingredients_and_posts_output(): void
+    {
+        $this->seed(DatabaseSeeder::class);
+
+        [$user, $business, $branch] = $this->context();
+        $warehouse = Warehouse::query()->where('business_id', $business->id)->where('branch_id', $branch->id)->firstOrFail();
+        $recipe = Recipe::query()->where('business_id', $business->id)->where('name', 'Recipe KAWI Rice Bowl')->with('items')->firstOrFail();
+        $ingredientId = $recipe->items->first()->ingredient_product_id;
+        $outputProduct = Product::query()->whereKey($recipe->product_id)->firstOrFail();
+        $ingredientBefore = (float) StockBalance::query()->where('warehouse_id', $warehouse->id)->where('product_id', $ingredientId)->firstOrFail()->quantity_on_hand;
+        $outputBefore = (float) StockBalance::query()->where('warehouse_id', $warehouse->id)->where('product_id', $outputProduct->id)->firstOrFail()->quantity_on_hand;
+
+        $this->actingAs($user, 'sanctum')
+            ->withHeaders(['X-Business-Id' => $business->uuid, 'X-Branch-Id' => $branch->uuid])
+            ->postJson('/api/production-orders', [
+                'warehouse_id' => $warehouse->id,
+                'recipe_id' => $recipe->id,
+                'production_number' => 'PROD-TEST-001',
+                'planned_quantity' => 5,
+                'actual_quantity' => 4,
+            ])
+            ->assertCreated()
+            ->assertJsonPath('production_order.status', 'posted')
+            ->assertJsonPath('production_order.waste_quantity', '1.000000');
+
+        $ingredientAfter = (float) StockBalance::query()->where('warehouse_id', $warehouse->id)->where('product_id', $ingredientId)->firstOrFail()->quantity_on_hand;
+        $outputAfter = (float) StockBalance::query()->where('warehouse_id', $warehouse->id)->where('product_id', $outputProduct->id)->firstOrFail()->quantity_on_hand;
+
+        $this->assertSame($ingredientBefore - 5, $ingredientAfter);
+        $this->assertSame($outputBefore + 4, $outputAfter);
+        $this->assertDatabaseHas('stock_ledgers', ['reference_number' => 'PROD-TEST-001', 'movement_type' => 'production_consumption']);
+        $this->assertDatabaseHas('stock_ledgers', ['reference_number' => 'PROD-TEST-001', 'movement_type' => 'production_output']);
+        $this->assertDatabaseHas('audit_logs', ['action' => 'production_order.posted']);
+    }
+
+    public function test_production_order_rejects_recipe_from_other_business(): void
+    {
+        $this->seed(DatabaseSeeder::class);
+
+        [$user, $business, $branch] = $this->context();
+        $warehouse = Warehouse::query()->where('business_id', $business->id)->where('branch_id', $branch->id)->firstOrFail();
+        $outsideBusiness = Business::query()->create(['uuid' => (string) Str::uuid(), 'name' => 'Outside Production']);
+        $outsideProduct = Product::query()->create([
+            'business_id' => $outsideBusiness->id,
+            'uuid' => (string) Str::uuid(),
+            'name' => 'Outside Menu',
+            'type' => 'food',
+            'sku' => 'OUT-PROD-001',
+        ]);
+        $outsideRecipe = Recipe::query()->create([
+            'business_id' => $outsideBusiness->id,
+            'product_id' => $outsideProduct->id,
+            'uuid' => (string) Str::uuid(),
+            'name' => 'Outside Recipe',
+        ]);
+
+        $this->actingAs($user, 'sanctum')
+            ->withHeaders(['X-Business-Id' => $business->uuid, 'X-Branch-Id' => $branch->uuid])
+            ->postJson('/api/production-orders', [
+                'warehouse_id' => $warehouse->id,
+                'recipe_id' => $outsideRecipe->id,
+                'production_number' => 'PROD-INVALID-001',
+                'planned_quantity' => 1,
+            ])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors(['recipe_id']);
     }
 
     private function context(): array

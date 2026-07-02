@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Recipe;
+use App\Models\ProductionOrder;
 use App\Models\StockBalance;
 use App\Models\StockLedger;
 use App\Models\StockOpname;
@@ -46,6 +47,12 @@ class InventoryController extends Controller
             'stock_opnames' => StockOpname::query()
                 ->forTenant($business->id, $branch?->id)
                 ->with('items.product')
+                ->latest()
+                ->limit(20)
+                ->get(),
+            'production_orders' => ProductionOrder::query()
+                ->forTenant($business->id, $branch?->id)
+                ->with(['recipe', 'product', 'items.product'])
                 ->latest()
                 ->limit(20)
                 ->get(),

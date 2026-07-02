@@ -199,6 +199,19 @@ Status: complete.
 - Dokumentasi Tahap 16 dibuat.
 - Automated test purchase return dibuat.
 
+### Tahap 17 - Production Foundation
+
+Status: complete.
+
+- Tabel `production_orders` dan `production_order_items` dibuat.
+- Endpoint `POST /api/production-orders` dibuat.
+- Produksi memakai recipe untuk konsumsi bahan dan output produk.
+- Ledger `production_consumption` dan `production_output` dibuat.
+- Actual quantity, planned quantity, waste quantity, dan total cost dicatat.
+- Inventory index dan dashboard inventory menampilkan production orders.
+- Dokumentasi Tahap 17 dibuat.
+- Automated test production foundation dibuat.
+
 ## Cara Track Mundur
 
 - Setiap tahap disimpan dalam commit terpisah.

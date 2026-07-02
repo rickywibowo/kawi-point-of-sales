@@ -121,7 +121,7 @@ onUnmounted(() => {
                     <div class="mt-6 rounded-md border border-white/10 bg-zinc-950/70 p-4">
                         <div class="flex flex-wrap items-center justify-between gap-3">
                             <h3 class="text-sm font-semibold text-zinc-300">Inventory Ledger</h3>
-                            <span class="text-xs text-zinc-500">{{ inventory.warehouse }} / {{ inventory.controlDocumentCount }} dokumen kontrol</span>
+                            <span class="text-xs text-zinc-500">{{ inventory.warehouse }} / {{ inventory.controlDocumentCount }} kontrol / {{ inventory.productionCount }} produksi</span>
                         </div>
                         <div class="mt-4 grid gap-3 sm:grid-cols-2">
                             <article
@@ -142,6 +142,10 @@ onUnmounted(() => {
                             <div class="rounded-md border border-white/10 bg-white/[0.03] p-3 text-sm">
                                 <p class="text-zinc-400">Opname Terakhir</p>
                                 <p class="mt-1 font-semibold">{{ inventory.stockOpnames[0]?.number }}</p>
+                            </div>
+                            <div class="rounded-md border border-white/10 bg-white/[0.03] p-3 text-sm">
+                                <p class="text-zinc-400">Produksi Terakhir</p>
+                                <p class="mt-1 font-semibold">{{ inventory.productionOrders[0]?.number }}</p>
                             </div>
                         </div>
                     </div>

@@ -17,11 +17,15 @@ export const useInventoryStore = defineStore('inventory', {
         stockOpnames: [
             { number: 'OPN-DEMO-001', status: 'posted', variance: -2 },
         ],
+        productionOrders: [
+            { number: 'PROD-DEMO-001', product: 'KAWI Rice Bowl', actualQuantity: 10, wasteQuantity: 1 },
+        ],
     }),
 
     getters: {
         totalStockValue: (state) => state.stockBalances.reduce((total, item) => total + item.value, 0),
         lowStockCount: (state) => state.stockBalances.filter((item) => item.quantity <= 5).length,
         controlDocumentCount: (state) => state.stockTransfers.length + state.stockOpnames.length,
+        productionCount: (state) => state.productionOrders.length,
     },
 });

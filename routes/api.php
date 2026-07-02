@@ -12,6 +12,7 @@ use App\Http\Controllers\Api\MasterDataController;
 use App\Http\Controllers\Api\OfflineSyncController;
 use App\Http\Controllers\Api\PosController;
 use App\Http\Controllers\Api\ProductController;
+use App\Http\Controllers\Api\ProductionController;
 use App\Http\Controllers\Api\GoodsReceiptController;
 use App\Http\Controllers\Api\HealthController;
 use App\Http\Controllers\Api\PurchaseOrderController;
@@ -69,6 +70,8 @@ Route::middleware(['auth:sanctum', 'tenant'])->group(function (): void {
     Route::post('/stock-transfers', [StockTransferController::class, 'store'])
         ->middleware('permission:inventory.adjust');
     Route::post('/stock-opnames', [StockOpnameController::class, 'store'])
+        ->middleware('permission:inventory.adjust');
+    Route::post('/production-orders', [ProductionController::class, 'store'])
         ->middleware('permission:inventory.adjust');
 
     Route::get('/pos', [PosController::class, 'index'])
