@@ -204,7 +204,7 @@ onUnmounted(() => {
                     <div class="mt-6 rounded-md border border-white/10 bg-zinc-950/70 p-4">
                         <div class="flex flex-wrap items-center justify-between gap-3">
                             <h3 class="text-sm font-semibold text-zinc-300">Accounting</h3>
-                            <span class="text-xs text-emerald-200">{{ accounting.trialBalanceStatus }}</span>
+                            <span class="text-xs text-emerald-200">{{ accounting.trialBalanceStatus }} / {{ accounting.statementStatus }}</span>
                         </div>
                         <div class="mt-4 grid gap-2 sm:grid-cols-2">
                             <div
@@ -214,6 +214,16 @@ onUnmounted(() => {
                             >
                                 <p class="font-medium">{{ account.code }} - {{ account.name }}</p>
                                 <p class="mt-1 text-xs text-zinc-500">{{ account.type }}</p>
+                            </div>
+                        </div>
+                        <div class="mt-4 grid gap-3 sm:grid-cols-2">
+                            <div class="rounded-md border border-white/10 bg-white/[0.03] p-3 text-sm">
+                                <p class="text-zinc-400">Neraca</p>
+                                <p class="mt-1 font-semibold">Rp {{ accounting.balanceSheet.assets.toLocaleString('id-ID') }}</p>
+                            </div>
+                            <div class="rounded-md border border-white/10 bg-white/[0.03] p-3 text-sm">
+                                <p class="text-zinc-400">Cash Flow</p>
+                                <p class="mt-1 font-semibold">Rp {{ accounting.cashFlow.netCashFlow.toLocaleString('id-ID') }}</p>
                             </div>
                         </div>
                     </div>

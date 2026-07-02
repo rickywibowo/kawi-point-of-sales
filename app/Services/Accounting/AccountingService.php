@@ -6,6 +6,7 @@ use App\Models\Account;
 use App\Models\Business;
 use App\Models\GoodsReceipt;
 use App\Models\JournalEntry;
+use App\Models\JournalLine;
 use App\Models\Sale;
 use App\Services\Audit\AuditLogger;
 use Illuminate\Http\Request;
@@ -174,6 +175,125 @@ class AccountingService
         ];
     }
 
+    public function generalLedger(int $businessId, ?string $dateFrom = null, ?string $dateTo = null): Collection
+    {
+        return Account::query()
+            ->forBusiness($businessId)
+            ->with(['journalLines' => function ($query) use ($dateFrom, $dateTo): void {
+                $query
+                    ->whereHas('journalEntry', function ($query) use ($dateFrom, $dateTo): void {
+                        $query->where('status', 'posted');
+
+                        if ($dateFrom) {
+                            $query->whereDate('journal_date', '>=', $dateFrom);
+                        }
+
+                        if ($dateTo) {
+                            $query->whereDate('journal_date', '<=', $dateTo);
+                        }
+                    })
+                    ->with('journalEntry')
+                    ->orderBy('id');
+            }])
+            ->orderBy('code')
+            ->get()
+            ->map(function (Account $account): array {
+                $runningBalance = 0.0;
+                $lines = $account->journalLines
+                    ->sortBy(fn (JournalLine $line) => $line->journalEntry?->journal_date?->format('Y-m-d').'-'.$line->id)
+                    ->values()
+                    ->map(function (JournalLine $line) use ($account, &$runningBalance): array {
+                        $debit = (float) $line->debit;
+                        $credit = (float) $line->credit;
+                        $delta = $account->normal_balance === 'debit' ? $debit - $credit : $credit - $debit;
+                        $runningBalance += $delta;
+
+                        return [
+                            'journal_number' => $line->journalEntry?->journal_number,
+                            'journal_date' => $line->journalEntry?->journal_date?->toDateString(),
+                            'description' => $line->description ?? $line->journalEntry?->description,
+                            'debit' => round($debit, 2),
+                            'credit' => round($credit, 2),
+                            'running_balance' => round($runningBalance, 2),
+                        ];
+                    });
+
+                return [
+                    'account' => [
+                        'code' => $account->code,
+                        'name' => $account->name,
+                        'type' => $account->type,
+                        'normal_balance' => $account->normal_balance,
+                    ],
+                    'debit_total' => round($lines->sum('debit'), 2),
+                    'credit_total' => round($lines->sum('credit'), 2),
+                    'ending_balance' => round($runningBalance, 2),
+                    'lines' => $lines,
+                ];
+            });
+    }
+
+    public function balanceSheet(int $businessId): array
+    {
+        $trialBalance = $this->trialBalance($businessId);
+        $assets = $this->statementSection($trialBalance, ['asset']);
+        $liabilities = $this->statementSection($trialBalance, ['liability']);
+        $equityBase = $this->statementSection($trialBalance, ['equity']);
+        $netProfit = $this->profitAndLoss($businessId)['net_profit'];
+        $equity = [
+            'lines' => $equityBase['lines']->push([
+                'code' => '3900',
+                'name' => 'Laba Ditahan Periode Berjalan',
+                'type' => 'equity',
+                'balance' => round($netProfit, 2),
+            ])->values(),
+            'total' => round($equityBase['total'] + $netProfit, 2),
+        ];
+
+        return [
+            'assets' => $assets,
+            'liabilities' => $liabilities,
+            'equity' => $equity,
+            'liabilities_and_equity_total' => round($liabilities['total'] + $equity['total'], 2),
+            'is_balanced' => round($assets['total'] - ($liabilities['total'] + $equity['total']), 2) === 0.0,
+        ];
+    }
+
+    public function cashFlow(int $businessId, ?string $dateFrom = null, ?string $dateTo = null): array
+    {
+        $cashLines = JournalLine::query()
+            ->whereHas('account', fn ($query) => $query->forBusiness($businessId)->where('is_cash', true))
+            ->whereHas('journalEntry', function ($query) use ($businessId, $dateFrom, $dateTo): void {
+                $query->where('business_id', $businessId)->where('status', 'posted');
+
+                if ($dateFrom) {
+                    $query->whereDate('journal_date', '>=', $dateFrom);
+                }
+
+                if ($dateTo) {
+                    $query->whereDate('journal_date', '<=', $dateTo);
+                }
+            })
+            ->with(['account', 'journalEntry.lines.account'])
+            ->get();
+
+        $inflows = round($cashLines->sum(fn (JournalLine $line) => (float) $line->debit), 2);
+        $outflows = round($cashLines->sum(fn (JournalLine $line) => (float) $line->credit), 2);
+
+        return [
+            'period' => [
+                'date_from' => $dateFrom,
+                'date_to' => $dateTo,
+            ],
+            'operating' => [
+                'inflows' => $inflows,
+                'outflows' => $outflows,
+                'net_cash_flow' => round($inflows - $outflows, 2),
+            ],
+            'ending_cash_balance' => round($this->trialBalance($businessId)->whereIn('code', $this->cashAccountCodes($businessId))->sum('balance'), 2),
+        ];
+    }
+
     private function accounts(int $businessId): array
     {
         $accounts = Account::query()->forBusiness($businessId)->get()->keyBy('code');
@@ -199,6 +319,33 @@ class AccountingService
         return collect($lines)
             ->filter(fn (array $line) => round((float) $line['debit'] + (float) $line['credit'], 2) > 0)
             ->values()
+            ->all();
+    }
+
+    private function statementSection(Collection $trialBalance, array $types): array
+    {
+        $lines = $trialBalance
+            ->whereIn('type', $types)
+            ->values()
+            ->map(fn (array $line): array => [
+                'code' => $line['code'],
+                'name' => $line['name'],
+                'type' => $line['type'],
+                'balance' => $line['balance'],
+            ]);
+
+        return [
+            'lines' => $lines,
+            'total' => round($lines->sum('balance'), 2),
+        ];
+    }
+
+    private function cashAccountCodes(int $businessId): array
+    {
+        return Account::query()
+            ->forBusiness($businessId)
+            ->where('is_cash', true)
+            ->pluck('code')
             ->all();
     }
 }

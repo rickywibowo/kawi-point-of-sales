@@ -18,6 +18,7 @@ export const useReportsStore = defineStore('reports', {
             revenue: 0,
             expenses: 0,
             netProfit: 0,
+            endingCashBalance: 0,
         },
     }),
 
@@ -26,6 +27,7 @@ export const useReportsStore = defineStore('reports', {
             { label: 'Sales', value: state.sales.grandTotal },
             { label: 'Stock Value', value: state.stock.stockValue },
             { label: 'Net Profit', value: state.accounting.netProfit },
+            { label: 'Cash Balance', value: state.accounting.endingCashBalance },
         ],
     },
 });

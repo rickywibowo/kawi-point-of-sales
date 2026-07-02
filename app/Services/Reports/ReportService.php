@@ -43,6 +43,8 @@ class ReportService
             'accounting' => [
                 'trial_balance' => $this->accounting->trialBalance($business->id),
                 'profit_and_loss' => $this->accounting->profitAndLoss($business->id),
+                'balance_sheet' => $this->accounting->balanceSheet($business->id),
+                'cash_flow' => $this->accounting->cashFlow($business->id, $from->toDateString(), $to->toDateString()),
             ],
         ];
     }

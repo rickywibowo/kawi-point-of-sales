@@ -14,9 +14,19 @@ export const useAccountingStore = defineStore('accounting', {
             expenses: 0,
             netProfit: 0,
         },
+        balanceSheet: {
+            assets: 0,
+            liabilitiesAndEquity: 0,
+            isBalanced: true,
+        },
+        cashFlow: {
+            netCashFlow: 0,
+            endingCashBalance: 0,
+        },
     }),
 
     getters: {
         accountCount: (state) => state.accounts.length,
+        statementStatus: (state) => state.balanceSheet.isBalanced ? 'statements balanced' : 'review needed',
     },
 });

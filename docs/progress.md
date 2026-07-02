@@ -149,6 +149,19 @@ Status: complete.
 - Dokumentasi Tahap 12 dibuat.
 - Automated test inventory controls dibuat.
 
+### Tahap 13 - Accounting Statements
+
+Status: complete.
+
+- General ledger dibuat dari journal lines per account.
+- Balance sheet dibuat dari trial balance dan net profit periode berjalan.
+- Cash flow dibuat dari akun kas/bank.
+- Endpoint accounting mengembalikan general ledger, balance sheet, dan cash flow.
+- Endpoint reports memasukkan balance sheet dan cash flow dalam blok accounting.
+- Vue Pinia store accounting/reports dan dashboard accounting diperbarui.
+- Dokumentasi Tahap 13 dibuat.
+- Automated test accounting statements dibuat.
+
 ## Cara Track Mundur
 
 - Setiap tahap disimpan dalam commit terpisah.

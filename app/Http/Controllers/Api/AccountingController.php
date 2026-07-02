@@ -27,6 +27,17 @@ class AccountingController extends Controller
                 ->get(),
             'trial_balance' => $accounting->trialBalance($business->id),
             'profit_and_loss' => $accounting->profitAndLoss($business->id),
+            'general_ledger' => $accounting->generalLedger(
+                $business->id,
+                $request->query('date_from'),
+                $request->query('date_to'),
+            ),
+            'balance_sheet' => $accounting->balanceSheet($business->id),
+            'cash_flow' => $accounting->cashFlow(
+                $business->id,
+                $request->query('date_from'),
+                $request->query('date_to'),
+            ),
         ]);
     }
 

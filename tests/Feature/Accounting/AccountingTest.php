@@ -126,7 +126,51 @@ class AccountingTest extends TestCase
             ->withHeaders(['X-Business-Id' => $business->uuid, 'X-Branch-Id' => $branch->uuid])
             ->getJson('/api/accounting')
             ->assertOk()
-            ->assertJsonStructure(['accounts', 'journal_entries', 'trial_balance', 'profit_and_loss']);
+            ->assertJsonStructure([
+                'accounts',
+                'journal_entries',
+                'trial_balance',
+                'profit_and_loss',
+                'general_ledger',
+                'balance_sheet',
+                'cash_flow',
+            ]);
+    }
+
+    public function test_accounting_statements_include_general_ledger_balance_sheet_and_cash_flow(): void
+    {
+        $this->seed(DatabaseSeeder::class);
+        [$user, $business, $branch] = $this->context();
+        $cash = Account::query()->where('business_id', $business->id)->where('code', '1100')->firstOrFail();
+        $capital = Account::query()->where('business_id', $business->id)->where('code', '3100')->firstOrFail();
+
+        $this->actingAs($user, 'sanctum')
+            ->withHeaders(['X-Business-Id' => $business->uuid, 'X-Branch-Id' => $branch->uuid])
+            ->postJson('/api/journal-entries', [
+                'journal_number' => 'JE-STMT-001',
+                'journal_date' => '2026-07-02',
+                'description' => 'Setoran modal statement',
+                'lines' => [
+                    ['account_id' => $cash->id, 'debit' => 150000, 'credit' => 0],
+                    ['account_id' => $capital->id, 'debit' => 0, 'credit' => 150000],
+                ],
+            ])
+            ->assertCreated();
+
+        $response = $this->actingAs($user, 'sanctum')
+            ->withHeaders(['X-Business-Id' => $business->uuid, 'X-Branch-Id' => $branch->uuid])
+            ->getJson('/api/accounting?date_from=2026-07-01&date_to=2026-07-31')
+            ->assertOk()
+            ->json();
+
+        $cashLedger = collect($response['general_ledger'])->firstWhere('account.code', '1100');
+
+        $this->assertSame(150000.0, (float) $cashLedger['ending_balance']);
+        $this->assertSame(150000.0, (float) $response['balance_sheet']['assets']['total']);
+        $this->assertSame(150000.0, (float) $response['balance_sheet']['liabilities_and_equity_total']);
+        $this->assertTrue($response['balance_sheet']['is_balanced']);
+        $this->assertSame(150000.0, (float) $response['cash_flow']['operating']['net_cash_flow']);
+        $this->assertSame(150000.0, (float) $response['cash_flow']['ending_cash_balance']);
     }
 
     private function context(): array
