@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\AccountingController;
+use App\Http\Controllers\Api\AuditLogController;
 use App\Http\Controllers\Api\CashierShiftController;
 use App\Http\Controllers\Api\CategoryController;
 use App\Http\Controllers\Api\CustomerController;
@@ -39,6 +40,8 @@ Route::middleware(['auth:sanctum', 'tenant'])->group(function (): void {
     Route::post('/user-access/users', [UserAccessController::class, 'store'])
         ->middleware('permission:users.manage');
     Route::post('/user-access/users/{user}/roles', [UserAccessController::class, 'assignRole'])
+        ->middleware('permission:users.manage');
+    Route::get('/audit-logs', [AuditLogController::class, 'index'])
         ->middleware('permission:users.manage');
 
     Route::get('/master-data', [MasterDataController::class, 'index'])

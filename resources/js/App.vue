@@ -1,6 +1,7 @@
 <script setup>
 import { onMounted, onUnmounted } from 'vue';
 import { useAccountingStore } from './stores/accounting';
+import { useAuditStore } from './stores/audit';
 import { useCustomersStore } from './stores/customers';
 import { useFoundationStore } from './stores/foundation';
 import { useInventoryStore } from './stores/inventory';
@@ -12,6 +13,7 @@ import { useReportsStore } from './stores/reports';
 import { useUserAccessStore } from './stores/userAccess';
 
 const accounting = useAccountingStore();
+const audit = useAuditStore();
 const customers = useCustomersStore();
 const foundation = useFoundationStore();
 const inventory = useInventoryStore();
@@ -32,6 +34,7 @@ const quickStats = [
     { label: 'Laporan', value: reports.period, tone: 'emerald' },
     { label: 'Pelanggan', value: customers.customerCount, tone: 'sky' },
     { label: 'User', value: userAccess.userCount, tone: 'amber' },
+    { label: 'Audit', value: audit.totalEvents, tone: 'emerald' },
 ];
 
 const modules = [
@@ -290,6 +293,27 @@ onUnmounted(() => {
                             <div class="rounded-md border border-white/10 bg-white/[0.03] p-3 text-sm">
                                 <p class="text-zinc-400">Owner</p>
                                 <p class="mt-1 font-semibold">{{ userAccess.users[0]?.name }}</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mt-6 rounded-md border border-white/10 bg-zinc-950/70 p-4">
+                        <div class="flex flex-wrap items-center justify-between gap-3">
+                            <h3 class="text-sm font-semibold text-zinc-300">Audit Review</h3>
+                            <span class="text-xs text-zinc-500">{{ audit.securityEventCount }} security events</span>
+                        </div>
+                        <div class="mt-4 grid gap-3 sm:grid-cols-3">
+                            <div class="rounded-md border border-white/10 bg-white/[0.03] p-3 text-sm">
+                                <p class="text-zinc-400">Events</p>
+                                <p class="mt-1 font-semibold">{{ audit.totalEvents }}</p>
+                            </div>
+                            <div class="rounded-md border border-white/10 bg-white/[0.03] p-3 text-sm">
+                                <p class="text-zinc-400">Users</p>
+                                <p class="mt-1 font-semibold">{{ audit.uniqueUsers }}</p>
+                            </div>
+                            <div class="rounded-md border border-white/10 bg-white/[0.03] p-3 text-sm">
+                                <p class="text-zinc-400">Top Action</p>
+                                <p class="mt-1 font-semibold">{{ audit.topActionLabel }}</p>
                             </div>
                         </div>
                     </div>

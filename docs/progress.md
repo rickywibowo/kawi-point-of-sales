@@ -174,6 +174,18 @@ Status: complete.
 - Dokumentasi Tahap 14 dibuat.
 - Automated test user/RBAC administration dibuat.
 
+### Tahap 15 - Audit Review & Compliance
+
+Status: complete.
+
+- Service layer `AuditReviewService` dibuat untuk audit log, filter, summary, dan security events.
+- Endpoint `GET /api/audit-logs` dibuat dengan permission `users.manage`.
+- Filter audit berdasarkan action, entity type, user, dan tanggal dibuat.
+- Tenant isolation audit log business aktif dibuat.
+- Vue Pinia store audit dan panel dashboard Audit Review dibuat.
+- Dokumentasi Tahap 15 dibuat.
+- Automated test audit review dan tenant isolation dibuat.
+
 ## Cara Track Mundur
 
 - Setiap tahap disimpan dalam commit terpisah.
