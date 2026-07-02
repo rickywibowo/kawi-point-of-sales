@@ -11,6 +11,7 @@ use App\Http\Controllers\Api\OfflineSyncController;
 use App\Http\Controllers\Api\PosController;
 use App\Http\Controllers\Api\ProductController;
 use App\Http\Controllers\Api\GoodsReceiptController;
+use App\Http\Controllers\Api\HealthController;
 use App\Http\Controllers\Api\PurchaseOrderController;
 use App\Http\Controllers\Api\PurchasingController;
 use App\Http\Controllers\Api\RecipeController;
@@ -20,6 +21,7 @@ use App\Http\Controllers\Api\StockAdjustmentController;
 use Illuminate\Support\Facades\Route;
 
 Route::post('/auth/login', [AuthController::class, 'login']);
+Route::get('/health', HealthController::class);
 
 Route::middleware(['auth:sanctum', 'tenant'])->group(function (): void {
     Route::get('/auth/me', [AuthController::class, 'me']);

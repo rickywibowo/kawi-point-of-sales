@@ -95,7 +95,7 @@ Status: complete.
 
 ### Tahap 8 - Reports
 
-Status: in progress, implementasi awal selesai.
+Status: complete.
 
 - Service layer `ReportService` dibuat untuk agregasi sales, stock, purchasing, dan accounting.
 - Endpoint `GET /api/reports` dibuat.
@@ -103,6 +103,15 @@ Status: in progress, implementasi awal selesai.
 - Vue Pinia store reports dibuat.
 - Dokumentasi Tahap 8 dibuat.
 - Automated test reports dibuat.
+
+### Tahap 9 - Production Readiness
+
+Status: complete.
+
+- Endpoint publik `GET /api/health` dibuat untuk monitoring app, database, runtime, dan release metadata.
+- `.env.example` dilengkapi variabel deployment backend/frontend.
+- Dokumentasi deploy Laravel Cloud + Cloudflare Pages dibuat.
+- Automated test health check dibuat.
 
 ## Cara Track Mundur
 
