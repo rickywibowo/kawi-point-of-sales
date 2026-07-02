@@ -7,6 +7,7 @@ use App\Http\Requests\Pos\StoreSaleRequest;
 use App\Http\Requests\Pos\SaleStatusRequest;
 use App\Models\Sale;
 use App\Services\Pos\PosService;
+use App\Services\Pos\ReceiptService;
 use Illuminate\Http\JsonResponse;
 
 class SaleController extends Controller
@@ -47,5 +48,16 @@ class SaleController extends Controller
         );
 
         return response()->json(['sale' => $sale]);
+    }
+
+    public function receipt(Sale $sale, ReceiptService $receipts): JsonResponse
+    {
+        $receipt = $receipts->build(
+            request()->attributes->get('business'),
+            request()->attributes->get('branch')?->id,
+            $sale,
+        );
+
+        return response()->json(['receipt' => $receipt]);
     }
 }

@@ -22,6 +22,9 @@ export const usePosStore = defineStore('pos', {
             voidedToday: 1,
             refundedToday: 1,
         },
+        receipts: [
+            { number: 'SALE-DEMO-001', channel: 'digital', total: 60000 },
+        ],
         heldTransactions: 1,
         todayTransactions: 0,
     }),
@@ -32,5 +35,6 @@ export const usePosStore = defineStore('pos', {
         cashMovementNet: (state) => state.cashMovements.reduce((total, movement) => {
             return total + (movement.type === 'cash_in' ? movement.amount : -movement.amount);
         }, 0),
+        receiptCount: (state) => state.receipts.length,
     },
 });

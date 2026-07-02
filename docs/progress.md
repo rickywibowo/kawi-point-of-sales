@@ -212,6 +212,18 @@ Status: complete.
 - Dokumentasi Tahap 17 dibuat.
 - Automated test production foundation dibuat.
 
+### Tahap 18 - Receipt & Transaction History
+
+Status: complete.
+
+- Service layer `ReceiptService` dibuat untuk payload struk digital.
+- Endpoint `GET /api/sales/{sale}/receipt` dibuat.
+- Receipt berisi business, branch, sale, items, payments, totals, dan QR payload.
+- Tenant dan branch isolation receipt dibuat.
+- Vue Pinia store POS dan dashboard struk diperbarui.
+- Dokumentasi Tahap 18 dibuat.
+- Automated test receipt dibuat.
+
 ## Cara Track Mundur
 
 - Setiap tahap disimpan dalam commit terpisah.

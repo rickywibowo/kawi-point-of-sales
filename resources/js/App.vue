@@ -153,7 +153,7 @@ onUnmounted(() => {
                     <div class="mt-6 rounded-md border border-white/10 bg-zinc-950/70 p-4">
                         <div class="flex flex-wrap items-center justify-between gap-3">
                             <h3 class="text-sm font-semibold text-zinc-300">POS Cart</h3>
-                            <span class="text-xs text-zinc-500">{{ pos.shift.number }} / {{ pos.shift.status }}</span>
+                            <span class="text-xs text-zinc-500">{{ pos.shift.number }} / {{ pos.shift.status }} / {{ pos.receiptCount }} struk</span>
                         </div>
                         <div class="mt-4 grid gap-3 sm:grid-cols-[1fr_auto]">
                             <div class="space-y-2">

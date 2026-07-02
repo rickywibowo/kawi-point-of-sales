@@ -69,6 +69,11 @@ class Sale extends Model
         return $this->belongsTo(CashierShift::class);
     }
 
+    public function branch(): BelongsTo
+    {
+        return $this->belongsTo(Branch::class);
+    }
+
     public function customer(): BelongsTo
     {
         return $this->belongsTo(Customer::class);

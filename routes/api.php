@@ -88,6 +88,8 @@ Route::middleware(['auth:sanctum', 'tenant'])->group(function (): void {
         ->middleware('permission:sales.void');
     Route::post('/sales/{sale}/refund', [SaleController::class, 'refund'])
         ->middleware('permission:sales.refund');
+    Route::get('/sales/{sale}/receipt', [SaleController::class, 'receipt'])
+        ->middleware('permission:sales.create');
     Route::post('/held-transactions', [HeldTransactionController::class, 'store'])
         ->middleware('permission:sales.create');
 

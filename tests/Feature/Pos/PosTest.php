@@ -228,6 +228,55 @@ class PosTest extends TestCase
         $this->assertDatabaseHas('audit_logs', ['action' => 'sale.refunded']);
     }
 
+    public function test_cashier_can_view_digital_receipt_for_completed_sale(): void
+    {
+        $this->seed(DatabaseSeeder::class);
+
+        [$user, $business, $branch] = $this->context();
+        [$sale] = $this->createCompletedSale($user, $business, $branch, 'SALE-RECEIPT-001', 'receipt-sale-001');
+
+        $this->actingAs($user, 'sanctum')
+            ->withHeaders(['X-Business-Id' => $business->uuid, 'X-Branch-Id' => $branch->uuid])
+            ->getJson("/api/sales/{$sale->id}/receipt")
+            ->assertOk()
+            ->assertJsonPath('receipt.sale.sale_number', 'SALE-RECEIPT-001')
+            ->assertJsonPath('receipt.business.name', 'KAWI Demo Business')
+            ->assertJsonPath('receipt.branch.code', 'MAIN')
+            ->assertJsonPath('receipt.items.0.name', 'KAWI Rice Bowl')
+            ->assertJsonPath('receipt.payments.0.method', 'cash')
+            ->assertJsonPath('receipt.digital.qr_payload', 'KAWI-POS:'.$sale->uuid)
+            ->assertJsonStructure([
+                'receipt' => [
+                    'business',
+                    'branch',
+                    'sale',
+                    'items',
+                    'payments',
+                    'totals',
+                    'digital',
+                ],
+            ]);
+    }
+
+    public function test_receipt_endpoint_rejects_sale_outside_active_branch(): void
+    {
+        $this->seed(DatabaseSeeder::class);
+
+        [$user, $business, $branch] = $this->context();
+        [$sale] = $this->createCompletedSale($user, $business, $branch, 'SALE-RECEIPT-OUT', 'receipt-sale-out');
+        $outsideBranch = Branch::query()->create([
+            'business_id' => $business->id,
+            'uuid' => (string) \Illuminate\Support\Str::uuid(),
+            'name' => 'Second Branch',
+            'code' => 'SECOND',
+        ]);
+
+        $this->actingAs($user, 'sanctum')
+            ->withHeaders(['X-Business-Id' => $business->uuid, 'X-Branch-Id' => $outsideBranch->uuid])
+            ->getJson("/api/sales/{$sale->id}/receipt")
+            ->assertForbidden();
+    }
+
     private function context(): array
     {
         $user = User::query()->where('email', 'owner@kawi.test')->firstOrFail();
