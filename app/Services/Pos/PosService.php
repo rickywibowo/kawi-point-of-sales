@@ -4,6 +4,7 @@ namespace App\Services\Pos;
 
 use App\Models\Branch;
 use App\Models\Business;
+use App\Models\CashMovement;
 use App\Models\CashierShift;
 use App\Models\Customer;
 use App\Models\HeldTransaction;
@@ -76,7 +77,15 @@ class PosService
             ->where('method', 'cash')
             ->sum(fn ($payment) => (float) $payment->amount);
 
-        $expectedCash = (float) $shift->opening_cash + $cashSales;
+        $cashIn = CashMovement::query()
+            ->where('cashier_shift_id', $shift->id)
+            ->where('type', 'cash_in')
+            ->sum('amount');
+        $cashOut = CashMovement::query()
+            ->where('cashier_shift_id', $shift->id)
+            ->where('type', 'cash_out')
+            ->sum('amount');
+        $expectedCash = (float) $shift->opening_cash + $cashSales + (float) $cashIn - (float) $cashOut;
         $actualCash = (float) $data['actual_cash'];
 
         $shift->update([
@@ -91,6 +100,34 @@ class PosService
         $this->audit->record('cashier_shift.closed', $shift, after: $shift->fresh()->toArray(), request: $request);
 
         return $shift->fresh();
+    }
+
+    public function recordCashMovement(Business $business, Branch $branch, CashierShift $shift, array $data, Request $request): CashMovement
+    {
+        abort_unless($shift->business_id === $business->id && $shift->branch_id === $branch->id, 403);
+
+        if ($shift->status !== 'open') {
+            throw ValidationException::withMessages(['cashier_shift_id' => ['Cash movement requires an open shift.']]);
+        }
+
+        return DB::transaction(function () use ($business, $branch, $shift, $data, $request): CashMovement {
+            $movement = CashMovement::query()->create([
+                'business_id' => $business->id,
+                'branch_id' => $branch->id,
+                'cashier_shift_id' => $shift->id,
+                'user_id' => $request->user()->id,
+                'type' => $data['type'],
+                'amount' => $data['amount'],
+                'reason' => $data['reason'] ?? null,
+            ]);
+
+            $delta = $data['type'] === 'cash_in' ? (float) $data['amount'] : -1 * (float) $data['amount'];
+            $shift->update(['expected_cash' => (float) $shift->expected_cash + $delta]);
+
+            $this->audit->record('cash_movement.created', $movement, after: $movement->toArray(), request: $request);
+
+            return $movement->load('cashierShift');
+        });
     }
 
     public function holdTransaction(Business $business, Branch $branch, array $data, Request $request): HeldTransaction
@@ -214,6 +251,58 @@ class PosService
         });
     }
 
+    public function voidSale(Business $business, Branch $branch, Sale $sale, array $data, Request $request): Sale
+    {
+        abort_unless($sale->business_id === $business->id && $sale->branch_id === $branch->id, 403);
+
+        if ($sale->status !== 'completed') {
+            throw ValidationException::withMessages(['sale' => ['Only completed sales can be voided.']]);
+        }
+
+        return DB::transaction(function () use ($sale, $data, $request): Sale {
+            $before = $sale->toArray();
+            $this->reverseSalesConsumption($sale, 'sales_void', $request->user()->id);
+
+            $sale->update([
+                'status' => 'voided',
+                'voided_at' => now(),
+                'voided_by' => $request->user()->id,
+                'notes' => $this->appendStatusReason($sale->notes, 'Void', $data['reason'] ?? null),
+            ]);
+
+            $sale->refresh()->load(['items.modifiers', 'payments']);
+            $this->audit->record('sale.voided', $sale, before: $before, after: $sale->toArray(), request: $request);
+
+            return $sale;
+        });
+    }
+
+    public function refundSale(Business $business, Branch $branch, Sale $sale, array $data, Request $request): Sale
+    {
+        abort_unless($sale->business_id === $business->id && $sale->branch_id === $branch->id, 403);
+
+        if ($sale->status !== 'completed') {
+            throw ValidationException::withMessages(['sale' => ['Only completed sales can be refunded.']]);
+        }
+
+        return DB::transaction(function () use ($sale, $data, $request): Sale {
+            $before = $sale->toArray();
+            $this->reverseSalesConsumption($sale, 'sales_refund', $request->user()->id);
+
+            $sale->update([
+                'status' => 'refunded',
+                'refunded_at' => now(),
+                'refunded_by' => $request->user()->id,
+                'notes' => $this->appendStatusReason($sale->notes, 'Refund', $data['reason'] ?? null),
+            ]);
+
+            $sale->refresh()->load(['items.modifiers', 'payments']);
+            $this->audit->record('sale.refunded', $sale, before: $before, after: $sale->toArray(), request: $request);
+
+            return $sale;
+        });
+    }
+
     private function prepareItems(int $businessId, int $branchId, array $inputItems): array
     {
         $items = [];
@@ -298,6 +387,71 @@ class PosService
         if (! $exists) {
             throw ValidationException::withMessages(['customer_id' => ['The selected customer is outside the active business.']]);
         }
+    }
+
+    private function reverseSalesConsumption(Sale $sale, string $movementType, ?int $userId): void
+    {
+        $sale->loadMissing('items.product');
+
+        foreach ($sale->items as $item) {
+            $sourceLedger = StockLedger::query()
+                ->where('source_type', Sale::class)
+                ->where('source_id', $sale->id)
+                ->where('product_id', $item->product_id)
+                ->where('movement_type', 'sales_consumption')
+                ->first();
+
+            if (! $sourceLedger || ! $item->product?->track_stock) {
+                continue;
+            }
+
+            $quantity = (float) $item->quantity;
+            $unitCost = (float) $sourceLedger->unit_cost;
+
+            StockLedger::query()->create([
+                'business_id' => $sale->business_id,
+                'branch_id' => $sale->branch_id,
+                'warehouse_id' => $sourceLedger->warehouse_id,
+                'product_id' => $item->product_id,
+                'unit_of_measure_id' => $sourceLedger->unit_of_measure_id,
+                'uuid' => (string) Str::uuid(),
+                'movement_type' => $movementType,
+                'quantity_in' => $quantity,
+                'quantity_out' => 0,
+                'unit_cost' => $unitCost,
+                'total_cost' => $quantity * $unitCost,
+                'source_type' => Sale::class,
+                'source_id' => $sale->id,
+                'reference_number' => $sale->sale_number,
+                'occurred_at' => now(),
+                'created_by' => $userId,
+            ]);
+
+            $balance = StockBalance::query()->firstOrCreate(
+                ['warehouse_id' => $sourceLedger->warehouse_id, 'product_id' => $item->product_id],
+                [
+                    'business_id' => $sale->business_id,
+                    'branch_id' => $sale->branch_id,
+                    'quantity_on_hand' => 0,
+                    'average_cost' => $unitCost,
+                    'stock_value' => 0,
+                ],
+            );
+
+            $newQuantity = (float) $balance->quantity_on_hand + $quantity;
+            $balance->update([
+                'quantity_on_hand' => $newQuantity,
+                'average_cost' => $unitCost,
+                'stock_value' => round($newQuantity * $unitCost, 2),
+            ]);
+        }
+    }
+
+    private function appendStatusReason(?string $notes, string $label, ?string $reason): string
+    {
+        $line = $label.($reason ? ': '.$reason : '');
+
+        return trim($notes ? $notes.PHP_EOL.$line : $line);
     }
 
     private function recordSalesConsumption(int $businessId, int $branchId, int $warehouseId, Product $product, float $quantity, Sale $sale): void

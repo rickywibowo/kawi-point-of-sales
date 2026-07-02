@@ -124,6 +124,18 @@ Status: complete.
 - Dokumentasi Tahap 10 dibuat.
 - Automated test customer CRM dan tenant isolation dibuat.
 
+### Tahap 11 - Post-Sale Controls
+
+Status: complete.
+
+- Endpoint cash movement shift kasir dibuat.
+- Endpoint void dan refund sale dibuat.
+- Void/refund membuat stock ledger pembalik dan mengembalikan stock balance.
+- Close shift menghitung expected cash dari opening cash, cash sales, cash in, dan cash out.
+- Vue Pinia store POS dan panel dashboard Post-Sale Controls dibuat.
+- Dokumentasi Tahap 11 dibuat.
+- Automated test post-sale controls dibuat.
+
 ## Cara Track Mundur
 
 - Setiap tahap disimpan dalam commit terpisah.

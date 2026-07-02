@@ -59,8 +59,14 @@ Route::middleware(['auth:sanctum', 'tenant'])->group(function (): void {
         ->middleware('permission:sales.create');
     Route::post('/cashier-shifts/{shift}/close', [CashierShiftController::class, 'close'])
         ->middleware('permission:sales.create');
+    Route::post('/cashier-shifts/{shift}/cash-movements', [CashierShiftController::class, 'cashMovement'])
+        ->middleware('permission:sales.create');
     Route::post('/sales', [SaleController::class, 'store'])
         ->middleware('permission:sales.create');
+    Route::post('/sales/{sale}/void', [SaleController::class, 'void'])
+        ->middleware('permission:sales.void');
+    Route::post('/sales/{sale}/refund', [SaleController::class, 'refund'])
+        ->middleware('permission:sales.refund');
     Route::post('/held-transactions', [HeldTransactionController::class, 'store'])
         ->middleware('permission:sales.create');
 

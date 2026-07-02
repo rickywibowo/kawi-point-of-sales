@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Pos\CloseShiftRequest;
 use App\Http\Requests\Pos\OpenShiftRequest;
+use App\Http\Requests\Pos\StoreCashMovementRequest;
 use App\Models\CashierShift;
 use App\Services\Pos\PosService;
 use Illuminate\Http\JsonResponse;
@@ -35,5 +36,18 @@ class CashierShiftController extends Controller
         );
 
         return response()->json(['shift' => $closed]);
+    }
+
+    public function cashMovement(StoreCashMovementRequest $request, CashierShift $shift, PosService $service): JsonResponse
+    {
+        $movement = $service->recordCashMovement(
+            $request->attributes->get('business'),
+            $request->attributes->get('branch'),
+            $shift,
+            $request->validated(),
+            $request,
+        );
+
+        return response()->json(['cash_movement' => $movement], 201);
     }
 }

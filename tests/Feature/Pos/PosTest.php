@@ -152,6 +152,82 @@ class PosTest extends TestCase
         $this->assertDatabaseHas('audit_logs', ['action' => 'cashier_shift.closed']);
     }
 
+    public function test_cashier_can_record_cash_movement_and_close_shift_with_adjusted_expected_cash(): void
+    {
+        $this->seed(DatabaseSeeder::class);
+
+        [$user, $business, $branch] = $this->context();
+        $shift = $this->openShift($user, $business, $branch, 'SHIFT-CASH-MOVE');
+
+        $this->actingAs($user, 'sanctum')
+            ->withHeaders(['X-Business-Id' => $business->uuid, 'X-Branch-Id' => $branch->uuid])
+            ->postJson("/api/cashier-shifts/{$shift->id}/cash-movements", [
+                'type' => 'cash_in',
+                'amount' => 50000,
+                'reason' => 'Tambahan kas kecil',
+            ])
+            ->assertCreated()
+            ->assertJsonPath('cash_movement.type', 'cash_in');
+
+        $this->actingAs($user, 'sanctum')
+            ->withHeaders(['X-Business-Id' => $business->uuid, 'X-Branch-Id' => $branch->uuid])
+            ->postJson("/api/cashier-shifts/{$shift->id}/close", [
+                'actual_cash' => 250000,
+            ])
+            ->assertOk()
+            ->assertJsonPath('shift.expected_cash', '250000.00')
+            ->assertJsonPath('shift.cash_difference', '0.00');
+
+        $this->assertDatabaseHas('audit_logs', ['action' => 'cash_movement.created']);
+    }
+
+    public function test_manager_can_void_sale_and_restore_stock(): void
+    {
+        $this->seed(DatabaseSeeder::class);
+
+        [$user, $business, $branch] = $this->context();
+        [$sale, $warehouse, $product, $before] = $this->createCompletedSale($user, $business, $branch, 'SALE-VOID-001', 'void-sale-001');
+
+        $this->actingAs($user, 'sanctum')
+            ->withHeaders(['X-Business-Id' => $business->uuid, 'X-Branch-Id' => $branch->uuid])
+            ->postJson("/api/sales/{$sale->id}/void", [
+                'reason' => 'Salah input',
+            ])
+            ->assertOk()
+            ->assertJsonPath('sale.status', 'voided');
+
+        $after = (float) StockBalance::query()->where('warehouse_id', $warehouse->id)->where('product_id', $product->id)->firstOrFail()->quantity_on_hand;
+
+        $this->assertSame($before, $after);
+        $this->assertDatabaseHas('stock_ledgers', ['reference_number' => 'SALE-VOID-001', 'movement_type' => 'sales_void']);
+        $this->assertDatabaseHas('audit_logs', ['action' => 'sale.voided']);
+    }
+
+    public function test_manager_can_refund_sale_and_prevent_second_status_change(): void
+    {
+        $this->seed(DatabaseSeeder::class);
+
+        [$user, $business, $branch] = $this->context();
+        [$sale] = $this->createCompletedSale($user, $business, $branch, 'SALE-REFUND-001', 'refund-sale-001');
+
+        $this->actingAs($user, 'sanctum')
+            ->withHeaders(['X-Business-Id' => $business->uuid, 'X-Branch-Id' => $branch->uuid])
+            ->postJson("/api/sales/{$sale->id}/refund", [
+                'reason' => 'Customer return',
+            ])
+            ->assertOk()
+            ->assertJsonPath('sale.status', 'refunded');
+
+        $this->actingAs($user, 'sanctum')
+            ->withHeaders(['X-Business-Id' => $business->uuid, 'X-Branch-Id' => $branch->uuid])
+            ->postJson("/api/sales/{$sale->id}/void")
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors(['sale']);
+
+        $this->assertDatabaseHas('stock_ledgers', ['reference_number' => 'SALE-REFUND-001', 'movement_type' => 'sales_refund']);
+        $this->assertDatabaseHas('audit_logs', ['action' => 'sale.refunded']);
+    }
+
     private function context(): array
     {
         $user = User::query()->where('email', 'owner@kawi.test')->firstOrFail();
@@ -174,5 +250,37 @@ class PosTest extends TestCase
             'status' => 'open',
             'opened_at' => now(),
         ]);
+    }
+
+    private function createCompletedSale(User $user, Business $business, Branch $branch, string $saleNumber, string $idempotencyKey): array
+    {
+        $shift = $this->openShift($user, $business, $branch, 'SHIFT-'.$saleNumber);
+        $warehouse = Warehouse::query()->where('business_id', $business->id)->where('branch_id', $branch->id)->firstOrFail();
+        $product = Product::query()->where('business_id', $business->id)->where('sku', 'KAWI-RICE-001')->firstOrFail();
+        $before = (float) StockBalance::query()->where('warehouse_id', $warehouse->id)->where('product_id', $product->id)->firstOrFail()->quantity_on_hand;
+
+        $saleId = $this->actingAs($user, 'sanctum')
+            ->withHeaders(['X-Business-Id' => $business->uuid, 'X-Branch-Id' => $branch->uuid])
+            ->postJson('/api/sales', [
+                'cashier_shift_id' => $shift->id,
+                'warehouse_id' => $warehouse->id,
+                'sale_number' => $saleNumber,
+                'idempotency_key' => $idempotencyKey,
+                'items' => [
+                    ['product_id' => $product->id, 'quantity' => 2, 'unit_price' => 35000],
+                ],
+                'payments' => [
+                    ['method' => 'cash', 'amount' => 77700],
+                ],
+            ])
+            ->assertCreated()
+            ->json('sale.id');
+
+        return [
+            Sale::query()->findOrFail($saleId),
+            $warehouse,
+            $product,
+            $before,
+        ];
     }
 }

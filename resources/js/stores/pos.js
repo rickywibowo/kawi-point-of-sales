@@ -14,6 +14,14 @@ export const usePosStore = defineStore('pos', {
         payments: [
             { method: 'cash', amount: 60000 },
         ],
+        cashMovements: [
+            { type: 'cash_in', amount: 50000, reason: 'Tambahan kas kecil' },
+            { type: 'cash_out', amount: 25000, reason: 'Belanja operasional' },
+        ],
+        postSaleControls: {
+            voidedToday: 1,
+            refundedToday: 1,
+        },
         heldTransactions: 1,
         todayTransactions: 0,
     }),
@@ -21,5 +29,8 @@ export const usePosStore = defineStore('pos', {
     getters: {
         subtotal: (state) => state.cart.reduce((total, item) => total + item.quantity * item.price, 0),
         totalQuantity: (state) => state.cart.reduce((total, item) => total + item.quantity, 0),
+        cashMovementNet: (state) => state.cashMovements.reduce((total, movement) => {
+            return total + (movement.type === 'cash_in' ? movement.amount : -movement.amount);
+        }, 0),
     },
 });

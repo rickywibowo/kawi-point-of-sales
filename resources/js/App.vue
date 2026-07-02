@@ -155,6 +155,27 @@ onUnmounted(() => {
 
                     <div class="mt-6 rounded-md border border-white/10 bg-zinc-950/70 p-4">
                         <div class="flex flex-wrap items-center justify-between gap-3">
+                            <h3 class="text-sm font-semibold text-zinc-300">Post-Sale Controls</h3>
+                            <span class="text-xs text-zinc-500">Void / Refund / Cash Movement</span>
+                        </div>
+                        <div class="mt-4 grid gap-3 sm:grid-cols-3">
+                            <div class="rounded-md border border-white/10 bg-white/[0.03] p-3 text-sm">
+                                <p class="text-zinc-400">Net Cash Movement</p>
+                                <p class="mt-1 font-semibold">Rp {{ pos.cashMovementNet.toLocaleString('id-ID') }}</p>
+                            </div>
+                            <div class="rounded-md border border-white/10 bg-white/[0.03] p-3 text-sm">
+                                <p class="text-zinc-400">Void Hari Ini</p>
+                                <p class="mt-1 font-semibold">{{ pos.postSaleControls.voidedToday }}</p>
+                            </div>
+                            <div class="rounded-md border border-white/10 bg-white/[0.03] p-3 text-sm">
+                                <p class="text-zinc-400">Refund Hari Ini</p>
+                                <p class="mt-1 font-semibold">{{ pos.postSaleControls.refundedToday }}</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mt-6 rounded-md border border-white/10 bg-zinc-950/70 p-4">
+                        <div class="flex flex-wrap items-center justify-between gap-3">
                             <h3 class="text-sm font-semibold text-zinc-300">Purchasing</h3>
                             <span class="text-xs text-zinc-500">{{ purchasing.openOrderCount }} active PO</span>
                         </div>
