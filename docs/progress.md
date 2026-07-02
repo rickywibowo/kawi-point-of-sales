@@ -136,6 +136,19 @@ Status: complete.
 - Dokumentasi Tahap 11 dibuat.
 - Automated test post-sale controls dibuat.
 
+### Tahap 12 - Inventory Controls
+
+Status: complete.
+
+- Tabel item untuk stock transfer dan stock opname dibuat.
+- Endpoint stock transfer dan stock opname dibuat.
+- Transfer stok membuat ledger `transfer_out` dan `transfer_in`.
+- Opname stok membuat ledger `stock_opname` berdasarkan variance.
+- Inventory index mengembalikan dokumen transfer dan opname terbaru.
+- Vue Pinia store inventory dan dashboard kontrol stok diperbarui.
+- Dokumentasi Tahap 12 dibuat.
+- Automated test inventory controls dibuat.
+
 ## Cara Track Mundur
 
 - Setiap tahap disimpan dalam commit terpisah.

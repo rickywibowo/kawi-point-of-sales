@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use App\Models\Recipe;
 use App\Models\StockBalance;
 use App\Models\StockLedger;
+use App\Models\StockOpname;
+use App\Models\StockTransfer;
 use App\Models\Warehouse;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -34,6 +36,18 @@ class InventoryController extends Controller
                 ->forBusiness($business->id)
                 ->with(['product', 'items.ingredientProduct'])
                 ->orderBy('name')
+                ->get(),
+            'stock_transfers' => StockTransfer::query()
+                ->forBusiness($business->id)
+                ->with('items.product')
+                ->latest()
+                ->limit(20)
+                ->get(),
+            'stock_opnames' => StockOpname::query()
+                ->forTenant($business->id, $branch?->id)
+                ->with('items.product')
+                ->latest()
+                ->limit(20)
                 ->get(),
         ]);
     }

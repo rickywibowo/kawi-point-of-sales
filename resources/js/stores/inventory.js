@@ -11,10 +11,17 @@ export const useInventoryStore = defineStore('inventory', {
         recentMovements: [
             { reference: 'OPENING-STOCK', type: 'opening_balance', quantity: 65 },
         ],
+        stockTransfers: [
+            { number: 'TRF-DEMO-001', status: 'posted', quantity: 5 },
+        ],
+        stockOpnames: [
+            { number: 'OPN-DEMO-001', status: 'posted', variance: -2 },
+        ],
     }),
 
     getters: {
         totalStockValue: (state) => state.stockBalances.reduce((total, item) => total + item.value, 0),
         lowStockCount: (state) => state.stockBalances.filter((item) => item.quantity <= 5).length,
+        controlDocumentCount: (state) => state.stockTransfers.length + state.stockOpnames.length,
     },
 });

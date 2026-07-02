@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Models\Concerns\BelongsToBusiness;
 use App\Models\Concerns\UsesUuid;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class StockTransfer extends Model
 {
@@ -21,4 +22,9 @@ class StockTransfer extends Model
         'status',
         'notes',
     ];
+
+    public function items(): HasMany
+    {
+        return $this->hasMany(StockTransferItem::class);
+    }
 }

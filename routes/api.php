@@ -19,6 +19,8 @@ use App\Http\Controllers\Api\RecipeController;
 use App\Http\Controllers\Api\ReportController;
 use App\Http\Controllers\Api\SaleController;
 use App\Http\Controllers\Api\StockAdjustmentController;
+use App\Http\Controllers\Api\StockOpnameController;
+use App\Http\Controllers\Api\StockTransferController;
 use Illuminate\Support\Facades\Route;
 
 Route::post('/auth/login', [AuthController::class, 'login']);
@@ -51,6 +53,10 @@ Route::middleware(['auth:sanctum', 'tenant'])->group(function (): void {
     Route::post('/recipes', [RecipeController::class, 'store'])
         ->middleware('permission:inventory.adjust');
     Route::post('/stock-adjustments', [StockAdjustmentController::class, 'store'])
+        ->middleware('permission:inventory.adjust');
+    Route::post('/stock-transfers', [StockTransferController::class, 'store'])
+        ->middleware('permission:inventory.adjust');
+    Route::post('/stock-opnames', [StockOpnameController::class, 'store'])
         ->middleware('permission:inventory.adjust');
 
     Route::get('/pos', [PosController::class, 'index'])

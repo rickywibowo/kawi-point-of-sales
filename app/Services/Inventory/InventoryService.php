@@ -9,6 +9,8 @@ use App\Models\RecipeItem;
 use App\Models\StockAdjustment;
 use App\Models\StockBalance;
 use App\Models\StockLedger;
+use App\Models\StockOpname;
+use App\Models\StockTransfer;
 use App\Models\Warehouse;
 use App\Services\Audit\AuditLogger;
 use Illuminate\Http\Request;
@@ -136,6 +138,146 @@ class InventoryService
         });
     }
 
+    public function postTransfer(Business $business, array $data, Request $request): StockTransfer
+    {
+        $fromWarehouse = $this->warehouseInBusiness($business->id, $data['from_warehouse_id'], 'from_warehouse_id');
+        $toWarehouse = $this->warehouseInBusiness($business->id, $data['to_warehouse_id'], 'to_warehouse_id');
+
+        foreach ($data['items'] as $index => $item) {
+            $this->assertBusinessProduct($business->id, $item['product_id'], "items.$index.product_id");
+        }
+
+        return DB::transaction(function () use ($business, $fromWarehouse, $toWarehouse, $data, $request): StockTransfer {
+            $transfer = StockTransfer::query()->create([
+                'business_id' => $business->id,
+                'from_branch_id' => $fromWarehouse->branch_id,
+                'to_branch_id' => $toWarehouse->branch_id,
+                'from_warehouse_id' => $fromWarehouse->id,
+                'to_warehouse_id' => $toWarehouse->id,
+                'uuid' => (string) Str::uuid(),
+                'transfer_number' => $data['transfer_number'],
+                'status' => 'posted',
+                'notes' => $data['notes'] ?? null,
+            ]);
+
+            foreach ($data['items'] as $item) {
+                $unitCost = $this->unitCost($fromWarehouse->id, $item['product_id'], $item['unit_cost'] ?? null);
+                $quantity = (float) $item['quantity'];
+
+                $transfer->items()->create([
+                    'product_id' => $item['product_id'],
+                    'unit_of_measure_id' => $item['unit_of_measure_id'] ?? null,
+                    'quantity' => $quantity,
+                    'unit_cost' => $unitCost,
+                    'notes' => $item['notes'] ?? null,
+                ]);
+
+                $this->recordStockMovement(
+                    businessId: $business->id,
+                    branchId: $fromWarehouse->branch_id,
+                    warehouseId: $fromWarehouse->id,
+                    productId: $item['product_id'],
+                    unitOfMeasureId: $item['unit_of_measure_id'] ?? null,
+                    movementType: 'transfer_out',
+                    quantityDelta: -1 * $quantity,
+                    unitCost: $unitCost,
+                    sourceType: StockTransfer::class,
+                    sourceId: $transfer->id,
+                    referenceNumber: $transfer->transfer_number,
+                    notes: $item['notes'] ?? $transfer->notes,
+                    userId: $request->user()?->id,
+                );
+
+                $this->recordStockMovement(
+                    businessId: $business->id,
+                    branchId: $toWarehouse->branch_id,
+                    warehouseId: $toWarehouse->id,
+                    productId: $item['product_id'],
+                    unitOfMeasureId: $item['unit_of_measure_id'] ?? null,
+                    movementType: 'transfer_in',
+                    quantityDelta: $quantity,
+                    unitCost: $unitCost,
+                    sourceType: StockTransfer::class,
+                    sourceId: $transfer->id,
+                    referenceNumber: $transfer->transfer_number,
+                    notes: $item['notes'] ?? $transfer->notes,
+                    userId: $request->user()?->id,
+                );
+            }
+
+            $transfer->load('items.product');
+            $this->audit->record('stock_transfer.posted', $transfer, after: $transfer->toArray(), request: $request);
+
+            return $transfer;
+        });
+    }
+
+    public function postOpname(Business $business, array $data, Request $request): StockOpname
+    {
+        $warehouse = $this->warehouseInBusiness($business->id, $data['warehouse_id'], 'warehouse_id');
+
+        foreach ($data['items'] as $index => $item) {
+            $this->assertBusinessProduct($business->id, $item['product_id'], "items.$index.product_id");
+        }
+
+        return DB::transaction(function () use ($business, $warehouse, $data, $request): StockOpname {
+            $opname = StockOpname::query()->create([
+                'business_id' => $business->id,
+                'branch_id' => $warehouse->branch_id,
+                'warehouse_id' => $warehouse->id,
+                'uuid' => (string) Str::uuid(),
+                'opname_number' => $data['opname_number'],
+                'status' => 'posted',
+                'counted_at' => now(),
+                'counted_by' => $request->user()?->id,
+            ]);
+
+            foreach ($data['items'] as $item) {
+                $balance = StockBalance::query()
+                    ->where('warehouse_id', $warehouse->id)
+                    ->where('product_id', $item['product_id'])
+                    ->first();
+                $systemQuantity = (float) ($balance?->quantity_on_hand ?? 0);
+                $countedQuantity = (float) $item['counted_quantity'];
+                $variance = $countedQuantity - $systemQuantity;
+                $unitCost = $this->unitCost($warehouse->id, $item['product_id'], $item['unit_cost'] ?? null);
+
+                $opname->items()->create([
+                    'product_id' => $item['product_id'],
+                    'unit_of_measure_id' => $item['unit_of_measure_id'] ?? null,
+                    'system_quantity' => $systemQuantity,
+                    'counted_quantity' => $countedQuantity,
+                    'variance_quantity' => $variance,
+                    'unit_cost' => $unitCost,
+                    'notes' => $item['notes'] ?? null,
+                ]);
+
+                if (round($variance, 6) !== 0.0) {
+                    $this->recordStockMovement(
+                        businessId: $business->id,
+                        branchId: $warehouse->branch_id,
+                        warehouseId: $warehouse->id,
+                        productId: $item['product_id'],
+                        unitOfMeasureId: $item['unit_of_measure_id'] ?? null,
+                        movementType: 'stock_opname',
+                        quantityDelta: $variance,
+                        unitCost: $unitCost,
+                        sourceType: StockOpname::class,
+                        sourceId: $opname->id,
+                        referenceNumber: $opname->opname_number,
+                        notes: $item['notes'] ?? null,
+                        userId: $request->user()?->id,
+                    );
+                }
+            }
+
+            $opname->load('items.product');
+            $this->audit->record('stock_opname.posted', $opname, after: $opname->toArray(), request: $request);
+
+            return $opname;
+        });
+    }
+
     private function recordStockMovement(
         int $businessId,
         ?int $branchId,
@@ -193,5 +335,31 @@ class InventoryService
         if (! $exists) {
             throw ValidationException::withMessages([$field => ['The selected product is outside the active business.']]);
         }
+    }
+
+    private function warehouseInBusiness(int $businessId, int $warehouseId, string $field): Warehouse
+    {
+        $warehouse = Warehouse::query()
+            ->where('business_id', $businessId)
+            ->whereKey($warehouseId)
+            ->first();
+
+        if (! $warehouse) {
+            throw ValidationException::withMessages([$field => ['The selected warehouse is outside the active business.']]);
+        }
+
+        return $warehouse;
+    }
+
+    private function unitCost(int $warehouseId, int $productId, mixed $fallback = null): float
+    {
+        if ($fallback !== null) {
+            return (float) $fallback;
+        }
+
+        return (float) (StockBalance::query()
+            ->where('warehouse_id', $warehouseId)
+            ->where('product_id', $productId)
+            ->value('average_cost') ?? 0);
     }
 }

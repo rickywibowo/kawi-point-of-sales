@@ -120,4 +120,111 @@ class InventoryTest extends TestCase
             ->assertCreated()
             ->assertJsonPath('recipe.computed_cost', '11000.00');
     }
+
+    public function test_stock_transfer_posts_out_and_in_ledgers_and_updates_balances(): void
+    {
+        $this->seed(DatabaseSeeder::class);
+
+        [$user, $business, $branch] = $this->context();
+        $fromWarehouse = Warehouse::query()->where('business_id', $business->id)->where('branch_id', $branch->id)->firstOrFail();
+        $toWarehouse = Warehouse::query()->create([
+            'business_id' => $business->id,
+            'branch_id' => $branch->id,
+            'uuid' => (string) Str::uuid(),
+            'name' => 'Gudang Cadangan',
+            'code' => 'RESERVE',
+            'type' => 'branch',
+        ]);
+        $product = Product::query()->where('business_id', $business->id)->where('sku', 'KAWI-RICE-001')->firstOrFail();
+        $beforeFrom = (float) StockBalance::query()->where('warehouse_id', $fromWarehouse->id)->where('product_id', $product->id)->firstOrFail()->quantity_on_hand;
+
+        $this->actingAs($user, 'sanctum')
+            ->withHeaders(['X-Business-Id' => $business->uuid, 'X-Branch-Id' => $branch->uuid])
+            ->postJson('/api/stock-transfers', [
+                'from_warehouse_id' => $fromWarehouse->id,
+                'to_warehouse_id' => $toWarehouse->id,
+                'transfer_number' => 'TRF-TEST-001',
+                'items' => [
+                    ['product_id' => $product->id, 'quantity' => 3],
+                ],
+            ])
+            ->assertCreated()
+            ->assertJsonPath('transfer.status', 'posted');
+
+        $afterFrom = (float) StockBalance::query()->where('warehouse_id', $fromWarehouse->id)->where('product_id', $product->id)->firstOrFail()->quantity_on_hand;
+        $afterTo = (float) StockBalance::query()->where('warehouse_id', $toWarehouse->id)->where('product_id', $product->id)->firstOrFail()->quantity_on_hand;
+
+        $this->assertSame($beforeFrom - 3, $afterFrom);
+        $this->assertSame(3.0, $afterTo);
+        $this->assertDatabaseHas('stock_ledgers', ['reference_number' => 'TRF-TEST-001', 'movement_type' => 'transfer_out']);
+        $this->assertDatabaseHas('stock_ledgers', ['reference_number' => 'TRF-TEST-001', 'movement_type' => 'transfer_in']);
+        $this->assertDatabaseHas('audit_logs', ['action' => 'stock_transfer.posted']);
+    }
+
+    public function test_stock_opname_posts_variance_ledger_and_updates_balance(): void
+    {
+        $this->seed(DatabaseSeeder::class);
+
+        [$user, $business, $branch] = $this->context();
+        $warehouse = Warehouse::query()->where('business_id', $business->id)->where('branch_id', $branch->id)->firstOrFail();
+        $product = Product::query()->where('business_id', $business->id)->where('sku', 'KAWI-RICE-001')->firstOrFail();
+        $before = (float) StockBalance::query()->where('warehouse_id', $warehouse->id)->where('product_id', $product->id)->firstOrFail()->quantity_on_hand;
+        $counted = $before - 2;
+
+        $this->actingAs($user, 'sanctum')
+            ->withHeaders(['X-Business-Id' => $business->uuid, 'X-Branch-Id' => $branch->uuid])
+            ->postJson('/api/stock-opnames', [
+                'warehouse_id' => $warehouse->id,
+                'opname_number' => 'OPN-TEST-001',
+                'items' => [
+                    ['product_id' => $product->id, 'counted_quantity' => $counted],
+                ],
+            ])
+            ->assertCreated()
+            ->assertJsonPath('opname.items.0.variance_quantity', '-2.000000');
+
+        $after = (float) StockBalance::query()->where('warehouse_id', $warehouse->id)->where('product_id', $product->id)->firstOrFail()->quantity_on_hand;
+
+        $this->assertSame($counted, $after);
+        $this->assertDatabaseHas('stock_ledgers', ['reference_number' => 'OPN-TEST-001', 'movement_type' => 'stock_opname']);
+        $this->assertDatabaseHas('audit_logs', ['action' => 'stock_opname.posted']);
+    }
+
+    public function test_stock_transfer_rejects_warehouse_from_other_business(): void
+    {
+        $this->seed(DatabaseSeeder::class);
+
+        [$user, $business, $branch] = $this->context();
+        $fromWarehouse = Warehouse::query()->where('business_id', $business->id)->where('branch_id', $branch->id)->firstOrFail();
+        $product = Product::query()->where('business_id', $business->id)->where('sku', 'KAWI-RICE-001')->firstOrFail();
+        $outsideBusiness = Business::query()->create(['uuid' => (string) Str::uuid(), 'name' => 'Outside Business']);
+        $outsideWarehouse = Warehouse::query()->create([
+            'business_id' => $outsideBusiness->id,
+            'uuid' => (string) Str::uuid(),
+            'name' => 'Outside Warehouse',
+            'code' => 'OUT-WH',
+        ]);
+
+        $this->actingAs($user, 'sanctum')
+            ->withHeaders(['X-Business-Id' => $business->uuid, 'X-Branch-Id' => $branch->uuid])
+            ->postJson('/api/stock-transfers', [
+                'from_warehouse_id' => $fromWarehouse->id,
+                'to_warehouse_id' => $outsideWarehouse->id,
+                'transfer_number' => 'TRF-INVALID-001',
+                'items' => [
+                    ['product_id' => $product->id, 'quantity' => 1],
+                ],
+            ])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors(['to_warehouse_id']);
+    }
+
+    private function context(): array
+    {
+        $user = User::query()->where('email', 'owner@kawi.test')->firstOrFail();
+        $business = Business::query()->where('name', 'KAWI Demo Business')->firstOrFail();
+        $branch = Branch::query()->where('business_id', $business->id)->where('code', 'MAIN')->firstOrFail();
+
+        return [$user, $business, $branch];
+    }
 }
