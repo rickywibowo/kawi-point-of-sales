@@ -19,11 +19,16 @@ export const useCustomersStore = defineStore('customers', {
             },
         ],
         selectedCustomer: 'Walk-in Customer',
+        loyaltyTransactions: [
+            { type: 'sale_earn', points: 3, note: 'SALE-DEMO-001' },
+            { type: 'manual_bonus', points: 25, note: 'Member opening bonus' },
+        ],
     }),
 
     getters: {
         customerCount: (state) => state.customers.length,
         memberCount: (state) => state.customers.filter((customer) => customer.loyaltyPoints > 0).length,
         totalLifetimeSpend: (state) => state.customers.reduce((total, customer) => total + customer.lifetimeSpend, 0),
+        loyaltyPointTotal: (state) => state.customers.reduce((total, customer) => total + customer.loyaltyPoints, 0),
     },
 });

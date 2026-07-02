@@ -62,6 +62,8 @@ Route::middleware(['auth:sanctum', 'tenant'])->group(function (): void {
         ->middleware('permission:sales.create');
     Route::patch('/customers/{customer}', [CustomerController::class, 'update'])
         ->middleware('permission:sales.create');
+    Route::post('/customers/{customer}/loyalty-transactions', [CustomerController::class, 'loyalty'])
+        ->middleware('permission:sales.create');
 
     Route::get('/inventory', [InventoryController::class, 'index'])
         ->middleware('permission:inventory.view');

@@ -35,4 +35,9 @@ class Customer extends Model
     {
         return $this->hasMany(Sale::class);
     }
+
+    public function loyaltyTransactions(): HasMany
+    {
+        return $this->hasMany(CustomerLoyaltyTransaction::class);
+    }
 }

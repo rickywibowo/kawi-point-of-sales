@@ -16,6 +16,7 @@ use App\Models\StockLedger;
 use App\Models\Warehouse;
 use App\Services\Accounting\AccountingService;
 use App\Services\Audit\AuditLogger;
+use App\Services\Customers\CustomerService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -26,6 +27,7 @@ class PosService
     public function __construct(
         private readonly AuditLogger $audit,
         private readonly AccountingService $accounting,
+        private readonly CustomerService $customers,
     )
     {
     }
@@ -245,6 +247,15 @@ class PosService
 
             $sale->load(['items.modifiers', 'payments']);
             $this->accounting->postSaleJournal($sale, $request);
+
+            if ($sale->customer_id) {
+                $customer = Customer::query()->where('business_id', $business->id)->whereKey($sale->customer_id)->first();
+
+                if ($customer) {
+                    $this->customers->earnFromSale($customer, $sale, $request);
+                }
+            }
+
             $this->audit->record('sale.completed', $sale, after: $sale->toArray(), request: $request);
 
             return $sale;

@@ -6,6 +6,7 @@ use App\Models\Branch;
 use App\Models\Business;
 use App\Models\CashierShift;
 use App\Models\Customer;
+use App\Models\CustomerLoyaltyTransaction;
 use App\Models\Product;
 use App\Models\User;
 use App\Models\Warehouse;
@@ -90,6 +91,46 @@ class CustomerTest extends TestCase
 
         $this->assertGreaterThan(0, (float) $profile['summary']['lifetime_spend']);
         $this->assertSame('SALE-CUSTOMER-001', $profile['recent_sales'][0]['sale_number']);
+        $this->assertSame(3, CustomerLoyaltyTransaction::query()->where('customer_id', $customer->id)->where('type', 'sale_earn')->sum('points_delta'));
+    }
+
+    public function test_cashier_can_adjust_customer_loyalty_points(): void
+    {
+        $this->seed(DatabaseSeeder::class);
+        [$user, $business] = $this->context();
+        $customer = Customer::query()->where('business_id', $business->id)->firstOrFail();
+
+        $this->actingAs($user, 'sanctum')
+            ->withHeader('X-Business-Id', $business->uuid)
+            ->postJson("/api/customers/{$customer->id}/loyalty-transactions", [
+                'type' => 'manual_bonus',
+                'points_delta' => 40,
+                'notes' => 'Opening loyalty bonus',
+            ])
+            ->assertCreated()
+            ->assertJsonPath('loyalty_transaction.type', 'manual_bonus')
+            ->assertJsonPath('loyalty_transaction.points_delta', 40);
+
+        $customer->refresh();
+
+        $this->assertSame(40, $customer->loyalty_points);
+        $this->assertDatabaseHas('audit_logs', ['action' => 'customer.loyalty_adjusted']);
+    }
+
+    public function test_loyalty_adjustment_cannot_make_balance_negative(): void
+    {
+        $this->seed(DatabaseSeeder::class);
+        [$user, $business] = $this->context();
+        $customer = Customer::query()->where('business_id', $business->id)->firstOrFail();
+
+        $this->actingAs($user, 'sanctum')
+            ->withHeader('X-Business-Id', $business->uuid)
+            ->postJson("/api/customers/{$customer->id}/loyalty-transactions", [
+                'type' => 'redeem',
+                'points_delta' => -999,
+            ])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors(['points_delta']);
     }
 
     public function test_customer_endpoints_do_not_leak_other_business_data(): void

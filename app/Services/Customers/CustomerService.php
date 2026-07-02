@@ -4,6 +4,7 @@ namespace App\Services\Customers;
 
 use App\Models\Business;
 use App\Models\Customer;
+use App\Models\CustomerLoyaltyTransaction;
 use App\Models\Sale;
 use App\Services\Audit\AuditLogger;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
@@ -95,7 +96,51 @@ class CustomerService
                 ->latest('sold_at')
                 ->limit(10)
                 ->get(),
+            'loyalty_transactions' => $customer->loyaltyTransactions()
+                ->latest()
+                ->limit(20)
+                ->get(),
         ];
+    }
+
+    public function adjustLoyalty(Customer $customer, array $data, Request $request): CustomerLoyaltyTransaction
+    {
+        return $this->recordLoyalty(
+            $customer,
+            $data['type'],
+            (int) $data['points_delta'],
+            $data['notes'] ?? null,
+            null,
+            null,
+            $request,
+        );
+    }
+
+    public function earnFromSale(Customer $customer, Sale $sale, Request $request): ?CustomerLoyaltyTransaction
+    {
+        $points = (int) floor((float) $sale->grand_total / 10000);
+
+        if ($points <= 0) {
+            return null;
+        }
+
+        if (CustomerLoyaltyTransaction::query()
+            ->where('source_type', Sale::class)
+            ->where('source_id', $sale->id)
+            ->where('type', 'sale_earn')
+            ->exists()) {
+            return null;
+        }
+
+        return $this->recordLoyalty(
+            $customer,
+            'sale_earn',
+            $points,
+            'Earned from sale '.$sale->sale_number,
+            Sale::class,
+            $sale->id,
+            $request,
+        );
     }
 
     public function assertInBusiness(Business $business, int $customerId): Customer
@@ -145,5 +190,42 @@ class CustomerService
                 ]);
             }
         }
+    }
+
+    private function recordLoyalty(
+        Customer $customer,
+        string $type,
+        int $pointsDelta,
+        ?string $notes,
+        ?string $sourceType,
+        ?int $sourceId,
+        Request $request,
+    ): CustomerLoyaltyTransaction {
+        return DB::transaction(function () use ($customer, $type, $pointsDelta, $notes, $sourceType, $sourceId, $request): CustomerLoyaltyTransaction {
+            $customer->refresh();
+            $newBalance = (int) $customer->loyalty_points + $pointsDelta;
+
+            if ($newBalance < 0) {
+                throw ValidationException::withMessages(['points_delta' => ['Loyalty points cannot go below zero.']]);
+            }
+
+            $customer->update(['loyalty_points' => $newBalance]);
+
+            $transaction = CustomerLoyaltyTransaction::query()->create([
+                'business_id' => $customer->business_id,
+                'customer_id' => $customer->id,
+                'type' => $type,
+                'points_delta' => $pointsDelta,
+                'balance_after' => $newBalance,
+                'source_type' => $sourceType,
+                'source_id' => $sourceId,
+                'notes' => $notes,
+                'created_by' => $request->user()?->id,
+            ]);
+
+            $this->audit->record('customer.loyalty_adjusted', $transaction, after: $transaction->toArray(), request: $request);
+
+            return $transaction;
+        });
     }
 }

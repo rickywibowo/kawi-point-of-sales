@@ -255,6 +255,21 @@ Status: complete.
 - Dokumentasi Tahap 20 dibuat.
 - Automated test supplier payment dibuat.
 
+### Tahap 21 - Customer Loyalty Ledger
+
+Status: complete.
+
+- Tabel `customer_loyalty_transactions` dibuat untuk riwayat poin pelanggan.
+- Model, request validation, dan endpoint loyalty transaction dibuat.
+- Endpoint `POST /api/customers/{customer}/loyalty-transactions` dibuat dengan permission `sales.create`.
+- Customer profile mengembalikan loyalty transactions terbaru.
+- Manual adjustment poin dapat menambah/mengurangi poin dengan proteksi balance tidak boleh negatif.
+- POS sale dengan customer otomatis membuat loyalty earn berdasarkan grand total.
+- Audit log `customer.loyalty_adjusted` dibuat.
+- Vue Pinia store customer dan dashboard Customer CRM diperbarui.
+- Dokumentasi Tahap 21 dibuat.
+- Automated test customer loyalty dibuat.
+
 ## Cara Track Mundur
 
 - Setiap tahap disimpan dalam commit terpisah.
