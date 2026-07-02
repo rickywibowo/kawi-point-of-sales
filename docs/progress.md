@@ -113,6 +113,17 @@ Status: complete.
 - Dokumentasi deploy Laravel Cloud + Cloudflare Pages dibuat.
 - Automated test health check dibuat.
 
+### Tahap 10 - Customer CRM Foundation
+
+Status: complete.
+
+- Service layer `CustomerService` dibuat untuk list, create, update, profile, dan summary pelanggan.
+- Endpoint customer lookup/profile dibuat.
+- POS sale dan held transaction memvalidasi `customer_id` dalam business aktif.
+- Vue Pinia store customer dan panel dashboard Customer CRM dibuat.
+- Dokumentasi Tahap 10 dibuat.
+- Automated test customer CRM dan tenant isolation dibuat.
+
 ## Cara Track Mundur
 
 - Setiap tahap disimpan dalam commit terpisah.

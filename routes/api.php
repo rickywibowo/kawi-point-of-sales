@@ -4,6 +4,7 @@ use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\AccountingController;
 use App\Http\Controllers\Api\CashierShiftController;
 use App\Http\Controllers\Api\CategoryController;
+use App\Http\Controllers\Api\CustomerController;
 use App\Http\Controllers\Api\HeldTransactionController;
 use App\Http\Controllers\Api\InventoryController;
 use App\Http\Controllers\Api\MasterDataController;
@@ -36,6 +37,14 @@ Route::middleware(['auth:sanctum', 'tenant'])->group(function (): void {
         ->middleware('permission:inventory.adjust');
     Route::post('/products', [ProductController::class, 'store'])
         ->middleware('permission:inventory.adjust');
+    Route::get('/customers', [CustomerController::class, 'index'])
+        ->middleware('permission:sales.create');
+    Route::post('/customers', [CustomerController::class, 'store'])
+        ->middleware('permission:sales.create');
+    Route::get('/customers/{customer}', [CustomerController::class, 'show'])
+        ->middleware('permission:sales.create');
+    Route::patch('/customers/{customer}', [CustomerController::class, 'update'])
+        ->middleware('permission:sales.create');
 
     Route::get('/inventory', [InventoryController::class, 'index'])
         ->middleware('permission:inventory.view');

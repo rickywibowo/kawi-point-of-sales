@@ -5,6 +5,7 @@ namespace App\Services\Pos;
 use App\Models\Branch;
 use App\Models\Business;
 use App\Models\CashierShift;
+use App\Models\Customer;
 use App\Models\HeldTransaction;
 use App\Models\Modifier;
 use App\Models\Product;
@@ -94,6 +95,8 @@ class PosService
 
     public function holdTransaction(Business $business, Branch $branch, array $data, Request $request): HeldTransaction
     {
+        $this->assertCustomerInBusiness($business->id, $data['customer_id'] ?? null);
+
         return DB::transaction(function () use ($business, $branch, $data, $request): HeldTransaction {
             $held = HeldTransaction::query()->create([
                 'business_id' => $business->id,
@@ -146,6 +149,8 @@ class PosService
         if (! $warehouse) {
             throw ValidationException::withMessages(['warehouse_id' => ['The selected warehouse is outside the active branch.']]);
         }
+
+        $this->assertCustomerInBusiness($business->id, $data['customer_id'] ?? null);
 
         return DB::transaction(function () use ($business, $branch, $warehouse, $shift, $data, $request): Sale {
             [$items, $subtotal, $discountTotal, $taxTotal] = $this->prepareItems($business->id, $branch->id, $data['items']);
@@ -277,6 +282,22 @@ class PosService
         }
 
         return [$items, round($subtotal, 2), round($discountTotal, 2), round($taxTotal, 2)];
+    }
+
+    private function assertCustomerInBusiness(int $businessId, ?int $customerId): void
+    {
+        if ($customerId === null) {
+            return;
+        }
+
+        $exists = Customer::query()
+            ->forBusiness($businessId)
+            ->whereKey($customerId)
+            ->exists();
+
+        if (! $exists) {
+            throw ValidationException::withMessages(['customer_id' => ['The selected customer is outside the active business.']]);
+        }
     }
 
     private function recordSalesConsumption(int $businessId, int $branchId, int $warehouseId, Product $product, float $quantity, Sale $sale): void

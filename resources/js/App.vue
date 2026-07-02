@@ -1,6 +1,7 @@
 <script setup>
 import { onMounted, onUnmounted } from 'vue';
 import { useAccountingStore } from './stores/accounting';
+import { useCustomersStore } from './stores/customers';
 import { useFoundationStore } from './stores/foundation';
 import { useInventoryStore } from './stores/inventory';
 import { useMasterDataStore } from './stores/masterData';
@@ -10,6 +11,7 @@ import { usePurchasingStore } from './stores/purchasing';
 import { useReportsStore } from './stores/reports';
 
 const accounting = useAccountingStore();
+const customers = useCustomersStore();
 const foundation = useFoundationStore();
 const inventory = useInventoryStore();
 const masterData = useMasterDataStore();
@@ -26,6 +28,7 @@ const quickStats = [
     { label: 'PO Aktif', value: purchasing.openOrderCount, tone: 'sky' },
     { label: 'Akun COA', value: accounting.accountCount, tone: 'amber' },
     { label: 'Laporan', value: reports.period, tone: 'emerald' },
+    { label: 'Pelanggan', value: customers.customerCount, tone: 'sky' },
 ];
 
 const modules = [
@@ -198,6 +201,31 @@ onUnmounted(() => {
                                 <p class="text-zinc-400">{{ card.label }}</p>
                                 <p class="mt-1 font-semibold">Rp {{ card.value.toLocaleString('id-ID') }}</p>
                             </div>
+                        </div>
+                    </div>
+
+                    <div class="mt-6 rounded-md border border-white/10 bg-zinc-950/70 p-4">
+                        <div class="flex flex-wrap items-center justify-between gap-3">
+                            <h3 class="text-sm font-semibold text-zinc-300">Customer CRM</h3>
+                            <span class="text-xs text-zinc-500">{{ customers.memberCount }} member aktif</span>
+                        </div>
+                        <div class="mt-4 grid gap-3 sm:grid-cols-2">
+                            <article
+                                v-for="customer in customers.customers"
+                                :key="customer.phone"
+                                class="rounded-md border border-white/10 bg-white/[0.03] p-3 text-sm"
+                            >
+                                <div class="flex items-start justify-between gap-3">
+                                    <div>
+                                        <p class="font-medium">{{ customer.name }}</p>
+                                        <p class="mt-1 text-xs text-zinc-500">{{ customer.phone }}</p>
+                                    </div>
+                                    <span class="text-xs text-emerald-200">{{ customer.loyaltyPoints }} pts</span>
+                                </div>
+                                <p class="mt-3 text-xs text-zinc-400">
+                                    {{ customer.transactionCount }} transaksi / Rp {{ customer.lifetimeSpend.toLocaleString('id-ID') }}
+                                </p>
+                            </article>
                         </div>
                     </div>
                 </section>
