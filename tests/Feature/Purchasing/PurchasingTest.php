@@ -5,6 +5,8 @@ namespace Tests\Feature\Purchasing;
 use App\Models\Branch;
 use App\Models\Business;
 use App\Models\GoodsReceipt;
+use App\Models\Account;
+use App\Models\JournalEntry;
 use App\Models\Product;
 use App\Models\PurchaseOrder;
 use App\Models\StockBalance;
@@ -166,6 +168,55 @@ class PurchasingTest extends TestCase
             ])
             ->assertUnprocessable()
             ->assertJsonValidationErrors(['items.0.quantity_returned']);
+    }
+
+    public function test_user_can_pay_supplier_payable_and_close_balance(): void
+    {
+        $this->seed(DatabaseSeeder::class);
+        [$user, $business, $branch, $supplier, $warehouse, $product] = $this->context();
+        $receiptId = $this->postGoodsReceipt($user, $business, $branch, $supplier, $warehouse, $product, 'GR-PAY-001', 3);
+        $payable = SupplierPayable::query()->where('goods_receipt_id', $receiptId)->firstOrFail();
+        $cashAccount = Account::query()->where('business_id', $business->id)->where('code', '1100')->firstOrFail();
+
+        $this->actingAs($user, 'sanctum')
+            ->withHeaders(['X-Business-Id' => $business->uuid, 'X-Branch-Id' => $branch->uuid])
+            ->postJson("/api/supplier-payables/{$payable->id}/payments", [
+                'payment_number' => 'PAY-TEST-001',
+                'payment_date' => '2026-07-03',
+                'cash_account_id' => $cashAccount->id,
+                'amount' => 29970,
+                'payment_method' => 'cash',
+            ])
+            ->assertCreated()
+            ->assertJsonPath('supplier_payment.payment_number', 'PAY-TEST-001')
+            ->assertJsonPath('supplier_payment.amount', '29970.00');
+
+        $payable->refresh();
+        $journal = JournalEntry::query()->where('journal_number', 'JE-AP-PAY-PAY-TEST-001')->with('lines.account')->firstOrFail();
+
+        $this->assertSame('closed', $payable->status);
+        $this->assertSame('29970.00', (string) $payable->paid_amount);
+        $this->assertSame('posted', $journal->status);
+        $this->assertTrue($journal->lines->contains(fn ($line) => $line->account->code === '2100' && (string) $line->debit === '29970.00'));
+        $this->assertTrue($journal->lines->contains(fn ($line) => $line->account->code === '1100' && (string) $line->credit === '29970.00'));
+        $this->assertDatabaseHas('audit_logs', ['action' => 'supplier_payment.posted']);
+    }
+
+    public function test_supplier_payment_rejects_amount_above_remaining_balance(): void
+    {
+        $this->seed(DatabaseSeeder::class);
+        [$user, $business, $branch, $supplier, $warehouse, $product] = $this->context();
+        $receiptId = $this->postGoodsReceipt($user, $business, $branch, $supplier, $warehouse, $product, 'GR-PAY-BAD', 1);
+        $payable = SupplierPayable::query()->where('goods_receipt_id', $receiptId)->firstOrFail();
+
+        $this->actingAs($user, 'sanctum')
+            ->withHeaders(['X-Business-Id' => $business->uuid, 'X-Branch-Id' => $branch->uuid])
+            ->postJson("/api/supplier-payables/{$payable->id}/payments", [
+                'payment_number' => 'PAY-INVALID-001',
+                'amount' => 999999,
+            ])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors(['amount']);
     }
 
     private function context(): array

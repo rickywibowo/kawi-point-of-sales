@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Models\Concerns\BelongsToTenant;
 use App\Models\Concerns\UsesUuid;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class SupplierPayable extends Model
 {
@@ -30,5 +31,10 @@ class SupplierPayable extends Model
             'paid_amount' => 'decimal:2',
             'due_date' => 'date',
         ];
+    }
+
+    public function payments(): HasMany
+    {
+        return $this->hasMany(SupplierPayment::class);
     }
 }

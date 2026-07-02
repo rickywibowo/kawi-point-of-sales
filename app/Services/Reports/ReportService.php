@@ -13,6 +13,7 @@ use App\Models\SaleItem;
 use App\Models\StockBalance;
 use App\Models\StockLedger;
 use App\Models\SupplierPayable;
+use App\Models\SupplierPayment;
 use App\Services\Accounting\AccountingService;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
@@ -175,6 +176,11 @@ class ReportService
                 ->when($branchId, fn ($query) => $query->where('branch_id', $branchId))
                 ->where('status', 'open')
                 ->sum(DB::raw('amount - paid_amount')), 2),
+            'supplier_payment_total' => round((float) SupplierPayment::query()
+                ->where('business_id', $businessId)
+                ->when($branchId, fn ($query) => $query->where('branch_id', $branchId))
+                ->whereBetween('payment_date', [$from->toDateString(), $to->toDateString()])
+                ->sum('amount'), 2),
         ];
     }
 

@@ -240,6 +240,21 @@ Status: complete.
 - Dokumentasi Tahap 19 dibuat.
 - Automated test operational expense dibuat.
 
+### Tahap 20 - Supplier Payable Payments
+
+Status: complete.
+
+- Tabel `supplier_payments` dibuat untuk pembayaran utang supplier.
+- Model, request validation, controller, dan endpoint supplier payment dibuat.
+- Endpoint `POST /api/supplier-payables/{payable}/payments` dibuat dengan permission `purchases.manage`.
+- Payment mengurangi sisa payable dan mengubah status menjadi `partial` atau `closed`.
+- Posting payment otomatis membuat jurnal debit utang usaha dan kredit kas.
+- Purchasing index mengembalikan supplier payments dan payment history per payable.
+- Report purchasing menampilkan total supplier payment periode aktif.
+- Vue Pinia store purchasing dan dashboard purchasing diperbarui.
+- Dokumentasi Tahap 20 dibuat.
+- Automated test supplier payment dibuat.
+
 ## Cara Track Mundur
 
 - Setiap tahap disimpan dalam commit terpisah.

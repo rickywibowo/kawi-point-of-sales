@@ -197,7 +197,7 @@ onUnmounted(() => {
                     <div class="mt-6 rounded-md border border-white/10 bg-zinc-950/70 p-4">
                         <div class="flex flex-wrap items-center justify-between gap-3">
                             <h3 class="text-sm font-semibold text-zinc-300">Purchasing</h3>
-                            <span class="text-xs text-zinc-500">{{ purchasing.openOrderCount }} active PO / Rp {{ purchasing.returnTotal.toLocaleString('id-ID') }} retur</span>
+                            <span class="text-xs text-zinc-500">{{ purchasing.openOrderCount }} active PO / Rp {{ purchasing.payableRemaining.toLocaleString('id-ID') }} sisa utang</span>
                         </div>
                         <div class="mt-4 space-y-2">
                             <div
@@ -207,6 +207,16 @@ onUnmounted(() => {
                             >
                                 <span>{{ order.number }} / {{ order.supplier }}</span>
                                 <span>Rp {{ order.total.toLocaleString('id-ID') }}</span>
+                            </div>
+                        </div>
+                        <div class="mt-4 grid gap-3 sm:grid-cols-2">
+                            <div class="rounded-md border border-white/10 bg-white/[0.03] p-3 text-sm">
+                                <p class="text-zinc-400">Supplier Payment</p>
+                                <p class="mt-1 font-semibold">Rp {{ purchasing.supplierPaymentTotal.toLocaleString('id-ID') }}</p>
+                            </div>
+                            <div class="rounded-md border border-white/10 bg-white/[0.03] p-3 text-sm">
+                                <p class="text-zinc-400">Purchase Return</p>
+                                <p class="mt-1 font-semibold">Rp {{ purchasing.returnTotal.toLocaleString('id-ID') }}</p>
                             </div>
                         </div>
                     </div>

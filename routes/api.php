@@ -25,6 +25,7 @@ use App\Http\Controllers\Api\SaleController;
 use App\Http\Controllers\Api\StockAdjustmentController;
 use App\Http\Controllers\Api\StockOpnameController;
 use App\Http\Controllers\Api\StockTransferController;
+use App\Http\Controllers\Api\SupplierPaymentController;
 use App\Http\Controllers\Api\UserAccessController;
 use Illuminate\Support\Facades\Route;
 
@@ -103,6 +104,8 @@ Route::middleware(['auth:sanctum', 'tenant'])->group(function (): void {
     Route::post('/goods-receipts', [GoodsReceiptController::class, 'store'])
         ->middleware('permission:purchases.manage');
     Route::post('/purchase-returns', [PurchaseReturnController::class, 'store'])
+        ->middleware('permission:purchases.manage');
+    Route::post('/supplier-payables/{payable}/payments', [SupplierPaymentController::class, 'store'])
         ->middleware('permission:purchases.manage');
 
     Route::get('/accounting', [AccountingController::class, 'index'])

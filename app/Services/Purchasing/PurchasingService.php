@@ -2,6 +2,7 @@
 
 namespace App\Services\Purchasing;
 
+use App\Models\Account;
 use App\Models\Business;
 use App\Models\GoodsReceipt;
 use App\Models\Product;
@@ -12,6 +13,7 @@ use App\Models\StockBalance;
 use App\Models\StockLedger;
 use App\Models\Supplier;
 use App\Models\SupplierPayable;
+use App\Models\SupplierPayment;
 use App\Models\Warehouse;
 use App\Services\Accounting\AccountingService;
 use App\Services\Audit\AuditLogger;
@@ -194,6 +196,87 @@ class PurchasingService
             $this->audit->record('purchase_return.posted', $return, after: $return->toArray(), request: $request);
 
             return $return;
+        });
+    }
+
+    public function postSupplierPayment(Business $business, ?int $branchId, SupplierPayable $payable, array $data, Request $request): SupplierPayment
+    {
+        abort_unless($payable->business_id === $business->id, 403);
+
+        if ($branchId !== null && (int) $payable->branch_id !== $branchId) {
+            abort(403);
+        }
+
+        $remaining = round((float) $payable->amount - (float) $payable->paid_amount, 2);
+
+        if ($remaining <= 0 || $payable->status === 'closed') {
+            throw ValidationException::withMessages(['supplier_payable_id' => ['Supplier payable is already closed.']]);
+        }
+
+        $amount = round((float) $data['amount'], 2);
+
+        if ($amount > $remaining) {
+            throw ValidationException::withMessages(['amount' => ['Payment amount cannot exceed payable remaining balance.']]);
+        }
+
+        $cashAccount = Account::query()
+            ->forBusiness($business->id)
+            ->whereKey($data['cash_account_id'] ?? null)
+            ->where('is_cash', true)
+            ->first()
+            ?? Account::query()->forBusiness($business->id)->where('code', '1100')->where('is_cash', true)->first();
+
+        if (! $cashAccount) {
+            throw ValidationException::withMessages(['cash_account_id' => ['Cash account must belong to the active business.']]);
+        }
+
+        return DB::transaction(function () use ($business, $branchId, $payable, $cashAccount, $data, $amount, $request): SupplierPayment {
+            $payment = SupplierPayment::query()->create([
+                'business_id' => $business->id,
+                'branch_id' => $branchId ?? $payable->branch_id,
+                'supplier_id' => $payable->supplier_id,
+                'supplier_payable_id' => $payable->id,
+                'cash_account_id' => $cashAccount->id,
+                'uuid' => (string) Str::uuid(),
+                'payment_number' => $data['payment_number'],
+                'payment_date' => $data['payment_date'] ?? now()->toDateString(),
+                'amount' => $amount,
+                'payment_method' => $data['payment_method'] ?? 'cash',
+                'reference_number' => $data['reference_number'] ?? null,
+                'notes' => $data['notes'] ?? null,
+                'posted_at' => now(),
+                'posted_by' => $request->user()?->id,
+            ]);
+
+            $newPaidAmount = round((float) $payable->paid_amount + $amount, 2);
+            $payable->update([
+                'paid_amount' => $newPaidAmount,
+                'status' => $newPaidAmount >= (float) $payable->amount ? 'closed' : 'partial',
+            ]);
+
+            $accounts = Account::query()->forBusiness($business->id)->get()->keyBy('code');
+            $accountsPayable = $accounts['2100'] ?? null;
+
+            if (! $accountsPayable) {
+                throw ValidationException::withMessages(['supplier_payable_id' => ['Accounts payable account is not configured.']]);
+            }
+
+            $this->accounting->postJournal($business, $payment->branch_id, [
+                'journal_number' => 'JE-AP-PAY-'.$payment->payment_number,
+                'journal_date' => $payment->payment_date->toDateString(),
+                'source_type' => SupplierPayment::class,
+                'source_id' => $payment->id,
+                'description' => 'Supplier payment '.$payment->payment_number,
+                'lines' => [
+                    ['account_id' => $accountsPayable->id, 'debit' => $amount, 'credit' => 0, 'description' => 'Pembayaran utang '.$payable->payable_number],
+                    ['account_id' => $cashAccount->id, 'debit' => 0, 'credit' => $amount, 'description' => 'Kas keluar '.$payment->payment_number],
+                ],
+            ], $request);
+
+            $payment->load(['supplier', 'payable', 'cashAccount']);
+            $this->audit->record('supplier_payment.posted', $payment, after: $payment->toArray(), request: $request);
+
+            return $payment;
         });
     }
 
