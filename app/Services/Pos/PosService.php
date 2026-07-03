@@ -30,6 +30,7 @@ class PosService
         private readonly AccountingService $accounting,
         private readonly CustomerService $customers,
         private readonly PromotionService $promotions,
+        private readonly KitchenService $kitchen,
     )
     {
     }
@@ -263,6 +264,7 @@ class PosService
             }
 
             $sale->load(['items.modifiers', 'payments']);
+            $this->kitchen->createTicketForSale($sale, $request);
             $this->accounting->postSaleJournal($sale, $request);
 
             if ($sale->customer_id) {

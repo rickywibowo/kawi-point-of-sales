@@ -6,6 +6,7 @@ use App\Models\Branch;
 use App\Models\Business;
 use App\Models\CashierShift;
 use App\Models\DiningTable;
+use App\Models\KitchenTicket;
 use App\Models\Product;
 use App\Models\Promotion;
 use App\Models\Sale;
@@ -134,6 +135,63 @@ class PosTest extends TestCase
 
         $after = (float) StockBalance::query()->where('warehouse_id', $warehouse->id)->where('product_id', $product->id)->firstOrFail()->quantity_on_hand;
         $this->assertSame($before - 2, $after);
+    }
+
+    public function test_completed_sale_creates_kitchen_ticket_and_kitchen_can_update_status(): void
+    {
+        $this->seed(DatabaseSeeder::class);
+
+        [$user, $business, $branch] = $this->context();
+        $shift = $this->openShift($user, $business, $branch, 'SHIFT-KDS');
+        $warehouse = Warehouse::query()->where('business_id', $business->id)->where('branch_id', $branch->id)->firstOrFail();
+        $product = Product::query()->where('business_id', $business->id)->where('sku', 'KAWI-RICE-001')->firstOrFail();
+
+        $saleId = $this->actingAs($user, 'sanctum')
+            ->withHeaders(['X-Business-Id' => $business->uuid, 'X-Branch-Id' => $branch->uuid])
+            ->postJson('/api/sales', [
+                'cashier_shift_id' => $shift->id,
+                'warehouse_id' => $warehouse->id,
+                'sale_number' => 'SALE-KDS-001',
+                'idempotency_key' => 'sale-kds-001',
+                'items' => [
+                    ['product_id' => $product->id, 'quantity' => 2, 'unit_price' => 35000, 'notes' => 'No spicy'],
+                ],
+                'payments' => [
+                    ['method' => 'cash', 'amount' => 77700],
+                ],
+            ])
+            ->assertCreated()
+            ->json('sale.id');
+
+        $ticket = KitchenTicket::query()->where('sale_id', $saleId)->with('items')->firstOrFail();
+
+        $this->assertSame('KOT-SALE-KDS-001', $ticket->ticket_number);
+        $this->assertSame('open', $ticket->status);
+        $this->assertSame('No spicy', $ticket->items->first()->notes);
+
+        $this->actingAs($user, 'sanctum')
+            ->withHeaders(['X-Business-Id' => $business->uuid, 'X-Branch-Id' => $branch->uuid])
+            ->getJson('/api/kitchen-tickets')
+            ->assertOk()
+            ->assertJsonFragment(['ticket_number' => 'KOT-SALE-KDS-001']);
+
+        $itemId = $ticket->items->first()->id;
+
+        $this->actingAs($user, 'sanctum')
+            ->withHeaders(['X-Business-Id' => $business->uuid, 'X-Branch-Id' => $branch->uuid])
+            ->patchJson("/api/kitchen-ticket-items/{$itemId}/status", ['status' => 'preparing'])
+            ->assertOk()
+            ->assertJsonPath('kitchen_ticket_item.status', 'preparing');
+
+        $this->actingAs($user, 'sanctum')
+            ->withHeaders(['X-Business-Id' => $business->uuid, 'X-Branch-Id' => $branch->uuid])
+            ->patchJson("/api/kitchen-tickets/{$ticket->id}/status", ['status' => 'served'])
+            ->assertOk()
+            ->assertJsonPath('kitchen_ticket.status', 'served');
+
+        $this->assertDatabaseHas('audit_logs', ['action' => 'kitchen_ticket.created']);
+        $this->assertDatabaseHas('audit_logs', ['action' => 'kitchen_ticket_item.status_updated']);
+        $this->assertDatabaseHas('audit_logs', ['action' => 'kitchen_ticket.status_updated']);
     }
 
     public function test_cashier_can_create_and_apply_promotion_to_sale(): void

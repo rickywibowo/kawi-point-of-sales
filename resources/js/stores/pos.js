@@ -37,6 +37,10 @@ export const usePosStore = defineStore('pos', {
             { code: 'KAWI10', name: 'KAWI 10%', type: 'percent', value: 10 },
             { code: 'LUNCH15K', name: 'Lunch 15K', type: 'fixed', value: 15000 },
         ],
+        kitchenTickets: [
+            { number: 'KOT-SALE-DEMO-001', table: 'T-02', status: 'preparing', itemCount: 2 },
+            { number: 'KOT-SALE-DEMO-002', table: 'Takeaway', status: 'ready', itemCount: 1 },
+        ],
         heldTransactions: 1,
         todayTransactions: 0,
     }),
@@ -51,5 +55,6 @@ export const usePosStore = defineStore('pos', {
         availableTableCount: (state) => state.diningTables.filter((table) => table.status === 'available').length,
         activeReservationCount: (state) => state.tableReservations.filter((reservation) => reservation.status !== 'cancelled').length,
         activePromotionCount: (state) => state.promotions.length,
+        activeKitchenTicketCount: (state) => state.kitchenTickets.filter((ticket) => ticket.status !== 'served').length,
     },
 });

@@ -9,6 +9,7 @@ use App\Http\Controllers\Api\CustomerController;
 use App\Http\Controllers\Api\DiningTableController;
 use App\Http\Controllers\Api\HeldTransactionController;
 use App\Http\Controllers\Api\InventoryController;
+use App\Http\Controllers\Api\KitchenTicketController;
 use App\Http\Controllers\Api\MasterDataController;
 use App\Http\Controllers\Api\OfflineSyncController;
 use App\Http\Controllers\Api\OperationalExpenseController;
@@ -109,6 +110,12 @@ Route::middleware(['auth:sanctum', 'tenant'])->group(function (): void {
     Route::get('/sales/{sale}/receipt', [SaleController::class, 'receipt'])
         ->middleware('permission:sales.create');
     Route::post('/held-transactions', [HeldTransactionController::class, 'store'])
+        ->middleware('permission:sales.create');
+    Route::get('/kitchen-tickets', [KitchenTicketController::class, 'index'])
+        ->middleware('permission:sales.create');
+    Route::patch('/kitchen-tickets/{ticket}/status', [KitchenTicketController::class, 'updateStatus'])
+        ->middleware('permission:sales.create');
+    Route::patch('/kitchen-ticket-items/{item}/status', [KitchenTicketController::class, 'updateItemStatus'])
         ->middleware('permission:sales.create');
 
     Route::get('/purchasing', [PurchasingController::class, 'index'])

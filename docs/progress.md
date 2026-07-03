@@ -315,6 +315,21 @@ Status: complete.
 - Dokumentasi Tahap 24 dibuat.
 - Automated test promotion/voucher dibuat.
 
+### Tahap 25 - Kitchen Display System Foundation
+
+Status: complete.
+
+- Tabel `kitchen_tickets` dan `kitchen_ticket_items` dibuat.
+- Model, service, controller, dan endpoint Kitchen Display System dibuat.
+- Completed sale otomatis membuat kitchen ticket `KOT-{sale_number}`.
+- Kitchen ticket item dibuat dari sale items.
+- Endpoint `GET /api/kitchen-tickets` dibuat untuk ticket aktif.
+- Endpoint update status kitchen ticket dan kitchen ticket item dibuat.
+- POS index mengembalikan kitchen tickets aktif.
+- Vue Pinia store POS dan dashboard POS menampilkan kitchen queue.
+- Dokumentasi Tahap 25 dan ringkasan milestone proyek dibuat.
+- Automated test KDS dibuat.
+
 ## Cara Track Mundur
 
 - Setiap tahap disimpan dalam commit terpisah.

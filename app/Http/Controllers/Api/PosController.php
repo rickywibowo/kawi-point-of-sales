@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\DiningTable;
 use App\Models\HeldTransaction;
+use App\Models\KitchenTicket;
 use App\Models\Product;
 use App\Models\Promotion;
 use App\Models\Sale;
@@ -43,6 +44,12 @@ class PosController extends Controller
                 ->forTenant($business->id, $branch->id)
                 ->whereNull('resumed_at')
                 ->latest('held_at')
+                ->get(),
+            'kitchen_tickets' => KitchenTicket::query()
+                ->forTenant($business->id, $branch->id)
+                ->with(['items', 'diningTable'])
+                ->whereIn('status', ['open', 'preparing', 'ready'])
+                ->latest('opened_at')
                 ->get(),
             'today_sales' => Sale::query()
                 ->forTenant($business->id, $branch->id)
