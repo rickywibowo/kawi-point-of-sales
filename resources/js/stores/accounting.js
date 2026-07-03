@@ -31,6 +31,9 @@ export const useAccountingStore = defineStore('accounting', {
             { number: 'SETTLE-DEMO-001', method: 'qris', expected: 27750, reported: 27750, variance: 0 },
             { number: 'SETTLE-DEMO-002', method: 'cash', expected: 38850, reported: 38800, variance: -50 },
         ],
+        providerImports: [
+            { number: 'IMP-QRIS-001', provider: 'QRIS Acquirer', matched: 12, unmatched: 1, variance: -2500 },
+        ],
     }),
 
     getters: {
@@ -38,5 +41,6 @@ export const useAccountingStore = defineStore('accounting', {
         statementStatus: (state) => state.balanceSheet.isBalanced ? 'statements balanced' : 'review needed',
         expenseTotal: (state) => state.operationalExpenses.reduce((total, expense) => total + expense.amount, 0),
         settlementVarianceTotal: (state) => state.paymentSettlements.reduce((total, settlement) => total + settlement.variance, 0),
+        providerImportReviewCount: (state) => state.providerImports.reduce((total, providerImport) => total + providerImport.unmatched, 0),
     },
 });

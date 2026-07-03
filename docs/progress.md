@@ -378,6 +378,23 @@ Status: complete.
 - Dokumentasi Tahap 28 dibuat.
 - Automated test cash drawer audit dibuat.
 
+### Tahap 29 - Payment Provider Reconciliation Import
+
+Status: complete.
+
+- Tabel `payment_provider_imports` dan `payment_provider_import_rows` dibuat.
+- Model, request validation, service, controller, dan endpoint provider import dibuat.
+- Endpoint `GET /api/payment-provider-imports` dan `POST /api/payment-provider-imports` dibuat dengan permission `accounting.manage`.
+- Import provider menempel ke `payment_settlement_id` dan wajib memakai method yang sama.
+- CSV provider diparse dari `csv_content` dengan header minimal `reference` dan `amount`.
+- Row provider dicocokkan ke `sale_payments.reference` dari settlement internal.
+- Status row mendukung `matched`, `amount_mismatch`, dan `unmatched`.
+- Header import menghitung gross, fee, received amount, matched/unmatched count, dan variance terhadap settlement.
+- Audit log `payment_provider_import.created` dibuat.
+- Vue Pinia store accounting dan dashboard accounting diperbarui.
+- Dokumentasi Tahap 29 dibuat.
+- Automated test payment provider import dibuat.
+
 ## Cara Track Mundur
 
 - Setiap tahap disimpan dalam commit terpisah.

@@ -307,6 +307,14 @@ onUnmounted(() => {
                                 <p class="text-zinc-400">Variance</p>
                                 <p class="mt-1 font-semibold">Rp {{ accounting.settlementVarianceTotal.toLocaleString('id-ID') }}</p>
                             </div>
+                            <div class="rounded-md border border-white/10 bg-white/[0.03] p-3 text-sm">
+                                <p class="text-zinc-400">Provider Import</p>
+                                <p class="mt-1 font-semibold">{{ accounting.providerImports[0]?.number }}</p>
+                            </div>
+                            <div class="rounded-md border border-white/10 bg-white/[0.03] p-3 text-sm">
+                                <p class="text-zinc-400">Provider Review</p>
+                                <p class="mt-1 font-semibold">{{ accounting.providerImportReviewCount }} unmatched</p>
+                            </div>
                         </div>
                     </div>
 

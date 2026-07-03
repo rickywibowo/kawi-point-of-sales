@@ -3,13 +3,13 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Http\Requests\Accounting\StorePaymentSettlementRequest;
-use App\Models\PaymentSettlement;
-use App\Services\Accounting\PaymentSettlementService;
+use App\Http\Requests\Accounting\StorePaymentProviderImportRequest;
+use App\Models\PaymentProviderImport;
+use App\Services\Accounting\PaymentProviderImportService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
-class PaymentSettlementController extends Controller
+class PaymentProviderImportController extends Controller
 {
     public function index(Request $request): JsonResponse
     {
@@ -17,24 +17,24 @@ class PaymentSettlementController extends Controller
         $branch = $request->attributes->get('branch');
 
         return response()->json([
-            'payment_settlements' => PaymentSettlement::query()
+            'payment_provider_imports' => PaymentProviderImport::query()
                 ->forTenant($business->id, $branch?->id)
-                ->with(['items', 'providerImports'])
-                ->latest('posted_at')
+                ->with(['settlement', 'rows'])
+                ->latest('imported_at')
                 ->limit(50)
                 ->get(),
         ]);
     }
 
-    public function store(StorePaymentSettlementRequest $request, PaymentSettlementService $settlements): JsonResponse
+    public function store(StorePaymentProviderImportRequest $request, PaymentProviderImportService $imports): JsonResponse
     {
-        $settlement = $settlements->create(
+        $providerImport = $imports->create(
             $request->attributes->get('business'),
             $request->attributes->get('branch')?->id,
             $request->validated(),
             $request,
         );
 
-        return response()->json(['payment_settlement' => $settlement], 201);
+        return response()->json(['payment_provider_import' => $providerImport], 201);
     }
 }

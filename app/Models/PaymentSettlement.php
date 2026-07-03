@@ -44,4 +44,9 @@ class PaymentSettlement extends Model
     {
         return $this->hasMany(PaymentSettlementItem::class);
     }
+
+    public function providerImports(): HasMany
+    {
+        return $this->hasMany(PaymentProviderImport::class);
+    }
 }

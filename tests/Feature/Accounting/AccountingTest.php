@@ -237,6 +237,77 @@ class AccountingTest extends TestCase
             ->assertJsonValidationErrors(['method']);
     }
 
+    public function test_user_can_import_provider_reconciliation_csv_for_payment_settlement(): void
+    {
+        $this->seed(DatabaseSeeder::class);
+        [$user, $business, $branch] = $this->context();
+        $shift = $this->openShift($user, $business, $branch);
+        $warehouse = Warehouse::query()->where('business_id', $business->id)->where('branch_id', $branch->id)->firstOrFail();
+        $product = Product::query()->where('business_id', $business->id)->where('sku', 'KAWI-RICE-001')->firstOrFail();
+
+        $this->actingAs($user, 'sanctum')
+            ->withHeaders(['X-Business-Id' => $business->uuid, 'X-Branch-Id' => $branch->uuid])
+            ->postJson('/api/sales', [
+                'cashier_shift_id' => $shift->id,
+                'warehouse_id' => $warehouse->id,
+                'sale_number' => 'SALE-PROVIDER-001',
+                'idempotency_key' => 'provider-sale-001',
+                'items' => [
+                    ['product_id' => $product->id, 'quantity' => 1, 'unit_price' => 35000],
+                ],
+                'payments' => [
+                    ['method' => 'qris', 'amount' => 38850, 'reference' => 'QRIS-PROVIDER-001'],
+                ],
+            ])
+            ->assertCreated();
+
+        $settlementId = $this->actingAs($user, 'sanctum')
+            ->withHeaders(['X-Business-Id' => $business->uuid, 'X-Branch-Id' => $branch->uuid])
+            ->postJson('/api/payment-settlements', [
+                'settlement_number' => 'SETTLE-PROVIDER-001',
+                'method' => 'qris',
+                'date_from' => now()->toDateString(),
+                'date_to' => now()->toDateString(),
+                'reported_amount' => 38800,
+            ])
+            ->assertCreated()
+            ->json('payment_settlement.id');
+
+        $csv = "reference,amount,fee_amount,settled_at\n"
+            ."QRIS-PROVIDER-001,38850,50,".now()->toDateTimeString()."\n"
+            ."QRIS-UNKNOWN-001,1000,0,".now()->toDateTimeString()."\n";
+
+        $this->actingAs($user, 'sanctum')
+            ->withHeaders(['X-Business-Id' => $business->uuid, 'X-Branch-Id' => $branch->uuid])
+            ->postJson('/api/payment-provider-imports', [
+                'payment_settlement_id' => $settlementId,
+                'import_number' => 'IMP-QRIS-001',
+                'provider' => 'QRIS Acquirer',
+                'method' => 'qris',
+                'settlement_date' => now()->toDateString(),
+                'csv_content' => $csv,
+            ])
+            ->assertCreated()
+            ->assertJsonPath('payment_provider_import.status', 'needs_review')
+            ->assertJsonPath('payment_provider_import.row_count', 2)
+            ->assertJsonPath('payment_provider_import.matched_count', 1)
+            ->assertJsonPath('payment_provider_import.unmatched_count', 1)
+            ->assertJsonPath('payment_provider_import.gross_amount', '39850.00')
+            ->assertJsonPath('payment_provider_import.fee_amount', '50.00')
+            ->assertJsonPath('payment_provider_import.received_amount', '39800.00')
+            ->assertJsonPath('payment_provider_import.variance_to_settlement', '1000.00');
+
+        $this->assertDatabaseHas('payment_provider_import_rows', [
+            'reference' => 'QRIS-PROVIDER-001',
+            'status' => 'matched',
+        ]);
+        $this->assertDatabaseHas('payment_provider_import_rows', [
+            'reference' => 'QRIS-UNKNOWN-001',
+            'status' => 'unmatched',
+        ]);
+        $this->assertDatabaseHas('audit_logs', ['action' => 'payment_provider_import.created']);
+    }
+
     public function test_operational_expense_rejects_account_outside_active_business(): void
     {
         $this->seed(DatabaseSeeder::class);
