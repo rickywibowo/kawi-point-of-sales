@@ -461,6 +461,17 @@ Status: complete.
 - Empty state filter ditambahkan.
 - Dokumentasi Tahap 34 dibuat.
 
+### Tahap 35 - Frontend Action Drawer & Form Foundation
+
+Status: complete.
+
+- Action toolbar workspace sekarang membuka drawer/form konteks.
+- State `activeAction`, `actionDraft`, dan `actionFeedback` dibuat.
+- Field form action dibuat dinamis berdasarkan action yang dipilih.
+- Tombol `Save Draft` menampilkan feedback lokal untuk dasar submit API berikutnya.
+- Perpindahan modul menutup drawer action dan reset pencarian.
+- Dokumentasi Tahap 35 dibuat.
+
 ## Cara Track Mundur
 
 - Setiap tahap disimpan dalam commit terpisah.

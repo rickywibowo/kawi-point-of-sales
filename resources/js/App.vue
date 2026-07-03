@@ -32,6 +32,9 @@ const loginPanelOpen = ref(false);
 const dashboardLoading = ref(false);
 const activeModule = ref('pos');
 const moduleSearch = ref('');
+const activeAction = ref(null);
+const actionDraft = reactive({});
+const actionFeedback = ref('');
 
 const quickStats = computed(() => [
     { label: 'Penjualan Hari Ini', value: 'Rp 0', tone: 'emerald' },
@@ -143,9 +146,124 @@ const moduleActions = computed(() => {
 
     return actions[activeModule.value] ?? [];
 });
+const actionFields = computed(() => {
+    const fields = {
+        'New Sale': [
+            { key: 'customer', label: 'Customer', type: 'text', placeholder: 'Walk-in Customer' },
+            { key: 'note', label: 'Catatan', type: 'text', placeholder: 'Catatan transaksi' },
+        ],
+        'Hold Cart': [
+            { key: 'hold_number', label: 'Hold Number', type: 'text', placeholder: 'HOLD-001' },
+            { key: 'reason', label: 'Reason', type: 'text', placeholder: 'Customer kembali nanti' },
+        ],
+        'Open Shift': [
+            { key: 'shift_number', label: 'Shift Number', type: 'text', placeholder: 'SHIFT-001' },
+            { key: 'opening_cash', label: 'Opening Cash', type: 'number', placeholder: '250000' },
+        ],
+        'New Product': [
+            { key: 'name', label: 'Product Name', type: 'text', placeholder: 'KAWI Menu Baru' },
+            { key: 'price', label: 'Base Price', type: 'number', placeholder: '35000' },
+        ],
+        'Import CSV': [
+            { key: 'source', label: 'Source', type: 'text', placeholder: 'products.csv' },
+            { key: 'notes', label: 'Notes', type: 'text', placeholder: 'Import batch' },
+        ],
+        'Price Update': [
+            { key: 'sku', label: 'SKU', type: 'text', placeholder: 'KAWI-RICE-001' },
+            { key: 'price', label: 'New Price', type: 'number', placeholder: '38000' },
+        ],
+        'Stock Opname': [
+            { key: 'opname_number', label: 'Opname Number', type: 'text', placeholder: 'OPN-001' },
+            { key: 'warehouse', label: 'Warehouse', type: 'text', placeholder: inventory.warehouse },
+        ],
+        'Transfer Stock': [
+            { key: 'transfer_number', label: 'Transfer Number', type: 'text', placeholder: 'TRF-001' },
+            { key: 'target', label: 'Target Warehouse', type: 'text', placeholder: 'Gudang Tujuan' },
+        ],
+        Production: [
+            { key: 'production_number', label: 'Production Number', type: 'text', placeholder: 'PROD-001' },
+            { key: 'quantity', label: 'Quantity', type: 'number', placeholder: '10' },
+        ],
+        'New PO': [
+            { key: 'order_number', label: 'PO Number', type: 'text', placeholder: 'PO-001' },
+            { key: 'supplier', label: 'Supplier', type: 'text', placeholder: 'Supplier KAWI' },
+        ],
+        'Goods Receipt': [
+            { key: 'receipt_number', label: 'Receipt Number', type: 'text', placeholder: 'GR-001' },
+            { key: 'po_number', label: 'PO Number', type: 'text', placeholder: 'PO-001' },
+        ],
+        'Pay Supplier': [
+            { key: 'payment_number', label: 'Payment Number', type: 'text', placeholder: 'PAY-001' },
+            { key: 'amount', label: 'Amount', type: 'number', placeholder: '50000' },
+        ],
+        'New Journal': [
+            { key: 'journal_number', label: 'Journal Number', type: 'text', placeholder: 'JE-001' },
+            { key: 'description', label: 'Description', type: 'text', placeholder: 'Manual journal' },
+        ],
+        Settlement: [
+            { key: 'settlement_number', label: 'Settlement Number', type: 'text', placeholder: 'SETTLE-001' },
+            { key: 'method', label: 'Method', type: 'text', placeholder: 'qris' },
+        ],
+        'Import Provider': [
+            { key: 'import_number', label: 'Import Number', type: 'text', placeholder: 'IMP-001' },
+            { key: 'provider', label: 'Provider', type: 'text', placeholder: 'QRIS Acquirer' },
+        ],
+        Refresh: [
+            { key: 'period', label: 'Period', type: 'text', placeholder: reports.period },
+        ],
+        Export: [
+            { key: 'format', label: 'Format', type: 'text', placeholder: 'xlsx' },
+        ],
+        Print: [
+            { key: 'template', label: 'Template', type: 'text', placeholder: 'Summary' },
+        ],
+        'New Customer': [
+            { key: 'name', label: 'Name', type: 'text', placeholder: 'Nama pelanggan' },
+            { key: 'phone', label: 'Phone', type: 'text', placeholder: '0812...' },
+        ],
+        Loyalty: [
+            { key: 'customer', label: 'Customer', type: 'text', placeholder: customers.customers[0]?.name },
+            { key: 'points', label: 'Points', type: 'number', placeholder: '10' },
+        ],
+        Segment: [
+            { key: 'name', label: 'Segment Name', type: 'text', placeholder: 'VIP' },
+        ],
+        'Invite User': [
+            { key: 'name', label: 'Name', type: 'text', placeholder: 'Kasir Baru' },
+            { key: 'email', label: 'Email', type: 'email', placeholder: 'user@kawi.test' },
+        ],
+        'Assign Role': [
+            { key: 'email', label: 'Email', type: 'email', placeholder: 'user@kawi.test' },
+            { key: 'role', label: 'Role', type: 'text', placeholder: 'Cashier' },
+        ],
+        Audit: [
+            { key: 'action', label: 'Action Filter', type: 'text', placeholder: 'sale.completed' },
+        ],
+    };
+
+    return fields[activeAction.value] ?? [];
+});
 const selectModule = (moduleId) => {
     activeModule.value = moduleId;
     moduleSearch.value = '';
+    activeAction.value = null;
+    actionFeedback.value = '';
+};
+const openAction = (action) => {
+    activeAction.value = action;
+    actionFeedback.value = '';
+    Object.keys(actionDraft).forEach((key) => delete actionDraft[key]);
+
+    actionFields.value.forEach((field) => {
+        actionDraft[field.key] = '';
+    });
+};
+const closeAction = () => {
+    activeAction.value = null;
+    actionFeedback.value = '';
+};
+const saveActionDraft = () => {
+    actionFeedback.value = `${activeAction.value} draft siap disambungkan ke API.`;
 };
 
 const updateOnlineStatus = () => foundation.setOnlineStatus(navigator.onLine);
@@ -342,10 +460,53 @@ onUnmounted(() => {
                                     :key="action"
                                     class="rounded-md border border-white/10 bg-white/[0.03] px-3 py-2 text-sm font-medium text-zinc-100 transition hover:border-emerald-300/50 hover:bg-emerald-300/10"
                                     type="button"
+                                    @click="openAction(action)"
                                 >
                                     {{ action }}
                                 </button>
                             </div>
+                        </div>
+                        <div
+                            v-if="activeAction"
+                            class="mt-4 rounded-md border border-emerald-300/30 bg-emerald-300/10 p-4"
+                        >
+                            <div class="flex flex-wrap items-center justify-between gap-3">
+                                <div>
+                                    <p class="text-xs uppercase text-emerald-100">Action Draft</p>
+                                    <h4 class="mt-1 text-base font-semibold text-emerald-50">{{ activeAction }}</h4>
+                                </div>
+                                <button
+                                    class="rounded-md border border-white/10 px-3 py-2 text-sm text-zinc-100 transition hover:border-amber-300/50 hover:bg-amber-300/10"
+                                    type="button"
+                                    @click="closeAction"
+                                >
+                                    Close
+                                </button>
+                            </div>
+                            <form class="mt-4 grid gap-3 sm:grid-cols-2" @submit.prevent="saveActionDraft">
+                                <label
+                                    v-for="field in actionFields"
+                                    :key="field.key"
+                                    class="grid gap-1 text-sm"
+                                >
+                                    <span class="text-zinc-300">{{ field.label }}</span>
+                                    <input
+                                        v-model="actionDraft[field.key]"
+                                        class="rounded-md border border-white/10 bg-zinc-950/80 px-3 py-2 text-zinc-100 outline-none transition focus:border-emerald-300/60"
+                                        :placeholder="field.placeholder"
+                                        :type="field.type"
+                                    >
+                                </label>
+                                <div class="flex items-end gap-2 sm:col-span-2">
+                                    <button
+                                        class="rounded-md bg-emerald-400 px-4 py-2 text-sm font-semibold text-zinc-950 transition hover:bg-emerald-300"
+                                        type="submit"
+                                    >
+                                        Save Draft
+                                    </button>
+                                    <span v-if="actionFeedback" class="text-sm text-emerald-100">{{ actionFeedback }}</span>
+                                </div>
+                            </form>
                         </div>
                         <div class="mt-4 overflow-hidden rounded-md border border-white/10">
                             <div class="grid grid-cols-[1.2fr_1fr_auto] gap-3 border-b border-white/10 bg-white/[0.03] px-3 py-2 text-xs uppercase text-zinc-500">
