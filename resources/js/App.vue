@@ -1,5 +1,5 @@
 <script setup>
-import { onMounted, onUnmounted } from 'vue';
+import { computed, reactive, ref, onMounted, onUnmounted } from 'vue';
 import { useAccountingStore } from './stores/accounting';
 import { useAuditStore } from './stores/audit';
 import { useCustomersStore } from './stores/customers';
@@ -24,9 +24,16 @@ const purchasing = usePurchasingStore();
 const reports = useReportsStore();
 const userAccess = useUserAccessStore();
 
-const quickStats = [
+const loginForm = reactive({
+    email: 'owner@kawi.test',
+    password: 'password',
+});
+const loginPanelOpen = ref(false);
+const dashboardLoading = ref(false);
+
+const quickStats = computed(() => [
     { label: 'Penjualan Hari Ini', value: 'Rp 0', tone: 'emerald' },
-    { label: 'Transaksi', value: '0', tone: 'sky' },
+    { label: 'Transaksi', value: String(pos.todayTransactions), tone: 'sky' },
     { label: 'Produk Aktif', value: masterData.activeProductCount, tone: 'amber' },
     { label: 'Nilai Stok', value: `Rp ${inventory.totalStockValue.toLocaleString('id-ID')}`, tone: 'emerald' },
     { label: 'PO Aktif', value: purchasing.openOrderCount, tone: 'sky' },
@@ -35,7 +42,7 @@ const quickStats = [
     { label: 'Pelanggan', value: customers.customerCount, tone: 'sky' },
     { label: 'User', value: userAccess.userCount, tone: 'amber' },
     { label: 'Audit', value: audit.totalEvents, tone: 'emerald' },
-];
+]);
 
 const modules = [
     'Kasir',
@@ -49,9 +56,12 @@ const modules = [
 const updateOnlineStatus = () => foundation.setOnlineStatus(navigator.onLine);
 const updateOfflineStatus = () => offline.setOnlineStatus(navigator.onLine);
 const loadDashboard = async () => {
+    dashboardLoading.value = true;
     await foundation.loadSession();
 
     if (foundation.apiStatus !== 'connected') {
+        dashboardLoading.value = false;
+
         return;
     }
 
@@ -66,11 +76,21 @@ const loadDashboard = async () => {
         userAccess.loadFromApi(),
         audit.loadFromApi(),
     ]);
+    dashboardLoading.value = false;
 };
 
-const connectDemoApi = async () => {
-    await foundation.login();
-    await loadDashboard();
+const submitLogin = async () => {
+    try {
+        await foundation.login(loginForm.email, loginForm.password);
+        loginPanelOpen.value = false;
+        await loadDashboard();
+    } catch (error) {
+        loginPanelOpen.value = true;
+    }
+};
+
+const logout = async () => {
+    await foundation.logout();
 };
 
 onMounted(() => {
@@ -110,20 +130,65 @@ onUnmounted(() => {
                         class="rounded-md border px-3 py-2 text-sm"
                         :class="foundation.apiStatus === 'connected' ? 'border-emerald-300/40 text-emerald-200' : 'border-sky-300/40 text-sky-200'"
                     >
-                        {{ foundation.apiMessage }}
+                        {{ dashboardLoading || foundation.isLoadingSession ? 'Loading API' : foundation.apiMessage }}
                     </span>
                     <button
                         v-if="foundation.apiStatus !== 'connected'"
                         class="rounded-md border border-white/10 px-4 py-2 text-sm font-semibold text-zinc-100 transition hover:border-emerald-300/50 hover:bg-emerald-300/10"
-                        @click="connectDemoApi"
+                        @click="loginPanelOpen = !loginPanelOpen"
                     >
-                        Connect Demo API
+                        Login
+                    </button>
+                    <button
+                        v-else
+                        class="rounded-md border border-white/10 px-4 py-2 text-sm font-semibold text-zinc-100 transition hover:border-amber-300/50 hover:bg-amber-300/10"
+                        @click="logout"
+                    >
+                        Logout
                     </button>
                     <button class="rounded-md bg-emerald-400 px-4 py-2 text-sm font-semibold text-zinc-950 transition hover:bg-emerald-300">
                         Mulai Transaksi
                     </button>
                 </div>
             </header>
+
+            <section
+                v-if="loginPanelOpen && foundation.apiStatus !== 'connected'"
+                class="border-b border-white/10 py-5"
+            >
+                <form class="grid gap-3 rounded-md border border-white/10 bg-zinc-900 p-4 sm:grid-cols-[1fr_1fr_auto]" @submit.prevent="submitLogin">
+                    <label class="grid gap-1 text-sm">
+                        <span class="text-zinc-400">Email</span>
+                        <input
+                            v-model="loginForm.email"
+                            class="rounded-md border border-white/10 bg-zinc-950 px-3 py-2 text-zinc-100 outline-none transition focus:border-emerald-300/60"
+                            type="email"
+                            autocomplete="username"
+                        >
+                    </label>
+                    <label class="grid gap-1 text-sm">
+                        <span class="text-zinc-400">Password</span>
+                        <input
+                            v-model="loginForm.password"
+                            class="rounded-md border border-white/10 bg-zinc-950 px-3 py-2 text-zinc-100 outline-none transition focus:border-emerald-300/60"
+                            type="password"
+                            autocomplete="current-password"
+                        >
+                    </label>
+                    <div class="flex items-end">
+                        <button
+                            class="w-full rounded-md bg-emerald-400 px-4 py-2 text-sm font-semibold text-zinc-950 transition hover:bg-emerald-300 disabled:cursor-not-allowed disabled:opacity-60"
+                            :disabled="foundation.isLoadingSession"
+                            type="submit"
+                        >
+                            {{ foundation.isLoadingSession ? 'Connecting' : 'Connect' }}
+                        </button>
+                    </div>
+                    <p v-if="foundation.loginError" class="text-sm text-amber-200 sm:col-span-3">
+                        {{ foundation.loginError }}
+                    </p>
+                </form>
+            </section>
 
             <div class="grid flex-1 gap-5 py-6 lg:grid-cols-[1.5fr_1fr]">
                 <section class="rounded-lg border border-white/10 bg-white/[0.04] p-5 shadow-2xl shadow-black/20">

@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia';
-import { ApiError, apiGet, apiPost, setApiToken, setTenantContext } from '../services/api';
+import { ApiError, apiGet, apiPost, clearApiSession, setApiToken, setTenantContext } from '../services/api';
 
 export const useFoundationStore = defineStore('foundation', {
     state: () => ({
@@ -12,6 +12,8 @@ export const useFoundationStore = defineStore('foundation', {
         apiStatus: 'demo',
         apiMessage: 'Demo data aktif',
         user: null,
+        isLoadingSession: false,
+        loginError: null,
     }),
 
     actions: {
@@ -20,25 +22,40 @@ export const useFoundationStore = defineStore('foundation', {
         },
 
         async login(email = 'owner@kawi.test', password = 'password') {
-            const response = await apiPost('/auth/login', {
-                email,
-                password,
-                device_name: 'kawi-dashboard',
-            });
+            this.loginError = null;
+            this.isLoadingSession = true;
 
-            setApiToken(response.token);
-            const business = response.user?.businesses?.[0];
-            const branch = business?.branches?.[0];
+            try {
+                const response = await apiPost('/auth/login', {
+                    email,
+                    password,
+                    device_name: 'kawi-dashboard',
+                });
 
-            setTenantContext({
-                businessId: business?.uuid,
-                branchId: branch?.uuid,
-            });
+                setApiToken(response.token);
+                const business = response.user?.businesses?.[0];
+                const branch = business?.branches?.[0];
 
-            await this.loadSession();
+                setTenantContext({
+                    businessId: business?.uuid,
+                    branchId: branch?.uuid,
+                });
+
+                await this.loadSession();
+            } catch (error) {
+                this.loginError = error instanceof ApiError ? error.message : 'Login gagal.';
+                this.apiStatus = 'demo';
+                this.apiMessage = 'Demo data aktif';
+
+                throw error;
+            } finally {
+                this.isLoadingSession = false;
+            }
         },
 
         async loadSession() {
+            this.isLoadingSession = true;
+
             try {
                 const response = await apiGet('/auth/me');
                 this.user = response.user;
@@ -51,6 +68,26 @@ export const useFoundationStore = defineStore('foundation', {
                 this.user = null;
                 this.apiStatus = error instanceof ApiError && [401, 403, 422].includes(error.status) ? 'demo' : 'offline';
                 this.apiMessage = this.apiStatus === 'demo' ? 'Demo data aktif' : 'API belum tersedia';
+            } finally {
+                this.isLoadingSession = false;
+            }
+        },
+
+        async logout() {
+            try {
+                if (this.apiStatus === 'connected') {
+                    await apiPost('/auth/logout', {});
+                }
+            } catch (error) {
+                this.loginError = null;
+            } finally {
+                clearApiSession();
+                this.user = null;
+                this.apiStatus = 'demo';
+                this.apiMessage = 'Demo data aktif';
+                this.cashier = 'KAWI Owner';
+                this.business = 'KAWI Demo Business';
+                this.branch = 'Cabang Utama';
             }
         },
     },

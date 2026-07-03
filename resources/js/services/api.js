@@ -26,6 +26,12 @@ export function setApiToken(token) {
     localStorage.removeItem('kawi_api_token');
 }
 
+export function clearApiSession() {
+    localStorage.removeItem('kawi_api_token');
+    localStorage.removeItem('kawi_business_id');
+    localStorage.removeItem('kawi_branch_id');
+}
+
 export function getTenantContext() {
     return {
         businessId: localStorage.getItem('kawi_business_id'),

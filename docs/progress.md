@@ -425,6 +425,19 @@ Status: complete.
 - Tombol `Connect Demo API` ditambahkan untuk hydrate dashboard dari API demo.
 - Dokumentasi Tahap 31 dibuat.
 
+### Tahap 32 - Login & Session UX
+
+Status: complete.
+
+- Panel login dashboard dibuat untuk login API dari browser.
+- Credential demo default `owner@kawi.test` dan `password` disediakan di form.
+- Header dashboard menampilkan status API, tombol login, dan tombol logout.
+- Store foundation menambahkan loading session, login error, dan action logout.
+- API client menambahkan helper `clearApiSession()`.
+- Logout membersihkan token dan tenant context lalu kembali ke mode demo.
+- Quick stats dashboard diubah menjadi computed agar mengikuti data store setelah API hydrate.
+- Dokumentasi Tahap 32 dibuat.
+
 ## Cara Track Mundur
 
 - Setiap tahap disimpan dalam commit terpisah.
