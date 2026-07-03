@@ -5,6 +5,7 @@ namespace Tests\Feature\Pos;
 use App\Models\Branch;
 use App\Models\Business;
 use App\Models\CashierShift;
+use App\Models\DeliveryOrder;
 use App\Models\DiningTable;
 use App\Models\KitchenTicket;
 use App\Models\Product;
@@ -192,6 +193,105 @@ class PosTest extends TestCase
         $this->assertDatabaseHas('audit_logs', ['action' => 'kitchen_ticket.created']);
         $this->assertDatabaseHas('audit_logs', ['action' => 'kitchen_ticket_item.status_updated']);
         $this->assertDatabaseHas('audit_logs', ['action' => 'kitchen_ticket.status_updated']);
+    }
+
+    public function test_delivery_sale_creates_delivery_order_and_can_update_status(): void
+    {
+        $this->seed(DatabaseSeeder::class);
+
+        [$user, $business, $branch] = $this->context();
+        $shift = $this->openShift($user, $business, $branch, 'SHIFT-DELIVERY');
+        $warehouse = Warehouse::query()->where('business_id', $business->id)->where('branch_id', $branch->id)->firstOrFail();
+        $product = Product::query()->where('business_id', $business->id)->where('sku', 'KAWI-RICE-001')->firstOrFail();
+
+        $saleId = $this->actingAs($user, 'sanctum')
+            ->withHeaders(['X-Business-Id' => $business->uuid, 'X-Branch-Id' => $branch->uuid])
+            ->postJson('/api/sales', [
+                'cashier_shift_id' => $shift->id,
+                'warehouse_id' => $warehouse->id,
+                'sale_number' => 'SALE-DELIVERY-001',
+                'idempotency_key' => 'sale-delivery-001',
+                'type' => 'delivery',
+                'delivery' => [
+                    'recipient_name' => 'Rina Delivery',
+                    'recipient_phone' => '081200000111',
+                    'address' => 'Jl. KAWI Delivery No. 1',
+                    'fee' => 10000,
+                ],
+                'items' => [
+                    ['product_id' => $product->id, 'quantity' => 1, 'unit_price' => 35000],
+                ],
+                'payments' => [
+                    ['method' => 'qris', 'amount' => 48850],
+                ],
+            ])
+            ->assertCreated()
+            ->assertJsonPath('sale.type', 'delivery')
+            ->assertJsonPath('sale.delivery_fee_total', '10000.00')
+            ->assertJsonPath('sale.grand_total', '48850.00')
+            ->json('sale.id');
+
+        $delivery = DeliveryOrder::query()->where('sale_id', $saleId)->firstOrFail();
+
+        $this->assertSame('DO-SALE-DELIVERY-001', $delivery->delivery_number);
+        $this->assertSame('pending', $delivery->status);
+
+        $this->actingAs($user, 'sanctum')
+            ->withHeaders(['X-Business-Id' => $business->uuid, 'X-Branch-Id' => $branch->uuid])
+            ->getJson('/api/delivery-orders')
+            ->assertOk()
+            ->assertJsonFragment(['delivery_number' => 'DO-SALE-DELIVERY-001']);
+
+        $this->actingAs($user, 'sanctum')
+            ->withHeaders(['X-Business-Id' => $business->uuid, 'X-Branch-Id' => $branch->uuid])
+            ->patchJson("/api/delivery-orders/{$delivery->id}/status", [
+                'status' => 'assigned',
+                'courier_name' => 'Andi Courier',
+                'courier_phone' => '081299900001',
+            ])
+            ->assertOk()
+            ->assertJsonPath('delivery_order.status', 'assigned')
+            ->assertJsonPath('delivery_order.courier_name', 'Andi Courier');
+
+        $this->actingAs($user, 'sanctum')
+            ->withHeaders(['X-Business-Id' => $business->uuid, 'X-Branch-Id' => $branch->uuid])
+            ->getJson("/api/sales/{$saleId}/receipt")
+            ->assertOk()
+            ->assertJsonPath('receipt.sale.delivery.delivery_number', 'DO-SALE-DELIVERY-001')
+            ->assertJsonPath('receipt.totals.delivery_fee_total', 10000);
+
+        $this->assertDatabaseHas('audit_logs', ['action' => 'delivery_order.created']);
+        $this->assertDatabaseHas('audit_logs', ['action' => 'delivery_order.status_updated']);
+    }
+
+    public function test_delivery_sale_requires_delivery_address(): void
+    {
+        $this->seed(DatabaseSeeder::class);
+
+        [$user, $business, $branch] = $this->context();
+        $shift = $this->openShift($user, $business, $branch, 'SHIFT-DELIVERY-BAD');
+        $warehouse = Warehouse::query()->where('business_id', $business->id)->where('branch_id', $branch->id)->firstOrFail();
+        $product = Product::query()->where('business_id', $business->id)->where('sku', 'KAWI-RICE-001')->firstOrFail();
+
+        $this->actingAs($user, 'sanctum')
+            ->withHeaders(['X-Business-Id' => $business->uuid, 'X-Branch-Id' => $branch->uuid])
+            ->postJson('/api/sales', [
+                'cashier_shift_id' => $shift->id,
+                'warehouse_id' => $warehouse->id,
+                'sale_number' => 'SALE-DELIVERY-BAD',
+                'type' => 'delivery',
+                'delivery' => [
+                    'recipient_name' => 'Missing Address',
+                ],
+                'items' => [
+                    ['product_id' => $product->id, 'quantity' => 1, 'unit_price' => 35000],
+                ],
+                'payments' => [
+                    ['method' => 'cash', 'amount' => 38850],
+                ],
+            ])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors(['delivery.address']);
     }
 
     public function test_cashier_can_create_and_apply_promotion_to_sale(): void

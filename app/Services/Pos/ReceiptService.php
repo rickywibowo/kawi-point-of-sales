@@ -17,6 +17,7 @@ class ReceiptService
             'customer',
             'diningTable',
             'promotion',
+            'deliveryOrder',
             'items.modifiers',
             'payments',
         ]);
@@ -43,6 +44,12 @@ class ReceiptService
                 'cashier_shift' => $sale->cashierShift?->shift_number,
                 'customer' => $sale->customer?->name,
                 'promotion_code' => $sale->promotion_code,
+                'delivery' => $sale->deliveryOrder ? [
+                    'delivery_number' => $sale->deliveryOrder->delivery_number,
+                    'status' => $sale->deliveryOrder->status,
+                    'recipient_name' => $sale->deliveryOrder->recipient_name,
+                    'address' => $sale->deliveryOrder->address,
+                ] : null,
                 'dining_table' => $sale->diningTable ? [
                     'code' => $sale->diningTable->code,
                     'name' => $sale->diningTable->name,
@@ -73,6 +80,7 @@ class ReceiptService
                 'promotion_discount_total' => (float) $sale->promotion_discount_total,
                 'tax_total' => (float) $sale->tax_total,
                 'service_charge_total' => (float) $sale->service_charge_total,
+                'delivery_fee_total' => (float) $sale->delivery_fee_total,
                 'grand_total' => (float) $sale->grand_total,
                 'paid_total' => (float) $sale->paid_total,
                 'change_total' => (float) $sale->change_total,

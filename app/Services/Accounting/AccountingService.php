@@ -85,7 +85,7 @@ class AccountingService
         $accounts = $this->accounts($sale->business_id);
         $sale->loadMissing('items.product');
         $cogs = $sale->items->sum(fn ($item) => (float) $item->quantity * (float) $item->product?->cost_price);
-        $revenue = (float) $sale->subtotal - (float) $sale->discount_total + (float) $sale->service_charge_total;
+        $revenue = (float) $sale->subtotal - (float) $sale->discount_total + (float) $sale->service_charge_total + (float) $sale->delivery_fee_total;
 
         $lines = [
             ['account_id' => $accounts['cash']->id, 'debit' => (float) $sale->paid_total, 'credit' => 0, 'description' => 'Kas penjualan '.$sale->sale_number],

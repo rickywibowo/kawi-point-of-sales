@@ -31,6 +31,7 @@ class PosService
         private readonly CustomerService $customers,
         private readonly PromotionService $promotions,
         private readonly KitchenService $kitchen,
+        private readonly DeliveryService $deliveries,
     )
     {
     }
@@ -200,7 +201,8 @@ class PosService
             [$promotion, $promotionDiscount] = $this->promotions->apply($business, $data['promotion_code'] ?? null, max($subtotal - $discountTotal, 0));
             $discountTotal = round($discountTotal + $promotionDiscount, 2);
             $serviceChargeTotal = (float) ($data['service_charge_total'] ?? 0);
-            $grandTotal = round($subtotal - $discountTotal + $taxTotal + $serviceChargeTotal, 2);
+            $deliveryFeeTotal = ($data['type'] ?? 'takeaway') === 'delivery' ? round((float) ($data['delivery']['fee'] ?? 0), 2) : 0.0;
+            $grandTotal = round($subtotal - $discountTotal + $taxTotal + $serviceChargeTotal + $deliveryFeeTotal, 2);
             $paidTotal = collect($data['payments'])->sum(fn ($payment) => (float) $payment['amount']);
 
             if ($paidTotal < $grandTotal) {
@@ -226,6 +228,7 @@ class PosService
                 'discount_total' => $discountTotal,
                 'tax_total' => $taxTotal,
                 'service_charge_total' => $serviceChargeTotal,
+                'delivery_fee_total' => $deliveryFeeTotal,
                 'grand_total' => $grandTotal,
                 'paid_total' => $paidTotal,
                 'change_total' => max($paidTotal - $grandTotal, 0),
@@ -264,6 +267,11 @@ class PosService
             }
 
             $sale->load(['items.modifiers', 'payments']);
+
+            if ($sale->type === 'delivery') {
+                $this->deliveries->createForSale($sale, $data, $request);
+            }
+
             $this->kitchen->createTicketForSale($sale, $request);
             $this->accounting->postSaleJournal($sale, $request);
 

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\DeliveryOrder;
 use App\Models\DiningTable;
 use App\Models\HeldTransaction;
 use App\Models\KitchenTicket;
@@ -50,6 +51,12 @@ class PosController extends Controller
                 ->with(['items', 'diningTable'])
                 ->whereIn('status', ['open', 'preparing', 'ready'])
                 ->latest('opened_at')
+                ->get(),
+            'delivery_orders' => DeliveryOrder::query()
+                ->forTenant($business->id, $branch->id)
+                ->with('sale')
+                ->whereIn('status', ['pending', 'assigned', 'picked_up'])
+                ->latest()
                 ->get(),
             'today_sales' => Sale::query()
                 ->forTenant($business->id, $branch->id)

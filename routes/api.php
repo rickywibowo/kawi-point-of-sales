@@ -6,6 +6,7 @@ use App\Http\Controllers\Api\AuditLogController;
 use App\Http\Controllers\Api\CashierShiftController;
 use App\Http\Controllers\Api\CategoryController;
 use App\Http\Controllers\Api\CustomerController;
+use App\Http\Controllers\Api\DeliveryOrderController;
 use App\Http\Controllers\Api\DiningTableController;
 use App\Http\Controllers\Api\HeldTransactionController;
 use App\Http\Controllers\Api\InventoryController;
@@ -116,6 +117,10 @@ Route::middleware(['auth:sanctum', 'tenant'])->group(function (): void {
     Route::patch('/kitchen-tickets/{ticket}/status', [KitchenTicketController::class, 'updateStatus'])
         ->middleware('permission:sales.create');
     Route::patch('/kitchen-ticket-items/{item}/status', [KitchenTicketController::class, 'updateItemStatus'])
+        ->middleware('permission:sales.create');
+    Route::get('/delivery-orders', [DeliveryOrderController::class, 'index'])
+        ->middleware('permission:sales.create');
+    Route::patch('/delivery-orders/{delivery}/status', [DeliveryOrderController::class, 'updateStatus'])
         ->middleware('permission:sales.create');
 
     Route::get('/purchasing', [PurchasingController::class, 'index'])

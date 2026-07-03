@@ -330,6 +330,22 @@ Status: complete.
 - Dokumentasi Tahap 25 dan ringkasan milestone proyek dibuat.
 - Automated test KDS dibuat.
 
+### Tahap 26 - Delivery Workflow Foundation
+
+Status: complete.
+
+- Tabel `delivery_orders` dibuat dan `sales.delivery_fee_total` ditambahkan.
+- Model, request validation, service, controller, dan endpoint delivery dibuat.
+- Sale tipe `delivery` wajib menyertakan recipient dan address.
+- Delivery fee masuk ke grand total sale.
+- Sale delivery otomatis membuat delivery order `DO-{sale_number}`.
+- Endpoint `GET /api/delivery-orders` dan update status delivery dibuat.
+- POS index mengembalikan delivery orders aktif.
+- Receipt digital menampilkan detail delivery dan delivery fee.
+- Vue Pinia store POS dan dashboard POS menampilkan delivery queue.
+- Dokumentasi Tahap 26 dibuat.
+- Automated test delivery workflow dibuat.
+
 ## Cara Track Mundur
 
 - Setiap tahap disimpan dalam commit terpisah.

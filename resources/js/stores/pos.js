@@ -41,6 +41,10 @@ export const usePosStore = defineStore('pos', {
             { number: 'KOT-SALE-DEMO-001', table: 'T-02', status: 'preparing', itemCount: 2 },
             { number: 'KOT-SALE-DEMO-002', table: 'Takeaway', status: 'ready', itemCount: 1 },
         ],
+        deliveryOrders: [
+            { number: 'DO-SALE-DEMO-003', recipient: 'Member KAWI', status: 'assigned', courier: 'Andi' },
+            { number: 'DO-SALE-DEMO-004', recipient: 'Rina Member', status: 'picked_up', courier: 'Budi' },
+        ],
         heldTransactions: 1,
         todayTransactions: 0,
     }),
@@ -56,5 +60,6 @@ export const usePosStore = defineStore('pos', {
         activeReservationCount: (state) => state.tableReservations.filter((reservation) => reservation.status !== 'cancelled').length,
         activePromotionCount: (state) => state.promotions.length,
         activeKitchenTicketCount: (state) => state.kitchenTickets.filter((ticket) => ticket.status !== 'served').length,
+        activeDeliveryCount: (state) => state.deliveryOrders.filter((order) => order.status !== 'delivered').length,
     },
 });

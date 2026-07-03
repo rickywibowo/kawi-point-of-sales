@@ -7,6 +7,7 @@ use App\Models\Concerns\UsesUuid;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class Sale extends Model
 {
@@ -31,6 +32,7 @@ class Sale extends Model
         'discount_total',
         'tax_total',
         'service_charge_total',
+        'delivery_fee_total',
         'grand_total',
         'paid_total',
         'change_total',
@@ -50,6 +52,7 @@ class Sale extends Model
             'promotion_discount_total' => 'decimal:2',
             'tax_total' => 'decimal:2',
             'service_charge_total' => 'decimal:2',
+            'delivery_fee_total' => 'decimal:2',
             'grand_total' => 'decimal:2',
             'paid_total' => 'decimal:2',
             'change_total' => 'decimal:2',
@@ -92,5 +95,10 @@ class Sale extends Model
     public function promotion(): BelongsTo
     {
         return $this->belongsTo(Promotion::class);
+    }
+
+    public function deliveryOrder(): HasOne
+    {
+        return $this->hasOne(DeliveryOrder::class);
     }
 }
