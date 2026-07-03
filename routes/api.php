@@ -6,6 +6,7 @@ use App\Http\Controllers\Api\AuditLogController;
 use App\Http\Controllers\Api\CashierShiftController;
 use App\Http\Controllers\Api\CategoryController;
 use App\Http\Controllers\Api\CustomerController;
+use App\Http\Controllers\Api\DiningTableController;
 use App\Http\Controllers\Api\HeldTransactionController;
 use App\Http\Controllers\Api\InventoryController;
 use App\Http\Controllers\Api\MasterDataController;
@@ -79,6 +80,10 @@ Route::middleware(['auth:sanctum', 'tenant'])->group(function (): void {
         ->middleware('permission:inventory.adjust');
 
     Route::get('/pos', [PosController::class, 'index'])
+        ->middleware('permission:sales.create');
+    Route::post('/dining-tables', [DiningTableController::class, 'store'])
+        ->middleware('permission:sales.create');
+    Route::patch('/dining-tables/{table}/status', [DiningTableController::class, 'updateStatus'])
         ->middleware('permission:sales.create');
     Route::post('/cashier-shifts', [CashierShiftController::class, 'store'])
         ->middleware('permission:sales.create');

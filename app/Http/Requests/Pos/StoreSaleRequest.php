@@ -13,6 +13,7 @@ class StoreSaleRequest extends FormRequest
             'cashier_shift_id' => ['required', 'integer'],
             'warehouse_id' => ['required', 'integer'],
             'customer_id' => ['nullable', 'integer'],
+            'dining_table_id' => ['nullable', 'integer'],
             'sale_number' => ['required', 'string', 'max:80'],
             'idempotency_key' => ['nullable', 'string', 'max:120'],
             'type' => ['nullable', Rule::in(['dine_in', 'takeaway', 'delivery'])],

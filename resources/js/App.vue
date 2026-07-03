@@ -153,7 +153,7 @@ onUnmounted(() => {
                     <div class="mt-6 rounded-md border border-white/10 bg-zinc-950/70 p-4">
                         <div class="flex flex-wrap items-center justify-between gap-3">
                             <h3 class="text-sm font-semibold text-zinc-300">POS Cart</h3>
-                            <span class="text-xs text-zinc-500">{{ pos.shift.number }} / {{ pos.shift.status }} / {{ pos.receiptCount }} struk</span>
+                            <span class="text-xs text-zinc-500">{{ pos.shift.number }} / {{ pos.shift.status }} / {{ pos.availableTableCount }} meja ready</span>
                         </div>
                         <div class="mt-4 grid gap-3 sm:grid-cols-[1fr_auto]">
                             <div class="space-y-2">
@@ -169,6 +169,16 @@ onUnmounted(() => {
                             <div class="rounded-md border border-emerald-300/30 bg-emerald-300/10 p-3 text-right">
                                 <p class="text-xs text-emerald-100">Subtotal</p>
                                 <p class="mt-1 text-xl font-semibold text-emerald-100">Rp {{ pos.subtotal.toLocaleString('id-ID') }}</p>
+                            </div>
+                        </div>
+                        <div class="mt-4 grid gap-2 sm:grid-cols-3">
+                            <div
+                                v-for="table in pos.diningTables"
+                                :key="table.code"
+                                class="rounded-md border border-white/10 bg-white/[0.03] px-3 py-2 text-sm"
+                            >
+                                <p class="font-medium">{{ table.code }} / {{ table.capacity }} pax</p>
+                                <p class="mt-1 text-xs text-zinc-500">{{ table.status }}</p>
                             </div>
                         </div>
                     </div>

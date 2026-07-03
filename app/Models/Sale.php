@@ -17,6 +17,7 @@ class Sale extends Model
         'branch_id',
         'cashier_shift_id',
         'customer_id',
+        'dining_table_id',
         'cashier_id',
         'uuid',
         'sale_number',
@@ -77,5 +78,10 @@ class Sale extends Model
     public function customer(): BelongsTo
     {
         return $this->belongsTo(Customer::class);
+    }
+
+    public function diningTable(): BelongsTo
+    {
+        return $this->belongsTo(DiningTable::class);
     }
 }

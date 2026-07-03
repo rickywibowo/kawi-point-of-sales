@@ -15,6 +15,7 @@ class ReceiptService
             'branch',
             'cashierShift',
             'customer',
+            'diningTable',
             'items.modifiers',
             'payments',
         ]);
@@ -40,6 +41,11 @@ class ReceiptService
                 'sold_at' => $sale->sold_at?->toIso8601String(),
                 'cashier_shift' => $sale->cashierShift?->shift_number,
                 'customer' => $sale->customer?->name,
+                'dining_table' => $sale->diningTable ? [
+                    'code' => $sale->diningTable->code,
+                    'name' => $sale->diningTable->name,
+                    'section' => $sale->diningTable->section,
+                ] : null,
             ],
             'items' => $sale->items->map(fn ($item): array => [
                 'name' => $item->product_name,

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\DiningTable;
 use App\Models\HeldTransaction;
 use App\Models\Product;
 use App\Models\Sale;
@@ -27,6 +28,7 @@ class PosController extends Controller
                 ->orderBy('name')
                 ->get(),
             'warehouses' => Warehouse::query()->forTenant($business->id, $branch->id)->where('is_active', true)->get(),
+            'dining_tables' => DiningTable::query()->forTenant($business->id, $branch->id)->orderBy('section')->orderBy('code')->get(),
             'held_transactions' => HeldTransaction::query()
                 ->forTenant($business->id, $branch->id)
                 ->whereNull('resumed_at')

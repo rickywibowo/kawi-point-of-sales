@@ -7,6 +7,7 @@ use App\Models\Business;
 use App\Models\CashMovement;
 use App\Models\CashierShift;
 use App\Models\Customer;
+use App\Models\DiningTable;
 use App\Models\HeldTransaction;
 use App\Models\Modifier;
 use App\Models\Product;
@@ -190,8 +191,9 @@ class PosService
         }
 
         $this->assertCustomerInBusiness($business->id, $data['customer_id'] ?? null);
+        $diningTable = $this->assertDiningTable($business->id, $branch->id, $data);
 
-        return DB::transaction(function () use ($business, $branch, $warehouse, $shift, $data, $request): Sale {
+        return DB::transaction(function () use ($business, $branch, $warehouse, $shift, $diningTable, $data, $request): Sale {
             [$items, $subtotal, $discountTotal, $taxTotal] = $this->prepareItems($business->id, $branch->id, $data['items']);
             $serviceChargeTotal = (float) ($data['service_charge_total'] ?? 0);
             $grandTotal = round($subtotal - $discountTotal + $taxTotal + $serviceChargeTotal, 2);
@@ -206,6 +208,7 @@ class PosService
                 'branch_id' => $branch->id,
                 'cashier_shift_id' => $shift->id,
                 'customer_id' => $data['customer_id'] ?? null,
+                'dining_table_id' => $diningTable?->id,
                 'cashier_id' => $request->user()->id,
                 'uuid' => (string) Str::uuid(),
                 'sale_number' => $data['sale_number'],
@@ -243,6 +246,10 @@ class PosService
                     'reference' => $payment['reference'] ?? null,
                     'metadata' => $payment['metadata'] ?? null,
                 ]);
+            }
+
+            if ($diningTable) {
+                $diningTable->update(['status' => 'cleaning']);
             }
 
             $sale->load(['items.modifiers', 'payments']);
@@ -398,6 +405,33 @@ class PosService
         if (! $exists) {
             throw ValidationException::withMessages(['customer_id' => ['The selected customer is outside the active business.']]);
         }
+    }
+
+    private function assertDiningTable(int $businessId, int $branchId, array $data): ?DiningTable
+    {
+        if (($data['type'] ?? 'takeaway') !== 'dine_in') {
+            return null;
+        }
+
+        if (empty($data['dining_table_id'])) {
+            throw ValidationException::withMessages(['dining_table_id' => ['Dine-in sales require a dining table.']]);
+        }
+
+        $table = DiningTable::query()
+            ->where('business_id', $businessId)
+            ->where('branch_id', $branchId)
+            ->whereKey($data['dining_table_id'])
+            ->first();
+
+        if (! $table) {
+            throw ValidationException::withMessages(['dining_table_id' => ['The selected dining table is outside the active branch.']]);
+        }
+
+        if (! in_array($table->status, ['available', 'reserved'], true)) {
+            throw ValidationException::withMessages(['dining_table_id' => ['The selected dining table is not available.']]);
+        }
+
+        return $table;
     }
 
     private function reverseSalesConsumption(Sale $sale, string $movementType, ?int $userId): void

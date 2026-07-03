@@ -270,6 +270,21 @@ Status: complete.
 - Dokumentasi Tahap 21 dibuat.
 - Automated test customer loyalty dibuat.
 
+### Tahap 22 - Dine-in Table Management
+
+Status: complete.
+
+- Tabel `dining_tables` dibuat dan `sales.dining_table_id` ditambahkan.
+- Model, request validation, service, dan endpoint dining table dibuat.
+- Endpoint `POST /api/dining-tables` dan `PATCH /api/dining-tables/{table}/status` dibuat.
+- POS index mengembalikan daftar dining tables.
+- Sale tipe `dine_in` wajib memakai meja dari branch aktif.
+- Meja dine-in berubah menjadi `cleaning` setelah sale selesai.
+- Receipt digital menampilkan informasi meja.
+- Seeder POS, Vue Pinia store POS, dan dashboard POS diperbarui.
+- Dokumentasi Tahap 22 dibuat.
+- Automated test dine-in table management dibuat.
+
 ## Cara Track Mundur
 
 - Setiap tahap disimpan dalam commit terpisah.

@@ -5,6 +5,7 @@ namespace Tests\Feature\Pos;
 use App\Models\Branch;
 use App\Models\Business;
 use App\Models\CashierShift;
+use App\Models\DiningTable;
 use App\Models\Product;
 use App\Models\Sale;
 use App\Models\StockBalance;
@@ -60,6 +61,41 @@ class PosTest extends TestCase
         $this->assertDatabaseHas('audit_logs', ['action' => 'sale.held']);
     }
 
+    public function test_cashier_can_create_and_update_dining_table_status(): void
+    {
+        $this->seed(DatabaseSeeder::class);
+
+        [$user, $business, $branch] = $this->context();
+
+        $response = $this->actingAs($user, 'sanctum')
+            ->withHeaders(['X-Business-Id' => $business->uuid, 'X-Branch-Id' => $branch->uuid])
+            ->postJson('/api/dining-tables', [
+                'code' => 'T-TEST-01',
+                'name' => 'Table Test 01',
+                'capacity' => 4,
+                'section' => 'Test',
+            ])
+            ->assertCreated()
+            ->assertJsonPath('dining_table.status', 'available');
+
+        $tableId = $response->json('dining_table.id');
+
+        $this->actingAs($user, 'sanctum')
+            ->withHeaders(['X-Business-Id' => $business->uuid, 'X-Branch-Id' => $branch->uuid])
+            ->patchJson("/api/dining-tables/{$tableId}/status", ['status' => 'reserved'])
+            ->assertOk()
+            ->assertJsonPath('dining_table.status', 'reserved');
+
+        $this->actingAs($user, 'sanctum')
+            ->withHeaders(['X-Business-Id' => $business->uuid, 'X-Branch-Id' => $branch->uuid])
+            ->getJson('/api/pos')
+            ->assertOk()
+            ->assertJsonFragment(['code' => 'T-TEST-01']);
+
+        $this->assertDatabaseHas('audit_logs', ['action' => 'dining_table.created']);
+        $this->assertDatabaseHas('audit_logs', ['action' => 'dining_table.status_updated']);
+    }
+
     public function test_complete_sale_creates_items_payments_and_stock_consumption(): void
     {
         $this->seed(DatabaseSeeder::class);
@@ -96,6 +132,80 @@ class PosTest extends TestCase
 
         $after = (float) StockBalance::query()->where('warehouse_id', $warehouse->id)->where('product_id', $product->id)->firstOrFail()->quantity_on_hand;
         $this->assertSame($before - 2, $after);
+    }
+
+    public function test_dine_in_sale_requires_table_and_marks_table_cleaning(): void
+    {
+        $this->seed(DatabaseSeeder::class);
+
+        [$user, $business, $branch] = $this->context();
+        $shift = $this->openShift($user, $business, $branch, 'SHIFT-DINE-IN');
+        $warehouse = Warehouse::query()->where('business_id', $business->id)->where('branch_id', $branch->id)->firstOrFail();
+        $product = Product::query()->where('business_id', $business->id)->where('sku', 'KAWI-RICE-001')->firstOrFail();
+        $table = DiningTable::query()->create([
+            'business_id' => $business->id,
+            'branch_id' => $branch->id,
+            'uuid' => (string) \Illuminate\Support\Str::uuid(),
+            'code' => 'DINE-01',
+            'name' => 'Dine Table 01',
+            'capacity' => 2,
+            'status' => 'available',
+        ]);
+
+        $saleId = $this->actingAs($user, 'sanctum')
+            ->withHeaders(['X-Business-Id' => $business->uuid, 'X-Branch-Id' => $branch->uuid])
+            ->postJson('/api/sales', [
+                'cashier_shift_id' => $shift->id,
+                'warehouse_id' => $warehouse->id,
+                'dining_table_id' => $table->id,
+                'sale_number' => 'SALE-DINE-001',
+                'idempotency_key' => 'sale-dine-001',
+                'type' => 'dine_in',
+                'items' => [
+                    ['product_id' => $product->id, 'quantity' => 1, 'unit_price' => 35000],
+                ],
+                'payments' => [
+                    ['method' => 'cash', 'amount' => 38850],
+                ],
+            ])
+            ->assertCreated()
+            ->assertJsonPath('sale.dining_table_id', $table->id)
+            ->json('sale.id');
+
+        $this->assertSame('cleaning', $table->fresh()->status);
+
+        $this->actingAs($user, 'sanctum')
+            ->withHeaders(['X-Business-Id' => $business->uuid, 'X-Branch-Id' => $branch->uuid])
+            ->getJson("/api/sales/{$saleId}/receipt")
+            ->assertOk()
+            ->assertJsonPath('receipt.sale.dining_table.code', 'DINE-01');
+    }
+
+    public function test_dine_in_sale_without_table_is_rejected(): void
+    {
+        $this->seed(DatabaseSeeder::class);
+
+        [$user, $business, $branch] = $this->context();
+        $shift = $this->openShift($user, $business, $branch, 'SHIFT-DINE-BAD');
+        $warehouse = Warehouse::query()->where('business_id', $business->id)->where('branch_id', $branch->id)->firstOrFail();
+        $product = Product::query()->where('business_id', $business->id)->where('sku', 'KAWI-RICE-001')->firstOrFail();
+
+        $this->actingAs($user, 'sanctum')
+            ->withHeaders(['X-Business-Id' => $business->uuid, 'X-Branch-Id' => $branch->uuid])
+            ->postJson('/api/sales', [
+                'cashier_shift_id' => $shift->id,
+                'warehouse_id' => $warehouse->id,
+                'sale_number' => 'SALE-DINE-BAD',
+                'type' => 'dine_in',
+                'items' => [
+                    ['product_id' => $product->id, 'quantity' => 1, 'unit_price' => 35000],
+                ],
+                'payments' => [
+                    ['method' => 'cash', 'amount' => 38850],
+                ],
+            ])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors(['dining_table_id']);
     }
 
     public function test_sale_idempotency_key_prevents_duplicate_sales(): void

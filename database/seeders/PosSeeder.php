@@ -5,6 +5,7 @@ namespace Database\Seeders;
 use App\Models\Branch;
 use App\Models\Business;
 use App\Models\CashierShift;
+use App\Models\DiningTable;
 use App\Models\HeldTransaction;
 use App\Models\Product;
 use App\Models\User;
@@ -19,6 +20,20 @@ class PosSeeder extends Seeder
         $branch = Branch::query()->where('business_id', $business->id)->where('code', 'MAIN')->firstOrFail();
         $owner = User::query()->where('email', 'owner@kawi.test')->firstOrFail();
         $product = Product::query()->where('business_id', $business->id)->where('sku', 'KAWI-RICE-001')->firstOrFail();
+
+        foreach ($this->tables() as $table) {
+            DiningTable::query()->firstOrCreate(
+                ['branch_id' => $branch->id, 'code' => $table['code']],
+                [
+                    'business_id' => $business->id,
+                    'uuid' => (string) Str::uuid(),
+                    'name' => $table['name'],
+                    'capacity' => $table['capacity'],
+                    'section' => $table['section'],
+                    'status' => $table['status'],
+                ],
+            );
+        }
 
         CashierShift::query()->firstOrCreate(
             ['business_id' => $business->id, 'shift_number' => 'SHIFT-SEED-001'],
@@ -51,5 +66,14 @@ class PosSeeder extends Seeder
                 'held_at' => now(),
             ],
         );
+    }
+
+    private function tables(): array
+    {
+        return [
+            ['code' => 'T-01', 'name' => 'Table 01', 'capacity' => 2, 'section' => 'Indoor', 'status' => 'available'],
+            ['code' => 'T-02', 'name' => 'Table 02', 'capacity' => 4, 'section' => 'Indoor', 'status' => 'available'],
+            ['code' => 'VIP-01', 'name' => 'VIP Room 01', 'capacity' => 8, 'section' => 'VIP', 'status' => 'reserved'],
+        ];
     }
 }

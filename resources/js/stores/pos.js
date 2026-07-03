@@ -25,6 +25,11 @@ export const usePosStore = defineStore('pos', {
         receipts: [
             { number: 'SALE-DEMO-001', channel: 'digital', total: 60000 },
         ],
+        diningTables: [
+            { code: 'T-01', name: 'Table 01', status: 'available', capacity: 2 },
+            { code: 'T-02', name: 'Table 02', status: 'cleaning', capacity: 4 },
+            { code: 'VIP-01', name: 'VIP Room', status: 'reserved', capacity: 8 },
+        ],
         heldTransactions: 1,
         todayTransactions: 0,
     }),
@@ -36,5 +41,6 @@ export const usePosStore = defineStore('pos', {
             return total + (movement.type === 'cash_in' ? movement.amount : -movement.amount);
         }, 0),
         receiptCount: (state) => state.receipts.length,
+        availableTableCount: (state) => state.diningTables.filter((table) => table.status === 'available').length,
     },
 });
