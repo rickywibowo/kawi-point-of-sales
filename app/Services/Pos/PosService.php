@@ -29,6 +29,7 @@ class PosService
         private readonly AuditLogger $audit,
         private readonly AccountingService $accounting,
         private readonly CustomerService $customers,
+        private readonly PromotionService $promotions,
     )
     {
     }
@@ -195,6 +196,8 @@ class PosService
 
         return DB::transaction(function () use ($business, $branch, $warehouse, $shift, $diningTable, $data, $request): Sale {
             [$items, $subtotal, $discountTotal, $taxTotal] = $this->prepareItems($business->id, $branch->id, $data['items']);
+            [$promotion, $promotionDiscount] = $this->promotions->apply($business, $data['promotion_code'] ?? null, max($subtotal - $discountTotal, 0));
+            $discountTotal = round($discountTotal + $promotionDiscount, 2);
             $serviceChargeTotal = (float) ($data['service_charge_total'] ?? 0);
             $grandTotal = round($subtotal - $discountTotal + $taxTotal + $serviceChargeTotal, 2);
             $paidTotal = collect($data['payments'])->sum(fn ($payment) => (float) $payment['amount']);
@@ -209,6 +212,9 @@ class PosService
                 'cashier_shift_id' => $shift->id,
                 'customer_id' => $data['customer_id'] ?? null,
                 'dining_table_id' => $diningTable?->id,
+                'promotion_id' => $promotion?->id,
+                'promotion_code' => $promotion?->code,
+                'promotion_discount_total' => $promotionDiscount,
                 'cashier_id' => $request->user()->id,
                 'uuid' => (string) Str::uuid(),
                 'sale_number' => $data['sale_number'],
@@ -250,6 +256,10 @@ class PosService
 
             if ($diningTable) {
                 $diningTable->update(['status' => 'cleaning']);
+            }
+
+            if ($promotion) {
+                $this->promotions->markUsed($promotion);
             }
 
             $sale->load(['items.modifiers', 'payments']);

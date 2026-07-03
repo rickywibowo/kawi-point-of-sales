@@ -14,6 +14,7 @@ use App\Http\Controllers\Api\OfflineSyncController;
 use App\Http\Controllers\Api\OperationalExpenseController;
 use App\Http\Controllers\Api\PosController;
 use App\Http\Controllers\Api\ProductController;
+use App\Http\Controllers\Api\PromotionController;
 use App\Http\Controllers\Api\ProductionController;
 use App\Http\Controllers\Api\GoodsReceiptController;
 use App\Http\Controllers\Api\HealthController;
@@ -90,6 +91,8 @@ Route::middleware(['auth:sanctum', 'tenant'])->group(function (): void {
     Route::patch('/table-reservations/{reservation}/cancel', [DiningTableController::class, 'cancelReservation'])
         ->middleware('permission:sales.create');
     Route::patch('/table-reservations/{reservation}/seat', [DiningTableController::class, 'seatReservation'])
+        ->middleware('permission:sales.create');
+    Route::post('/promotions', [PromotionController::class, 'store'])
         ->middleware('permission:sales.create');
     Route::post('/cashier-shifts', [CashierShiftController::class, 'store'])
         ->middleware('permission:sales.create');

@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\DiningTable;
 use App\Models\HeldTransaction;
 use App\Models\Product;
+use App\Models\Promotion;
 use App\Models\Sale;
 use App\Models\TableReservation;
 use App\Models\Warehouse;
@@ -29,6 +30,7 @@ class PosController extends Controller
                 ->orderBy('name')
                 ->get(),
             'warehouses' => Warehouse::query()->forTenant($business->id, $branch->id)->where('is_active', true)->get(),
+            'promotions' => Promotion::query()->forBusiness($business->id)->where('is_active', true)->orderBy('code')->get(),
             'dining_tables' => DiningTable::query()->forTenant($business->id, $branch->id)->orderBy('section')->orderBy('code')->get(),
             'table_reservations' => TableReservation::query()
                 ->forTenant($business->id, $branch->id)

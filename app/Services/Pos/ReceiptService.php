@@ -16,6 +16,7 @@ class ReceiptService
             'cashierShift',
             'customer',
             'diningTable',
+            'promotion',
             'items.modifiers',
             'payments',
         ]);
@@ -41,6 +42,7 @@ class ReceiptService
                 'sold_at' => $sale->sold_at?->toIso8601String(),
                 'cashier_shift' => $sale->cashierShift?->shift_number,
                 'customer' => $sale->customer?->name,
+                'promotion_code' => $sale->promotion_code,
                 'dining_table' => $sale->diningTable ? [
                     'code' => $sale->diningTable->code,
                     'name' => $sale->diningTable->name,
@@ -68,6 +70,7 @@ class ReceiptService
             'totals' => [
                 'subtotal' => (float) $sale->subtotal,
                 'discount_total' => (float) $sale->discount_total,
+                'promotion_discount_total' => (float) $sale->promotion_discount_total,
                 'tax_total' => (float) $sale->tax_total,
                 'service_charge_total' => (float) $sale->service_charge_total,
                 'grand_total' => (float) $sale->grand_total,

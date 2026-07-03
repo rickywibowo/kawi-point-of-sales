@@ -17,6 +17,7 @@ class StoreSaleRequest extends FormRequest
             'sale_number' => ['required', 'string', 'max:80'],
             'idempotency_key' => ['nullable', 'string', 'max:120'],
             'type' => ['nullable', Rule::in(['dine_in', 'takeaway', 'delivery'])],
+            'promotion_code' => ['nullable', 'string', 'max:60'],
             'service_charge_total' => ['nullable', 'numeric', 'min:0'],
             'notes' => ['nullable', 'string', 'max:1000'],
             'items' => ['required', 'array', 'min:1'],

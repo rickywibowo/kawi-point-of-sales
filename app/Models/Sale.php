@@ -18,6 +18,9 @@ class Sale extends Model
         'cashier_shift_id',
         'customer_id',
         'dining_table_id',
+        'promotion_id',
+        'promotion_code',
+        'promotion_discount_total',
         'cashier_id',
         'uuid',
         'sale_number',
@@ -44,6 +47,7 @@ class Sale extends Model
         return [
             'subtotal' => 'decimal:2',
             'discount_total' => 'decimal:2',
+            'promotion_discount_total' => 'decimal:2',
             'tax_total' => 'decimal:2',
             'service_charge_total' => 'decimal:2',
             'grand_total' => 'decimal:2',
@@ -83,5 +87,10 @@ class Sale extends Model
     public function diningTable(): BelongsTo
     {
         return $this->belongsTo(DiningTable::class);
+    }
+
+    public function promotion(): BelongsTo
+    {
+        return $this->belongsTo(Promotion::class);
     }
 }

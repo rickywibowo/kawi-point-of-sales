@@ -300,6 +300,21 @@ Status: complete.
 - Dokumentasi Tahap 23 dibuat.
 - Automated test table reservations dibuat.
 
+### Tahap 24 - Promotion & Voucher Engine
+
+Status: complete.
+
+- Tabel `promotions` dibuat dan kolom promo ditambahkan ke `sales`.
+- Model, request validation, service, controller, dan endpoint promo dibuat.
+- Endpoint `POST /api/promotions` dibuat dengan permission `sales.create`.
+- POS index mengembalikan promo aktif.
+- Sale menerima `promotion_code` dan menghitung promotion discount.
+- Promo mendukung tipe `percent` dan `fixed`, minimum subtotal, maximum discount, dan usage limit.
+- Receipt digital menampilkan kode promo dan total diskon promo.
+- Vue Pinia store POS dan dashboard POS diperbarui.
+- Dokumentasi Tahap 24 dibuat.
+- Automated test promotion/voucher dibuat.
+
 ## Cara Track Mundur
 
 - Setiap tahap disimpan dalam commit terpisah.

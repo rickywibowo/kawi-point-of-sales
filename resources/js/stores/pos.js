@@ -33,6 +33,10 @@ export const usePosStore = defineStore('pos', {
         tableReservations: [
             { number: 'RSV-DEMO-001', guest: 'Rina Member', table: 'VIP-01', status: 'booked', time: '19:00' },
         ],
+        promotions: [
+            { code: 'KAWI10', name: 'KAWI 10%', type: 'percent', value: 10 },
+            { code: 'LUNCH15K', name: 'Lunch 15K', type: 'fixed', value: 15000 },
+        ],
         heldTransactions: 1,
         todayTransactions: 0,
     }),
@@ -46,5 +50,6 @@ export const usePosStore = defineStore('pos', {
         receiptCount: (state) => state.receipts.length,
         availableTableCount: (state) => state.diningTables.filter((table) => table.status === 'available').length,
         activeReservationCount: (state) => state.tableReservations.filter((reservation) => reservation.status !== 'cancelled').length,
+        activePromotionCount: (state) => state.promotions.length,
     },
 });

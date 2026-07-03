@@ -7,6 +7,7 @@ use App\Models\Business;
 use App\Models\CashierShift;
 use App\Models\DiningTable;
 use App\Models\Product;
+use App\Models\Promotion;
 use App\Models\Sale;
 use App\Models\StockBalance;
 use App\Models\StockLedger;
@@ -133,6 +134,97 @@ class PosTest extends TestCase
 
         $after = (float) StockBalance::query()->where('warehouse_id', $warehouse->id)->where('product_id', $product->id)->firstOrFail()->quantity_on_hand;
         $this->assertSame($before - 2, $after);
+    }
+
+    public function test_cashier_can_create_and_apply_promotion_to_sale(): void
+    {
+        $this->seed(DatabaseSeeder::class);
+
+        [$user, $business, $branch] = $this->context();
+        $shift = $this->openShift($user, $business, $branch, 'SHIFT-PROMO');
+        $warehouse = Warehouse::query()->where('business_id', $business->id)->where('branch_id', $branch->id)->firstOrFail();
+        $product = Product::query()->where('business_id', $business->id)->where('sku', 'KAWI-RICE-001')->firstOrFail();
+
+        $this->actingAs($user, 'sanctum')
+            ->withHeaders(['X-Business-Id' => $business->uuid, 'X-Branch-Id' => $branch->uuid])
+            ->postJson('/api/promotions', [
+                'code' => 'KAWI10',
+                'name' => 'KAWI 10 Percent',
+                'type' => 'percent',
+                'value' => 10,
+                'maximum_discount' => 5000,
+            ])
+            ->assertCreated()
+            ->assertJsonPath('promotion.code', 'KAWI10');
+
+        $saleId = $this->actingAs($user, 'sanctum')
+            ->withHeaders(['X-Business-Id' => $business->uuid, 'X-Branch-Id' => $branch->uuid])
+            ->postJson('/api/sales', [
+                'cashier_shift_id' => $shift->id,
+                'warehouse_id' => $warehouse->id,
+                'sale_number' => 'SALE-PROMO-001',
+                'idempotency_key' => 'sale-promo-001',
+                'promotion_code' => 'KAWI10',
+                'items' => [
+                    ['product_id' => $product->id, 'quantity' => 1, 'unit_price' => 35000],
+                ],
+                'payments' => [
+                    ['method' => 'cash', 'amount' => 35350],
+                ],
+            ])
+            ->assertCreated()
+            ->assertJsonPath('sale.promotion_code', 'KAWI10')
+            ->assertJsonPath('sale.promotion_discount_total', '3500.00')
+            ->assertJsonPath('sale.grand_total', '35350.00')
+            ->json('sale.id');
+
+        $this->assertSame(1, Promotion::query()->where('code', 'KAWI10')->value('usage_count'));
+
+        $this->actingAs($user, 'sanctum')
+            ->withHeaders(['X-Business-Id' => $business->uuid, 'X-Branch-Id' => $branch->uuid])
+            ->getJson("/api/sales/{$saleId}/receipt")
+            ->assertOk()
+            ->assertJsonPath('receipt.sale.promotion_code', 'KAWI10')
+            ->assertJsonPath('receipt.totals.promotion_discount_total', 3500);
+
+        $this->assertDatabaseHas('audit_logs', ['action' => 'promotion.created']);
+    }
+
+    public function test_promotion_rejects_sale_below_minimum_subtotal(): void
+    {
+        $this->seed(DatabaseSeeder::class);
+
+        [$user, $business, $branch] = $this->context();
+        $shift = $this->openShift($user, $business, $branch, 'SHIFT-PROMO-MIN');
+        $warehouse = Warehouse::query()->where('business_id', $business->id)->where('branch_id', $branch->id)->firstOrFail();
+        $product = Product::query()->where('business_id', $business->id)->where('sku', 'KAWI-RICE-001')->firstOrFail();
+
+        Promotion::query()->create([
+            'business_id' => $business->id,
+            'uuid' => (string) \Illuminate\Support\Str::uuid(),
+            'code' => 'MIN100',
+            'name' => 'Minimum 100K',
+            'type' => 'fixed',
+            'value' => 10000,
+            'minimum_subtotal' => 100000,
+        ]);
+
+        $this->actingAs($user, 'sanctum')
+            ->withHeaders(['X-Business-Id' => $business->uuid, 'X-Branch-Id' => $branch->uuid])
+            ->postJson('/api/sales', [
+                'cashier_shift_id' => $shift->id,
+                'warehouse_id' => $warehouse->id,
+                'sale_number' => 'SALE-PROMO-MIN',
+                'promotion_code' => 'MIN100',
+                'items' => [
+                    ['product_id' => $product->id, 'quantity' => 1, 'unit_price' => 35000],
+                ],
+                'payments' => [
+                    ['method' => 'cash', 'amount' => 38850],
+                ],
+            ])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors(['promotion_code']);
     }
 
     public function test_dine_in_sale_requires_table_and_marks_table_cleaning(): void
