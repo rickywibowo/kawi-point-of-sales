@@ -1,4 +1,5 @@
 import { defineStore } from 'pinia';
+import { apiGet } from '../services/api';
 
 export const usePurchasingStore = defineStore('purchasing', {
     state: () => ({
@@ -23,5 +24,34 @@ export const usePurchasingStore = defineStore('purchasing', {
         payableRemaining: (state) => state.payables.reduce((total, payable) => total + payable.amount - payable.paidAmount, 0),
         supplierPaymentTotal: (state) => state.supplierPayments.reduce((total, payment) => total + payment.amount, 0),
         returnTotal: (state) => state.purchaseReturns.reduce((total, purchaseReturn) => total + purchaseReturn.total, 0),
+    },
+
+    actions: {
+        async loadFromApi() {
+            const response = await apiGet('/purchasing');
+            this.purchaseOrders = response.purchase_orders?.map((order) => ({
+                number: order.order_number,
+                supplier: order.supplier?.name,
+                status: order.status,
+                total: Number(order.grand_total ?? 0),
+            })) ?? this.purchaseOrders;
+            this.goodsReceipts = response.goods_receipts ?? this.goodsReceipts;
+            this.purchaseReturns = response.purchase_returns?.map((purchaseReturn) => ({
+                number: purchaseReturn.return_number,
+                status: purchaseReturn.status,
+                total: Number(purchaseReturn.grand_total ?? 0),
+            })) ?? this.purchaseReturns;
+            this.payables = response.supplier_payables?.map((payable) => ({
+                number: payable.payable_number,
+                status: payable.status,
+                amount: Number(payable.amount ?? 0),
+                paidAmount: Number(payable.paid_amount ?? 0),
+            })) ?? this.payables;
+            this.supplierPayments = response.supplier_payments?.map((payment) => ({
+                number: payment.payment_number,
+                supplier: payment.supplier?.name,
+                amount: Number(payment.amount ?? 0),
+            })) ?? this.supplierPayments;
+        },
     },
 });

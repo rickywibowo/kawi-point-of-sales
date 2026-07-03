@@ -7,8 +7,9 @@ Status: complete.
 - Laravel, Vue, Vite, Sanctum, tenant context, RBAC, dan audit log dasar.
 - Multi-business dan multi-branch siap.
 - Health check dan deployment readiness tersedia.
+- Frontend API client foundation tersedia.
 
-Tahap terkait: 1, 9, 14, 15.
+Tahap terkait: 1, 9, 14, 15, 31.
 
 ## Milestone 2 - Master Data & Inventory
 
@@ -58,4 +59,4 @@ Tahap terkait: 10, 21.
 
 Prioritas yang masih natural untuk dilanjutkan:
 
-- Frontend API integration: ganti data demo Pinia menjadi API calls nyata.
+- Frontend UX lanjutan: login screen, module pages, forms, dan table views nyata.

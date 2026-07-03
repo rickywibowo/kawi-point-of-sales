@@ -1,4 +1,5 @@
 import { defineStore } from 'pinia';
+import { apiGet } from '../services/api';
 
 export const useCustomersStore = defineStore('customers', {
     state: () => ({
@@ -30,5 +31,19 @@ export const useCustomersStore = defineStore('customers', {
         memberCount: (state) => state.customers.filter((customer) => customer.loyaltyPoints > 0).length,
         totalLifetimeSpend: (state) => state.customers.reduce((total, customer) => total + customer.lifetimeSpend, 0),
         loyaltyPointTotal: (state) => state.customers.reduce((total, customer) => total + customer.loyaltyPoints, 0),
+    },
+
+    actions: {
+        async loadFromApi() {
+            const response = await apiGet('/customers');
+            this.customers = response.customers?.map((customer) => ({
+                name: customer.name,
+                phone: customer.phone,
+                loyaltyPoints: customer.loyalty_points ?? 0,
+                lifetimeSpend: Number(customer.lifetime_spend ?? 0),
+                transactionCount: customer.transaction_count ?? 0,
+            })) ?? this.customers;
+            this.selectedCustomer = this.customers[0]?.name ?? this.selectedCustomer;
+        },
     },
 });

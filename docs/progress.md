@@ -412,6 +412,19 @@ Status: complete.
 - Dokumentasi Tahap 30 dibuat.
 - Automated test KDS station routing dibuat.
 
+### Tahap 31 - Frontend API Integration Foundation
+
+Status: complete.
+
+- API client frontend `resources/js/services/api.js` dibuat.
+- API client mendukung bearer token, tenant header, branch header, dan error handling.
+- Store foundation menambahkan login demo, session loader, API status, dan tenant context persistence.
+- Store master data, inventory, POS, purchasing, accounting, reports, customers, user access, dan audit mendapat action `loadFromApi()`.
+- Dashboard memanggil `loadDashboard()` saat mounted.
+- Dashboard tetap fallback ke data demo saat user belum login atau API belum tersedia.
+- Tombol `Connect Demo API` ditambahkan untuk hydrate dashboard dari API demo.
+- Dokumentasi Tahap 31 dibuat.
+
 ## Cara Track Mundur
 
 - Setiap tahap disimpan dalam commit terpisah.

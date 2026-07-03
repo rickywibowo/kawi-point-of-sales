@@ -48,6 +48,30 @@ const modules = [
 
 const updateOnlineStatus = () => foundation.setOnlineStatus(navigator.onLine);
 const updateOfflineStatus = () => offline.setOnlineStatus(navigator.onLine);
+const loadDashboard = async () => {
+    await foundation.loadSession();
+
+    if (foundation.apiStatus !== 'connected') {
+        return;
+    }
+
+    await Promise.allSettled([
+        masterData.loadFromApi(),
+        inventory.loadFromApi(),
+        pos.loadFromApi(),
+        purchasing.loadFromApi(),
+        accounting.loadFromApi(),
+        reports.loadFromApi(),
+        customers.loadFromApi(),
+        userAccess.loadFromApi(),
+        audit.loadFromApi(),
+    ]);
+};
+
+const connectDemoApi = async () => {
+    await foundation.login();
+    await loadDashboard();
+};
 
 onMounted(() => {
     window.addEventListener('online', updateOnlineStatus);
@@ -55,6 +79,7 @@ onMounted(() => {
     window.addEventListener('online', updateOfflineStatus);
     window.addEventListener('offline', updateOfflineStatus);
     offline.loadQueue();
+    loadDashboard();
 });
 
 onUnmounted(() => {
@@ -81,6 +106,19 @@ onUnmounted(() => {
                     >
                         {{ foundation.isOnline ? 'Online' : 'Offline' }}
                     </span>
+                    <span
+                        class="rounded-md border px-3 py-2 text-sm"
+                        :class="foundation.apiStatus === 'connected' ? 'border-emerald-300/40 text-emerald-200' : 'border-sky-300/40 text-sky-200'"
+                    >
+                        {{ foundation.apiMessage }}
+                    </span>
+                    <button
+                        v-if="foundation.apiStatus !== 'connected'"
+                        class="rounded-md border border-white/10 px-4 py-2 text-sm font-semibold text-zinc-100 transition hover:border-emerald-300/50 hover:bg-emerald-300/10"
+                        @click="connectDemoApi"
+                    >
+                        Connect Demo API
+                    </button>
                     <button class="rounded-md bg-emerald-400 px-4 py-2 text-sm font-semibold text-zinc-950 transition hover:bg-emerald-300">
                         Mulai Transaksi
                     </button>

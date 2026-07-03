@@ -1,4 +1,5 @@
 import { defineStore } from 'pinia';
+import { apiGet } from '../services/api';
 
 export const usePosStore = defineStore('pos', {
     state: () => ({
@@ -79,5 +80,59 @@ export const usePosStore = defineStore('pos', {
         activeKitchenStationCount: (state) => state.kitchenStations.length,
         activeDeliveryCount: (state) => state.deliveryOrders.filter((order) => order.status !== 'delivered').length,
         drawerDenominationCount: (state) => state.drawerAudit.denominations.reduce((total, item) => total + item.quantity, 0),
+    },
+
+    actions: {
+        async loadFromApi() {
+            const response = await apiGet('/pos');
+            this.cart = response.today_sales?.[0]?.items?.map((item) => ({
+                name: item.product_name,
+                quantity: Number(item.quantity ?? 0),
+                price: Number(item.unit_price ?? 0),
+            })) ?? this.cart;
+            this.payments = response.today_sales?.[0]?.payments?.map((payment) => ({
+                method: payment.method,
+                amount: Number(payment.amount ?? 0),
+            })) ?? this.payments;
+            this.diningTables = response.dining_tables?.map((table) => ({
+                code: table.code,
+                name: table.name,
+                status: table.status,
+                capacity: table.capacity,
+            })) ?? this.diningTables;
+            this.tableReservations = response.table_reservations?.map((reservation) => ({
+                number: reservation.reservation_number,
+                guest: reservation.guest_name,
+                table: reservation.dining_table?.code,
+                status: reservation.status,
+                time: reservation.reserved_at?.slice(11, 16),
+            })) ?? this.tableReservations;
+            this.promotions = response.promotions?.map((promotion) => ({
+                code: promotion.code,
+                name: promotion.name,
+                type: promotion.type,
+                value: Number(promotion.value ?? 0),
+            })) ?? this.promotions;
+            this.kitchenTickets = response.kitchen_tickets?.map((ticket) => ({
+                number: ticket.ticket_number,
+                table: ticket.dining_table?.code ?? ticket.sale?.type ?? 'Takeaway',
+                station: ticket.items?.[0]?.station_name ?? 'General',
+                status: ticket.status,
+                itemCount: ticket.items?.length ?? 0,
+            })) ?? this.kitchenTickets;
+            this.kitchenStations = response.kitchen_stations?.map((station) => ({
+                code: station.code,
+                name: station.name,
+                activeTickets: this.kitchenTickets.filter((ticket) => ticket.station === station.name).length,
+            })) ?? this.kitchenStations;
+            this.deliveryOrders = response.delivery_orders?.map((order) => ({
+                number: order.delivery_number,
+                recipient: order.recipient_name,
+                status: order.status,
+                courier: order.courier_name,
+            })) ?? this.deliveryOrders;
+            this.heldTransactions = response.held_transactions?.length ?? this.heldTransactions;
+            this.todayTransactions = response.today_sales?.length ?? this.todayTransactions;
+        },
     },
 });

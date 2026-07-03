@@ -1,4 +1,5 @@
 import { defineStore } from 'pinia';
+import { apiGet } from '../services/api';
 
 export const useUserAccessStore = defineStore('userAccess', {
     state: () => ({
@@ -28,5 +29,18 @@ export const useUserAccessStore = defineStore('userAccess', {
         userCount: (state) => state.users.length,
         roleCount: (state) => state.roles.length,
         permissionCount: (state) => state.permissions.length,
+    },
+
+    actions: {
+        async loadFromApi() {
+            const response = await apiGet('/user-access');
+            this.users = response.users?.map((user) => ({
+                name: user.name,
+                email: user.email,
+                roles: user.roles?.map((role) => role.name) ?? [],
+            })) ?? this.users;
+            this.roles = response.roles?.map((role) => role.name) ?? this.roles;
+            this.permissions = response.permissions?.map((permission) => permission.name) ?? this.permissions;
+        },
     },
 });
