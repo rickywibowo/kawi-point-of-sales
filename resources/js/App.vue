@@ -31,6 +31,7 @@ const loginForm = reactive({
 const loginPanelOpen = ref(false);
 const dashboardLoading = ref(false);
 const activeModule = ref('pos');
+const moduleSearch = ref('');
 
 const quickStats = computed(() => [
     { label: 'Penjualan Hari Ini', value: 'Rp 0', tone: 'emerald' },
@@ -103,6 +104,16 @@ const moduleRows = computed(() => {
 
     return rowMaps[activeModule.value] ?? [];
 });
+const filteredModuleRows = computed(() => {
+    const query = moduleSearch.value.trim().toLowerCase();
+
+    if (!query) {
+        return moduleRows.value;
+    }
+
+    return moduleRows.value.filter((row) => [row.primary, row.secondary, row.value]
+        .some((value) => String(value ?? '').toLowerCase().includes(query)));
+});
 
 const moduleSummary = computed(() => {
     const summaries = {
@@ -118,6 +129,24 @@ const moduleSummary = computed(() => {
 
     return summaries[activeModule.value] ?? '';
 });
+const moduleActions = computed(() => {
+    const actions = {
+        pos: ['New Sale', 'Hold Cart', 'Open Shift'],
+        products: ['New Product', 'Import CSV', 'Price Update'],
+        inventory: ['Stock Opname', 'Transfer Stock', 'Production'],
+        purchasing: ['New PO', 'Goods Receipt', 'Pay Supplier'],
+        accounting: ['New Journal', 'Settlement', 'Import Provider'],
+        reports: ['Refresh', 'Export', 'Print'],
+        customers: ['New Customer', 'Loyalty', 'Segment'],
+        settings: ['Invite User', 'Assign Role', 'Audit'],
+    };
+
+    return actions[activeModule.value] ?? [];
+});
+const selectModule = (moduleId) => {
+    activeModule.value = moduleId;
+    moduleSearch.value = '';
+};
 
 const updateOnlineStatus = () => foundation.setOnlineStatus(navigator.onLine);
 const updateOfflineStatus = () => offline.setOnlineStatus(navigator.onLine);
@@ -297,6 +326,27 @@ onUnmounted(() => {
                                 {{ moduleSummary }}
                             </span>
                         </div>
+                        <div class="mt-4 grid gap-3 lg:grid-cols-[1fr_auto]">
+                            <label class="grid gap-1 text-sm">
+                                <span class="text-xs uppercase text-zinc-500">Cari data modul</span>
+                                <input
+                                    v-model="moduleSearch"
+                                    class="rounded-md border border-white/10 bg-zinc-950 px-3 py-2 text-zinc-100 outline-none transition focus:border-emerald-300/60"
+                                    type="search"
+                                    placeholder="Cari nomor, nama, status"
+                                >
+                            </label>
+                            <div class="flex flex-wrap items-end gap-2">
+                                <button
+                                    v-for="action in moduleActions"
+                                    :key="action"
+                                    class="rounded-md border border-white/10 bg-white/[0.03] px-3 py-2 text-sm font-medium text-zinc-100 transition hover:border-emerald-300/50 hover:bg-emerald-300/10"
+                                    type="button"
+                                >
+                                    {{ action }}
+                                </button>
+                            </div>
+                        </div>
                         <div class="mt-4 overflow-hidden rounded-md border border-white/10">
                             <div class="grid grid-cols-[1.2fr_1fr_auto] gap-3 border-b border-white/10 bg-white/[0.03] px-3 py-2 text-xs uppercase text-zinc-500">
                                 <span>Data</span>
@@ -304,7 +354,7 @@ onUnmounted(() => {
                                 <span>Status</span>
                             </div>
                             <div
-                                v-for="row in moduleRows.slice(0, 6)"
+                                v-for="row in filteredModuleRows.slice(0, 8)"
                                 :key="`${activeModule}-${row.primary}-${row.secondary}`"
                                 class="grid grid-cols-[1.2fr_1fr_auto] gap-3 border-b border-white/5 px-3 py-3 text-sm last:border-b-0"
                             >
@@ -312,7 +362,7 @@ onUnmounted(() => {
                                 <span class="text-zinc-400">{{ row.secondary }}</span>
                                 <span class="text-right text-emerald-200">{{ row.value }}</span>
                             </div>
-                            <div v-if="moduleRows.length === 0" class="px-3 py-6 text-sm text-zinc-400">
+                            <div v-if="filteredModuleRows.length === 0" class="px-3 py-6 text-sm text-zinc-400">
                                 Belum ada data.
                             </div>
                         </div>
@@ -628,7 +678,7 @@ onUnmounted(() => {
                             :key="module.id"
                             class="rounded-md border px-3 py-4 text-left text-sm font-medium transition hover:border-emerald-300/50 hover:bg-emerald-300/10"
                             :class="activeModule === module.id ? 'border-emerald-300/50 bg-emerald-300/10 text-emerald-100' : 'border-white/10 bg-white/[0.03] text-zinc-100'"
-                            @click="activeModule = module.id"
+                            @click="selectModule(module.id)"
                         >
                             {{ module.label }}
                         </button>
