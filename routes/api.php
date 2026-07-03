@@ -14,6 +14,7 @@ use App\Http\Controllers\Api\KitchenTicketController;
 use App\Http\Controllers\Api\MasterDataController;
 use App\Http\Controllers\Api\OfflineSyncController;
 use App\Http\Controllers\Api\OperationalExpenseController;
+use App\Http\Controllers\Api\PaymentSettlementController;
 use App\Http\Controllers\Api\PosController;
 use App\Http\Controllers\Api\ProductController;
 use App\Http\Controllers\Api\PromotionController;
@@ -141,6 +142,10 @@ Route::middleware(['auth:sanctum', 'tenant'])->group(function (): void {
     Route::post('/journal-entries', [AccountingController::class, 'store'])
         ->middleware('permission:accounting.manage');
     Route::post('/operational-expenses', [OperationalExpenseController::class, 'store'])
+        ->middleware('permission:accounting.manage');
+    Route::get('/payment-settlements', [PaymentSettlementController::class, 'index'])
+        ->middleware('permission:accounting.manage');
+    Route::post('/payment-settlements', [PaymentSettlementController::class, 'store'])
         ->middleware('permission:accounting.manage');
 
     Route::post('/offline/sales/sync', [OfflineSyncController::class, 'syncSales'])

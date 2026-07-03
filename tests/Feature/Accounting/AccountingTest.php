@@ -175,6 +175,68 @@ class AccountingTest extends TestCase
         $this->assertDatabaseHas('audit_logs', ['action' => 'expense.posted']);
     }
 
+    public function test_user_can_post_payment_settlement_for_unsettled_sale_payments(): void
+    {
+        $this->seed(DatabaseSeeder::class);
+        [$user, $business, $branch] = $this->context();
+        $shift = $this->openShift($user, $business, $branch);
+        $warehouse = Warehouse::query()->where('business_id', $business->id)->where('branch_id', $branch->id)->firstOrFail();
+        $product = Product::query()->where('business_id', $business->id)->where('sku', 'KAWI-RICE-001')->firstOrFail();
+
+        $this->actingAs($user, 'sanctum')
+            ->withHeaders(['X-Business-Id' => $business->uuid, 'X-Branch-Id' => $branch->uuid])
+            ->postJson('/api/sales', [
+                'cashier_shift_id' => $shift->id,
+                'warehouse_id' => $warehouse->id,
+                'sale_number' => 'SALE-SETTLE-001',
+                'idempotency_key' => 'settlement-sale-001',
+                'items' => [
+                    ['product_id' => $product->id, 'quantity' => 1, 'unit_price' => 35000],
+                ],
+                'payments' => [
+                    ['method' => 'qris', 'amount' => 38850, 'reference' => 'QRIS-001'],
+                ],
+            ])
+            ->assertCreated();
+
+        $this->actingAs($user, 'sanctum')
+            ->withHeaders(['X-Business-Id' => $business->uuid, 'X-Branch-Id' => $branch->uuid])
+            ->postJson('/api/payment-settlements', [
+                'settlement_number' => 'SETTLE-TEST-001',
+                'method' => 'qris',
+                'date_from' => now()->toDateString(),
+                'date_to' => now()->toDateString(),
+                'reported_amount' => 38800,
+                'notes' => 'QRIS settlement test',
+            ])
+            ->assertCreated()
+            ->assertJsonPath('payment_settlement.status', 'posted')
+            ->assertJsonPath('payment_settlement.expected_amount', '38850.00')
+            ->assertJsonPath('payment_settlement.reported_amount', '38800.00')
+            ->assertJsonPath('payment_settlement.variance_amount', '-50.00')
+            ->assertJsonCount(1, 'payment_settlement.items');
+
+        $this->assertDatabaseHas('payment_settlements', [
+            'business_id' => $business->id,
+            'settlement_number' => 'SETTLE-TEST-001',
+            'method' => 'qris',
+            'status' => 'posted',
+        ]);
+        $this->assertDatabaseHas('audit_logs', ['action' => 'payment_settlement.posted']);
+
+        $this->actingAs($user, 'sanctum')
+            ->withHeaders(['X-Business-Id' => $business->uuid, 'X-Branch-Id' => $branch->uuid])
+            ->postJson('/api/payment-settlements', [
+                'settlement_number' => 'SETTLE-TEST-002',
+                'method' => 'qris',
+                'date_from' => now()->toDateString(),
+                'date_to' => now()->toDateString(),
+                'reported_amount' => 38850,
+            ])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors(['method']);
+    }
+
     public function test_operational_expense_rejects_account_outside_active_business(): void
     {
         $this->seed(DatabaseSeeder::class);

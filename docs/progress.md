@@ -346,6 +346,22 @@ Status: complete.
 - Dokumentasi Tahap 26 dibuat.
 - Automated test delivery workflow dibuat.
 
+### Tahap 27 - Payment Settlement & Reconciliation
+
+Status: complete.
+
+- Tabel `payment_settlements` dan `payment_settlement_items` dibuat.
+- Model, request validation, service, controller, dan endpoint payment settlement dibuat.
+- Endpoint `GET /api/payment-settlements` dan `POST /api/payment-settlements` dibuat dengan permission `accounting.manage`.
+- Settlement menghitung expected amount dari sale payment completed yang belum pernah disettlement.
+- Variance dihitung dari reported amount dikurangi expected amount.
+- Sale payment yang sudah masuk settlement tidak dapat disettlement ulang.
+- Audit log `payment_settlement.posted` dibuat.
+- Report dashboard menampilkan ringkasan payment settlements dan breakdown per method.
+- Vue Pinia store accounting dan dashboard accounting diperbarui.
+- Dokumentasi Tahap 27 dibuat.
+- Automated test payment settlement dibuat.
+
 ## Cara Track Mundur
 
 - Setiap tahap disimpan dalam commit terpisah.

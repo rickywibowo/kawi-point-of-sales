@@ -6,6 +6,7 @@ use App\Models\Business;
 use App\Models\GoodsReceipt;
 use App\Models\JournalEntry;
 use App\Models\OperationalExpense;
+use App\Models\PaymentSettlement;
 use App\Models\Product;
 use App\Models\PurchaseOrder;
 use App\Models\Sale;
@@ -43,6 +44,7 @@ class ReportService
             'stock_movements' => $this->stockMovements($business->id, $branchId, $from, $to),
             'purchasing' => $this->purchasingSummary($business->id, $branchId, $from, $to),
             'expenses' => $this->expenseSummary($business->id, $branchId, $from, $to),
+            'payment_settlements' => $this->paymentSettlementSummary($business->id, $branchId, $from, $to),
             'accounting' => [
                 'trial_balance' => $this->accounting->trialBalance($business->id),
                 'profit_and_loss' => $this->accounting->profitAndLoss($business->id),
@@ -198,6 +200,31 @@ class ReportService
                 ->select('category', DB::raw('sum(amount) as amount'))
                 ->groupBy('category')
                 ->orderByDesc('amount')
+                ->get(),
+        ];
+    }
+
+    public function paymentSettlementSummary(int $businessId, ?int $branchId, Carbon $from, Carbon $to): array
+    {
+        $query = PaymentSettlement::query()
+            ->where('business_id', $businessId)
+            ->when($branchId, fn ($query) => $query->where('branch_id', $branchId))
+            ->whereBetween('date_from', [$from->toDateString(), $to->toDateString()]);
+
+        return [
+            'settlement_count' => (clone $query)->count(),
+            'expected_amount' => round((float) (clone $query)->sum('expected_amount'), 2),
+            'reported_amount' => round((float) (clone $query)->sum('reported_amount'), 2),
+            'variance_amount' => round((float) (clone $query)->sum('variance_amount'), 2),
+            'by_method' => (clone $query)
+                ->select(
+                    'method',
+                    DB::raw('sum(expected_amount) as expected_amount'),
+                    DB::raw('sum(reported_amount) as reported_amount'),
+                    DB::raw('sum(variance_amount) as variance_amount')
+                )
+                ->groupBy('method')
+                ->orderBy('method')
                 ->get(),
         ];
     }

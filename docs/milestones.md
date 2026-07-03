@@ -42,9 +42,9 @@ Tahap terkait: 5, 16, 20.
 
 Status: complete.
 
-- Chart of accounts, manual journal, auto journal, trial balance, profit and loss, general ledger, balance sheet, cash flow, operational expense, dan dashboard reports.
+- Chart of accounts, manual journal, auto journal, trial balance, profit and loss, general ledger, balance sheet, cash flow, operational expense, payment settlement, dan dashboard reports.
 
-Tahap terkait: 6, 8, 13, 19.
+Tahap terkait: 6, 8, 13, 19, 27.
 
 ## Milestone 6 - Customer & Loyalty
 
@@ -59,6 +59,6 @@ Tahap terkait: 10, 21.
 Prioritas yang masih natural untuk dilanjutkan:
 
 - KDS detail lanjutan: kitchen station, course routing, printed kitchen slip.
-- Payment reconciliation: settlement per method, QRIS/bank/card reconciliation.
-- Cash drawer session audit: denomination count dan approval selisih kas.
+- Cash drawer session audit: denomination count, approval selisih kas, dan closing evidence.
+- Payment provider reconciliation: import settlement QRIS/bank/card dari file provider.
 - Frontend API integration: ganti data demo Pinia menjadi API calls nyata.
