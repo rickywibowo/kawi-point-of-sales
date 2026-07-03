@@ -8,6 +8,7 @@ use App\Models\DeliveryOrder;
 use App\Models\DiningTable;
 use App\Models\HeldTransaction;
 use App\Models\KitchenTicket;
+use App\Models\KitchenStation;
 use App\Models\Product;
 use App\Models\Promotion;
 use App\Models\Sale;
@@ -52,6 +53,12 @@ class PosController extends Controller
                 ->with(['items', 'diningTable'])
                 ->whereIn('status', ['open', 'preparing', 'ready'])
                 ->latest('opened_at')
+                ->get(),
+            'kitchen_stations' => KitchenStation::query()
+                ->forTenant($business->id, $branch->id)
+                ->where('is_active', true)
+                ->orderBy('sort_order')
+                ->orderBy('name')
                 ->get(),
             'delivery_orders' => DeliveryOrder::query()
                 ->forTenant($business->id, $branch->id)

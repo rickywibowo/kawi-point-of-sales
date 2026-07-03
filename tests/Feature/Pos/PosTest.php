@@ -7,6 +7,7 @@ use App\Models\Business;
 use App\Models\CashierShift;
 use App\Models\DeliveryOrder;
 use App\Models\DiningTable;
+use App\Models\KitchenStation;
 use App\Models\KitchenTicket;
 use App\Models\Product;
 use App\Models\Promotion;
@@ -193,6 +194,69 @@ class PosTest extends TestCase
         $this->assertDatabaseHas('audit_logs', ['action' => 'kitchen_ticket.created']);
         $this->assertDatabaseHas('audit_logs', ['action' => 'kitchen_ticket_item.status_updated']);
         $this->assertDatabaseHas('audit_logs', ['action' => 'kitchen_ticket.status_updated']);
+    }
+
+    public function test_kitchen_ticket_routes_items_to_station_and_returns_slip_payload(): void
+    {
+        $this->seed(DatabaseSeeder::class);
+
+        [$user, $business, $branch] = $this->context();
+        $shift = $this->openShift($user, $business, $branch, 'SHIFT-KDS-STATION');
+        $warehouse = Warehouse::query()->where('business_id', $business->id)->where('branch_id', $branch->id)->firstOrFail();
+        $product = Product::query()->where('business_id', $business->id)->where('sku', 'KAWI-RICE-001')->firstOrFail();
+
+        $stationId = $this->actingAs($user, 'sanctum')
+            ->withHeaders(['X-Business-Id' => $business->uuid, 'X-Branch-Id' => $branch->uuid])
+            ->postJson('/api/kitchen-stations', [
+                'code' => 'HOT',
+                'name' => 'Hot Kitchen',
+                'sort_order' => 10,
+            ])
+            ->assertCreated()
+            ->assertJsonPath('kitchen_station.code', 'HOT')
+            ->json('kitchen_station.id');
+
+        $product->update(['kitchen_station_id' => $stationId]);
+
+        $saleId = $this->actingAs($user, 'sanctum')
+            ->withHeaders(['X-Business-Id' => $business->uuid, 'X-Branch-Id' => $branch->uuid])
+            ->postJson('/api/sales', [
+                'cashier_shift_id' => $shift->id,
+                'warehouse_id' => $warehouse->id,
+                'sale_number' => 'SALE-KDS-STATION-001',
+                'idempotency_key' => 'sale-kds-station-001',
+                'items' => [
+                    ['product_id' => $product->id, 'quantity' => 1, 'unit_price' => 35000, 'notes' => 'Sauce separate'],
+                ],
+                'payments' => [
+                    ['method' => 'cash', 'amount' => 38850],
+                ],
+            ])
+            ->assertCreated()
+            ->json('sale.id');
+
+        $ticket = KitchenTicket::query()->where('sale_id', $saleId)->with('items')->firstOrFail();
+        $item = $ticket->items->first();
+
+        $this->assertSame($stationId, $item->kitchen_station_id);
+        $this->assertSame('Hot Kitchen', $item->station_name);
+        $this->assertSame(10, $item->station_sequence);
+
+        $this->actingAs($user, 'sanctum')
+            ->withHeaders(['X-Business-Id' => $business->uuid, 'X-Branch-Id' => $branch->uuid])
+            ->getJson('/api/kitchen-tickets')
+            ->assertOk()
+            ->assertJsonFragment(['name' => 'Hot Kitchen']);
+
+        $this->actingAs($user, 'sanctum')
+            ->withHeaders(['X-Business-Id' => $business->uuid, 'X-Branch-Id' => $branch->uuid])
+            ->getJson("/api/kitchen-tickets/{$ticket->id}/slip")
+            ->assertOk()
+            ->assertJsonPath('slip.ticket.number', 'KOT-SALE-KDS-STATION-001')
+            ->assertJsonPath('slip.stations.0.station', 'Hot Kitchen')
+            ->assertJsonPath('slip.stations.0.items.0.notes', 'Sauce separate');
+
+        $this->assertDatabaseHas('audit_logs', ['action' => 'kitchen_station.created']);
     }
 
     public function test_delivery_sale_creates_delivery_order_and_can_update_status(): void

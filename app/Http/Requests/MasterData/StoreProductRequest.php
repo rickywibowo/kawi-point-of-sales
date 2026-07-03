@@ -13,6 +13,7 @@ class StoreProductRequest extends FormRequest
             'category_id' => ['nullable', 'integer'],
             'unit_of_measure_id' => ['nullable', 'integer'],
             'tax_id' => ['nullable', 'integer'],
+            'kitchen_station_id' => ['nullable', 'integer'],
             'name' => ['required', 'string', 'max:160'],
             'type' => ['required', Rule::in(['goods', 'food', 'beverage', 'service'])],
             'sku' => ['nullable', 'string', 'max:80'],

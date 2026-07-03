@@ -395,6 +395,23 @@ Status: complete.
 - Dokumentasi Tahap 29 dibuat.
 - Automated test payment provider import dibuat.
 
+### Tahap 30 - KDS Station Routing & Slip Payload
+
+Status: complete.
+
+- Tabel `kitchen_stations` dibuat untuk station dapur per branch.
+- Kolom `products.kitchen_station_id` ditambahkan untuk routing produk ke station.
+- Kolom station, course, dan sequence ditambahkan ke `kitchen_ticket_items`.
+- Model `KitchenStation` dibuat.
+- Relasi produk dan kitchen ticket item ke station dibuat.
+- Endpoint `POST /api/kitchen-stations` dibuat dengan permission `sales.create`.
+- Endpoint `GET /api/kitchen-tickets/{ticket}/slip` dibuat untuk payload printed kitchen slip.
+- KOT otomatis mengisi station item dari mapping produk.
+- Endpoint KDS dan POS mengembalikan daftar kitchen stations aktif.
+- Vue Pinia store POS dan dashboard POS diperbarui.
+- Dokumentasi Tahap 30 dibuat.
+- Automated test KDS station routing dibuat.
+
 ## Cara Track Mundur
 
 - Setiap tahap disimpan dalam commit terpisah.

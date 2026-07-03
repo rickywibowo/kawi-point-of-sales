@@ -196,7 +196,13 @@ onUnmounted(() => {
                         <div class="mt-4 rounded-md border border-white/10 bg-white/[0.03] p-3 text-sm">
                             <p class="text-zinc-400">Kitchen Queue</p>
                             <p class="mt-1 font-semibold">
-                                {{ pos.activeKitchenTicketCount }} ticket / {{ pos.kitchenTickets[0]?.status }}
+                                {{ pos.activeKitchenTicketCount }} ticket / {{ pos.kitchenTickets[0]?.station }}
+                            </p>
+                        </div>
+                        <div class="mt-4 rounded-md border border-white/10 bg-white/[0.03] p-3 text-sm">
+                            <p class="text-zinc-400">Kitchen Stations</p>
+                            <p class="mt-1 font-semibold">
+                                {{ pos.activeKitchenStationCount }} station / {{ pos.kitchenStations[0]?.name }}
                             </p>
                         </div>
                         <div class="mt-4 rounded-md border border-white/10 bg-white/[0.03] p-3 text-sm">

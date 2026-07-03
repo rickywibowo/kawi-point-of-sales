@@ -18,6 +18,7 @@ class Product extends Model
         'category_id',
         'unit_of_measure_id',
         'tax_id',
+        'kitchen_station_id',
         'uuid',
         'name',
         'type',
@@ -52,6 +53,11 @@ class Product extends Model
     public function tax(): BelongsTo
     {
         return $this->belongsTo(Tax::class);
+    }
+
+    public function kitchenStation(): BelongsTo
+    {
+        return $this->belongsTo(KitchenStation::class);
     }
 
     public function variants(): HasMany

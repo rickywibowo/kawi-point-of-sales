@@ -116,6 +116,10 @@ Route::middleware(['auth:sanctum', 'tenant'])->group(function (): void {
         ->middleware('permission:sales.create');
     Route::get('/kitchen-tickets', [KitchenTicketController::class, 'index'])
         ->middleware('permission:sales.create');
+    Route::post('/kitchen-stations', [KitchenTicketController::class, 'storeStation'])
+        ->middleware('permission:sales.create');
+    Route::get('/kitchen-tickets/{ticket}/slip', [KitchenTicketController::class, 'slip'])
+        ->middleware('permission:sales.create');
     Route::patch('/kitchen-tickets/{ticket}/status', [KitchenTicketController::class, 'updateStatus'])
         ->middleware('permission:sales.create');
     Route::patch('/kitchen-ticket-items/{item}/status', [KitchenTicketController::class, 'updateItemStatus'])

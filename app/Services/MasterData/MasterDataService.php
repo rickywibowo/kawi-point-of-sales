@@ -54,6 +54,7 @@ class MasterDataService
         $this->assertBusinessEntity(Category::class, $business->id, $data['category_id'] ?? null, 'category_id');
         $this->assertBusinessEntity(\App\Models\UnitOfMeasure::class, $business->id, $data['unit_of_measure_id'] ?? null, 'unit_of_measure_id');
         $this->assertBusinessEntity(\App\Models\Tax::class, $business->id, $data['tax_id'] ?? null, 'tax_id');
+        $this->assertKitchenStation($business->id, $data['kitchen_station_id'] ?? null);
 
         foreach ($data['branch_prices'] ?? [] as $index => $branchPrice) {
             $branchExists = \App\Models\Branch::query()
@@ -74,6 +75,7 @@ class MasterDataService
                 'category_id' => $data['category_id'] ?? null,
                 'unit_of_measure_id' => $data['unit_of_measure_id'] ?? null,
                 'tax_id' => $data['tax_id'] ?? null,
+                'kitchen_station_id' => $data['kitchen_station_id'] ?? null,
                 'uuid' => (string) Str::uuid(),
                 'name' => $data['name'],
                 'type' => $data['type'],
@@ -95,7 +97,7 @@ class MasterDataService
                 ]);
             }
 
-            $product->load(['category', 'unitOfMeasure', 'tax', 'branchPrices']);
+            $product->load(['category', 'unitOfMeasure', 'tax', 'kitchenStation', 'branchPrices']);
             $this->audit->record('product.created', $product, after: $product->toArray(), request: $request);
 
             return $product;
@@ -113,6 +115,24 @@ class MasterDataService
         if (! $exists) {
             throw ValidationException::withMessages([
                 $field => ['The selected value is outside the active business.'],
+            ]);
+        }
+    }
+
+    private function assertKitchenStation(int $businessId, ?int $id): void
+    {
+        if ($id === null) {
+            return;
+        }
+
+        $exists = \App\Models\KitchenStation::query()
+            ->where('business_id', $businessId)
+            ->whereKey($id)
+            ->exists();
+
+        if (! $exists) {
+            throw ValidationException::withMessages([
+                'kitchen_station_id' => ['The selected kitchen station is outside the active business.'],
             ]);
         }
     }

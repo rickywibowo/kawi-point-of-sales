@@ -50,8 +50,12 @@ export const usePosStore = defineStore('pos', {
             { code: 'LUNCH15K', name: 'Lunch 15K', type: 'fixed', value: 15000 },
         ],
         kitchenTickets: [
-            { number: 'KOT-SALE-DEMO-001', table: 'T-02', status: 'preparing', itemCount: 2 },
-            { number: 'KOT-SALE-DEMO-002', table: 'Takeaway', status: 'ready', itemCount: 1 },
+            { number: 'KOT-SALE-DEMO-001', table: 'T-02', station: 'Hot Kitchen', status: 'preparing', itemCount: 2 },
+            { number: 'KOT-SALE-DEMO-002', table: 'Takeaway', station: 'Bar', status: 'ready', itemCount: 1 },
+        ],
+        kitchenStations: [
+            { code: 'HOT', name: 'Hot Kitchen', activeTickets: 1 },
+            { code: 'BAR', name: 'Bar', activeTickets: 1 },
         ],
         deliveryOrders: [
             { number: 'DO-SALE-DEMO-003', recipient: 'Member KAWI', status: 'assigned', courier: 'Andi' },
@@ -72,6 +76,7 @@ export const usePosStore = defineStore('pos', {
         activeReservationCount: (state) => state.tableReservations.filter((reservation) => reservation.status !== 'cancelled').length,
         activePromotionCount: (state) => state.promotions.length,
         activeKitchenTicketCount: (state) => state.kitchenTickets.filter((ticket) => ticket.status !== 'served').length,
+        activeKitchenStationCount: (state) => state.kitchenStations.length,
         activeDeliveryCount: (state) => state.deliveryOrders.filter((order) => order.status !== 'delivered').length,
         drawerDenominationCount: (state) => state.drawerAudit.denominations.reduce((total, item) => total + item.quantity, 0),
     },
