@@ -484,6 +484,16 @@ Status: complete.
 - Action lain tetap memakai mode draft lokal.
 - Dokumentasi Tahap 36 dibuat.
 
+### Tahap 37 - Frontend POS Submit Actions
+
+Status: complete.
+
+- Action `Open Shift` submit ke `POST /api/cashier-shifts`.
+- Action `Hold Cart` submit ke `POST /api/held-transactions`.
+- Badge `API submit ready` diperluas untuk action POS awal.
+- POS store reload setelah action POS berhasil.
+- Dokumentasi Tahap 37 dibuat.
+
 ## Cara Track Mundur
 
 - Setiap tahap disimpan dalam commit terpisah.

@@ -279,15 +279,32 @@ const actionPayload = () => {
             track_stock: false,
             is_active: true,
         }),
+        'Open Shift': () => ({
+            shift_number: actionDraft.shift_number,
+            opening_cash: Number(actionDraft.opening_cash || 0),
+        }),
+        'Hold Cart': () => ({
+            hold_number: actionDraft.hold_number,
+            payload: {
+                note: actionDraft.reason,
+                items: pos.cart.map((item) => ({
+                    name: item.name,
+                    quantity: Number(item.quantity || 0),
+                    price: Number(item.price || 0),
+                })),
+            },
+        }),
     };
 
     return payloads[activeAction.value]?.() ?? null;
 };
-const isApiSubmitAction = computed(() => ['New Customer', 'New Product'].includes(activeAction.value));
+const isApiSubmitAction = computed(() => ['New Customer', 'New Product', 'Open Shift', 'Hold Cart'].includes(activeAction.value));
 const saveActionDraft = async () => {
     const endpoints = {
         'New Customer': '/customers',
         'New Product': '/products',
+        'Open Shift': '/cashier-shifts',
+        'Hold Cart': '/held-transactions',
     };
     const endpoint = endpoints[activeAction.value];
 
@@ -306,6 +323,10 @@ const saveActionDraft = async () => {
 
         if (activeAction.value === 'New Product') {
             await masterData.loadFromApi();
+        }
+
+        if (['Open Shift', 'Hold Cart'].includes(activeAction.value)) {
+            await pos.loadFromApi();
         }
 
         actionFeedback.value = `${activeAction.value} berhasil disimpan ke API.`;
