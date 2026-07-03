@@ -225,6 +225,18 @@ onUnmounted(() => {
                                 <p class="text-zinc-400">Refund Hari Ini</p>
                                 <p class="mt-1 font-semibold">{{ pos.postSaleControls.refundedToday }}</p>
                             </div>
+                            <div class="rounded-md border border-white/10 bg-white/[0.03] p-3 text-sm">
+                                <p class="text-zinc-400">Drawer Audit</p>
+                                <p class="mt-1 font-semibold">{{ pos.drawerAudit.status }}</p>
+                            </div>
+                            <div class="rounded-md border border-white/10 bg-white/[0.03] p-3 text-sm">
+                                <p class="text-zinc-400">Drawer Variance</p>
+                                <p class="mt-1 font-semibold">Rp {{ pos.drawerAudit.variance.toLocaleString('id-ID') }}</p>
+                            </div>
+                            <div class="rounded-md border border-white/10 bg-white/[0.03] p-3 text-sm">
+                                <p class="text-zinc-400">Denominasi</p>
+                                <p class="mt-1 font-semibold">{{ pos.drawerDenominationCount }} lembar/koin</p>
+                            </div>
                         </div>
                     </div>
 

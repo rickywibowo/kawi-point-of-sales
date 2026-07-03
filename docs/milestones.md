@@ -25,9 +25,9 @@ Tahap terkait: 2, 3, 12, 16, 17.
 Status: complete.
 
 - Shift kasir, cash movement, sale, payment, held transaction, void, refund, receipt digital, dan offline sync.
-- Dine-in table management, reservation, promotion/voucher, KDS foundation, dan delivery workflow.
+- Dine-in table management, reservation, promotion/voucher, KDS foundation, delivery workflow, dan cash drawer audit.
 
-Tahap terkait: 4, 7, 11, 18, 22, 23, 24, 25, 26.
+Tahap terkait: 4, 7, 11, 18, 22, 23, 24, 25, 26, 28.
 
 ## Milestone 4 - Purchasing & Payables
 
@@ -59,6 +59,5 @@ Tahap terkait: 10, 21.
 Prioritas yang masih natural untuk dilanjutkan:
 
 - KDS detail lanjutan: kitchen station, course routing, printed kitchen slip.
-- Cash drawer session audit: denomination count, approval selisih kas, dan closing evidence.
 - Payment provider reconciliation: import settlement QRIS/bank/card dari file provider.
 - Frontend API integration: ganti data demo Pinia menjadi API calls nyata.

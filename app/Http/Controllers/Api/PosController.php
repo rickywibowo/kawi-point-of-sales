@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\CashDrawerAudit;
 use App\Models\DeliveryOrder;
 use App\Models\DiningTable;
 use App\Models\HeldTransaction;
@@ -57,6 +58,12 @@ class PosController extends Controller
                 ->with('sale')
                 ->whereIn('status', ['pending', 'assigned', 'picked_up'])
                 ->latest()
+                ->get(),
+            'cash_drawer_audits' => CashDrawerAudit::query()
+                ->forTenant($business->id, $branch->id)
+                ->with('cashierShift')
+                ->latest('audited_at')
+                ->limit(10)
                 ->get(),
             'today_sales' => Sale::query()
                 ->forTenant($business->id, $branch->id)

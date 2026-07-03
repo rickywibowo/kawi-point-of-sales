@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Models\Concerns\BelongsToTenant;
 use App\Models\Concerns\UsesUuid;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class CashierShift extends Model
@@ -47,5 +48,10 @@ class CashierShift extends Model
     public function cashMovements(): HasMany
     {
         return $this->hasMany(CashMovement::class);
+    }
+
+    public function drawerAudit(): HasOne
+    {
+        return $this->hasOne(CashDrawerAudit::class);
     }
 }

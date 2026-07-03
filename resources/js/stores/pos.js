@@ -18,6 +18,18 @@ export const usePosStore = defineStore('pos', {
             { type: 'cash_in', amount: 50000, reason: 'Tambahan kas kecil' },
             { type: 'cash_out', amount: 25000, reason: 'Belanja operasional' },
         ],
+        drawerAudit: {
+            status: 'variance_approved',
+            expectedCash: 275000,
+            countedCash: 274950,
+            variance: -50,
+            denominations: [
+                { denomination: 100000, quantity: 2 },
+                { denomination: 50000, quantity: 1 },
+                { denomination: 20000, quantity: 1 },
+                { denomination: 5000, quantity: 1 },
+            ],
+        },
         postSaleControls: {
             voidedToday: 1,
             refundedToday: 1,
@@ -61,5 +73,6 @@ export const usePosStore = defineStore('pos', {
         activePromotionCount: (state) => state.promotions.length,
         activeKitchenTicketCount: (state) => state.kitchenTickets.filter((ticket) => ticket.status !== 'served').length,
         activeDeliveryCount: (state) => state.deliveryOrders.filter((order) => order.status !== 'delivered').length,
+        drawerDenominationCount: (state) => state.drawerAudit.denominations.reduce((total, item) => total + item.quantity, 0),
     },
 });

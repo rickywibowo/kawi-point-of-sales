@@ -5,6 +5,7 @@ namespace App\Services\Pos;
 use App\Models\Branch;
 use App\Models\Business;
 use App\Models\CashMovement;
+use App\Models\CashDrawerAudit;
 use App\Models\CashierShift;
 use App\Models\Customer;
 use App\Models\DiningTable;
@@ -73,6 +74,10 @@ class PosService
     {
         abort_unless($shift->business_id === $business->id && $shift->branch_id === $branch->id, 403);
 
+        if ($shift->status !== 'open') {
+            throw ValidationException::withMessages(['shift' => ['Only open shifts can be closed.']]);
+        }
+
         $cashSales = Sale::query()
             ->where('cashier_shift_id', $shift->id)
             ->where('status', 'completed')
@@ -93,19 +98,52 @@ class PosService
             ->sum('amount');
         $expectedCash = (float) $shift->opening_cash + $cashSales + (float) $cashIn - (float) $cashOut;
         $actualCash = (float) $data['actual_cash'];
+        $drawerCounts = $data['drawer_counts'] ?? null;
+        $countedCash = $drawerCounts ? $this->countDrawerCash($drawerCounts) : $actualCash;
+        $variance = round($actualCash - $expectedCash, 2);
 
-        $shift->update([
-            'expected_cash' => $expectedCash,
-            'actual_cash' => $actualCash,
-            'cash_difference' => $actualCash - $expectedCash,
-            'status' => 'closed',
-            'closed_at' => now(),
-            'notes' => $data['notes'] ?? $shift->notes,
-        ]);
+        if (round($countedCash, 2) !== round($actualCash, 2)) {
+            throw ValidationException::withMessages(['drawer_counts' => ['Drawer count total must match actual cash.']]);
+        }
 
-        $this->audit->record('cashier_shift.closed', $shift, after: $shift->fresh()->toArray(), request: $request);
+        if ($variance !== 0.0 && empty($data['variance_reason'])) {
+            throw ValidationException::withMessages(['variance_reason' => ['Variance reason is required when cash difference is not zero.']]);
+        }
 
-        return $shift->fresh();
+        return DB::transaction(function () use ($business, $branch, $shift, $data, $request, $expectedCash, $actualCash, $countedCash, $variance, $drawerCounts): CashierShift {
+            $shift->update([
+                'expected_cash' => $expectedCash,
+                'actual_cash' => $actualCash,
+                'cash_difference' => $variance,
+                'status' => 'closed',
+                'closed_at' => now(),
+                'notes' => $data['notes'] ?? $shift->notes,
+            ]);
+
+            if ($drawerCounts) {
+                $drawerAudit = CashDrawerAudit::query()->create([
+                    'business_id' => $business->id,
+                    'branch_id' => $branch->id,
+                    'cashier_shift_id' => $shift->id,
+                    'user_id' => $request->user()->id,
+                    'denomination_breakdown' => $this->normalizeDrawerCounts($drawerCounts),
+                    'expected_cash' => $expectedCash,
+                    'counted_cash' => $countedCash,
+                    'variance_amount' => $variance,
+                    'status' => $this->drawerAuditStatus($variance, (bool) ($data['variance_approved'] ?? false)),
+                    'variance_reason' => $data['variance_reason'] ?? null,
+                    'approved_by' => $variance !== 0.0 && (bool) ($data['variance_approved'] ?? false) ? $request->user()->id : null,
+                    'audited_at' => now(),
+                ]);
+
+                $this->audit->record('cash_drawer.audit_created', $drawerAudit, after: $drawerAudit->toArray(), request: $request);
+            }
+
+            $closed = $shift->fresh()->load('drawerAudit');
+            $this->audit->record('cashier_shift.closed', $closed, after: $closed->toArray(), request: $request);
+
+            return $closed;
+        });
     }
 
     public function recordCashMovement(Business $business, Branch $branch, CashierShift $shift, array $data, Request $request): CashMovement
@@ -517,6 +555,33 @@ class PosService
         $line = $label.($reason ? ': '.$reason : '');
 
         return trim($notes ? $notes.PHP_EOL.$line : $line);
+    }
+
+    private function countDrawerCash(array $drawerCounts): float
+    {
+        return round(collect($drawerCounts)->sum(fn (array $count): float => (float) $count['denomination'] * (int) $count['quantity']), 2);
+    }
+
+    private function normalizeDrawerCounts(array $drawerCounts): array
+    {
+        return collect($drawerCounts)
+            ->map(fn (array $count): array => [
+                'denomination' => round((float) $count['denomination'], 2),
+                'quantity' => (int) $count['quantity'],
+                'subtotal' => round((float) $count['denomination'] * (int) $count['quantity'], 2),
+                'label' => $count['label'] ?? null,
+            ])
+            ->values()
+            ->all();
+    }
+
+    private function drawerAuditStatus(float $variance, bool $approved): string
+    {
+        if ($variance === 0.0) {
+            return 'balanced';
+        }
+
+        return $approved ? 'variance_approved' : 'variance_pending';
     }
 
     private function recordSalesConsumption(int $businessId, int $branchId, int $warehouseId, Product $product, float $quantity, Sale $sale): void

@@ -661,6 +661,63 @@ class PosTest extends TestCase
         $this->assertDatabaseHas('audit_logs', ['action' => 'cash_movement.created']);
     }
 
+    public function test_cashier_can_close_shift_with_cash_drawer_denominations(): void
+    {
+        $this->seed(DatabaseSeeder::class);
+
+        [$user, $business, $branch] = $this->context();
+        $shift = $this->openShift($user, $business, $branch, 'SHIFT-DRAWER-AUDIT');
+
+        $this->actingAs($user, 'sanctum')
+            ->withHeaders(['X-Business-Id' => $business->uuid, 'X-Branch-Id' => $branch->uuid])
+            ->postJson("/api/cashier-shifts/{$shift->id}/close", [
+                'actual_cash' => 199950,
+                'drawer_counts' => [
+                    ['denomination' => 100000, 'quantity' => 1],
+                    ['denomination' => 50000, 'quantity' => 1],
+                    ['denomination' => 20000, 'quantity' => 2],
+                    ['denomination' => 5000, 'quantity' => 1],
+                    ['denomination' => 1000, 'quantity' => 4],
+                    ['denomination' => 500, 'quantity' => 1],
+                    ['denomination' => 100, 'quantity' => 4],
+                    ['denomination' => 50, 'quantity' => 1],
+                ],
+                'variance_reason' => 'Selisih receh saat closing',
+                'variance_approved' => true,
+            ])
+            ->assertOk()
+            ->assertJsonPath('shift.status', 'closed')
+            ->assertJsonPath('shift.cash_difference', '-50.00')
+            ->assertJsonPath('shift.drawer_audit.status', 'variance_approved')
+            ->assertJsonPath('shift.drawer_audit.counted_cash', '199950.00');
+
+        $this->assertDatabaseHas('cash_drawer_audits', [
+            'cashier_shift_id' => $shift->id,
+            'variance_amount' => -50,
+            'status' => 'variance_approved',
+        ]);
+        $this->assertDatabaseHas('audit_logs', ['action' => 'cash_drawer.audit_created']);
+    }
+
+    public function test_close_shift_rejects_drawer_count_that_does_not_match_actual_cash(): void
+    {
+        $this->seed(DatabaseSeeder::class);
+
+        [$user, $business, $branch] = $this->context();
+        $shift = $this->openShift($user, $business, $branch, 'SHIFT-DRAWER-MISMATCH');
+
+        $this->actingAs($user, 'sanctum')
+            ->withHeaders(['X-Business-Id' => $business->uuid, 'X-Branch-Id' => $branch->uuid])
+            ->postJson("/api/cashier-shifts/{$shift->id}/close", [
+                'actual_cash' => 200000,
+                'drawer_counts' => [
+                    ['denomination' => 100000, 'quantity' => 1],
+                ],
+            ])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors(['drawer_counts']);
+    }
+
     public function test_manager_can_void_sale_and_restore_stock(): void
     {
         $this->seed(DatabaseSeeder::class);

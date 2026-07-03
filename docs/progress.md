@@ -362,6 +362,22 @@ Status: complete.
 - Dokumentasi Tahap 27 dibuat.
 - Automated test payment settlement dibuat.
 
+### Tahap 28 - Cash Drawer Session Audit
+
+Status: complete.
+
+- Tabel `cash_drawer_audits` dibuat untuk bukti audit tutup kasir.
+- Model `CashDrawerAudit` dibuat dan direlasikan ke `CashierShift`.
+- Close shift mendukung input denominasi kas melalui `drawer_counts`.
+- Total denominasi wajib sama dengan `actual_cash`.
+- Selisih kas wajib memiliki `variance_reason`.
+- Status audit mendukung `balanced`, `variance_pending`, dan `variance_approved`.
+- Endpoint `GET /api/pos` mengembalikan drawer audits terbaru.
+- Audit log `cash_drawer.audit_created` dibuat.
+- Vue Pinia store POS dan dashboard Post-Sale Controls diperbarui.
+- Dokumentasi Tahap 28 dibuat.
+- Automated test cash drawer audit dibuat.
+
 ## Cara Track Mundur
 
 - Setiap tahap disimpan dalam commit terpisah.
