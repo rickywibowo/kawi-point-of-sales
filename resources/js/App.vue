@@ -11,6 +11,7 @@ import { usePosStore } from './stores/pos';
 import { usePurchasingStore } from './stores/purchasing';
 import { useReportsStore } from './stores/reports';
 import { useUserAccessStore } from './stores/userAccess';
+import { apiPost } from './services/api';
 
 const accounting = useAccountingStore();
 const audit = useAuditStore();
@@ -162,6 +163,7 @@ const actionFields = computed(() => {
         ],
         'New Product': [
             { key: 'name', label: 'Product Name', type: 'text', placeholder: 'KAWI Menu Baru' },
+            { key: 'type', label: 'Type', type: 'text', placeholder: 'food' },
             { key: 'price', label: 'Base Price', type: 'number', placeholder: '35000' },
         ],
         'Import CSV': [
@@ -262,8 +264,54 @@ const closeAction = () => {
     activeAction.value = null;
     actionFeedback.value = '';
 };
-const saveActionDraft = () => {
-    actionFeedback.value = `${activeAction.value} draft siap disambungkan ke API.`;
+const actionPayload = () => {
+    const payloads = {
+        'New Customer': () => ({
+            name: actionDraft.name,
+            phone: actionDraft.phone,
+            is_active: true,
+        }),
+        'New Product': () => ({
+            name: actionDraft.name,
+            type: actionDraft.type || 'food',
+            base_price: Number(actionDraft.price || 0),
+            cost_price: 0,
+            track_stock: false,
+            is_active: true,
+        }),
+    };
+
+    return payloads[activeAction.value]?.() ?? null;
+};
+const isApiSubmitAction = computed(() => ['New Customer', 'New Product'].includes(activeAction.value));
+const saveActionDraft = async () => {
+    const endpoints = {
+        'New Customer': '/customers',
+        'New Product': '/products',
+    };
+    const endpoint = endpoints[activeAction.value];
+
+    if (!endpoint || foundation.apiStatus !== 'connected') {
+        actionFeedback.value = `${activeAction.value} draft siap disambungkan ke API.`;
+
+        return;
+    }
+
+    try {
+        await apiPost(endpoint, actionPayload());
+
+        if (activeAction.value === 'New Customer') {
+            await customers.loadFromApi();
+        }
+
+        if (activeAction.value === 'New Product') {
+            await masterData.loadFromApi();
+        }
+
+        actionFeedback.value = `${activeAction.value} berhasil disimpan ke API.`;
+    } catch (error) {
+        actionFeedback.value = error?.payload?.message ?? error?.message ?? 'Submit API gagal.';
+    }
 };
 
 const updateOnlineStatus = () => foundation.setOnlineStatus(navigator.onLine);
@@ -475,6 +523,9 @@ onUnmounted(() => {
                                     <p class="text-xs uppercase text-emerald-100">Action Draft</p>
                                     <h4 class="mt-1 text-base font-semibold text-emerald-50">{{ activeAction }}</h4>
                                 </div>
+                                <span class="rounded-md border border-white/10 px-3 py-1 text-xs text-emerald-50">
+                                    {{ isApiSubmitAction && foundation.apiStatus === 'connected' ? 'API submit ready' : 'Draft only' }}
+                                </span>
                                 <button
                                     class="rounded-md border border-white/10 px-3 py-2 text-sm text-zinc-100 transition hover:border-amber-300/50 hover:bg-amber-300/10"
                                     type="button"

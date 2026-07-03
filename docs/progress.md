@@ -472,6 +472,18 @@ Status: complete.
 - Perpindahan modul menutup drawer action dan reset pencarian.
 - Dokumentasi Tahap 35 dibuat.
 
+### Tahap 36 - Frontend API Submit Actions
+
+Status: complete.
+
+- Action drawer mulai tersambung ke endpoint API nyata.
+- `New Customer` submit ke `POST /api/customers`.
+- `New Product` submit ke `POST /api/products`.
+- Store customer dan master data reload setelah submit berhasil.
+- Drawer menampilkan badge `API submit ready` atau `Draft only`.
+- Action lain tetap memakai mode draft lokal.
+- Dokumentasi Tahap 36 dibuat.
+
 ## Cara Track Mundur
 
 - Setiap tahap disimpan dalam commit terpisah.

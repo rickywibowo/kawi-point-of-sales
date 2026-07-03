@@ -7,9 +7,9 @@ Status: complete.
 - Laravel, Vue, Vite, Sanctum, tenant context, RBAC, dan audit log dasar.
 - Multi-business dan multi-branch siap.
 - Health check dan deployment readiness tersedia.
-- Frontend API client foundation, login/session UX, module navigation shell, module table/action foundation, dan action drawer foundation tersedia.
+- Frontend API client foundation, login/session UX, module navigation shell, module table/action foundation, action drawer foundation, dan submit API awal tersedia.
 
-Tahap terkait: 1, 9, 14, 15, 31, 32, 33, 34, 35.
+Tahap terkait: 1, 9, 14, 15, 31, 32, 33, 34, 35, 36.
 
 ## Milestone 2 - Master Data & Inventory
 
