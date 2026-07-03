@@ -30,6 +30,7 @@ const loginForm = reactive({
 });
 const loginPanelOpen = ref(false);
 const dashboardLoading = ref(false);
+const activeModule = ref('pos');
 
 const quickStats = computed(() => [
     { label: 'Penjualan Hari Ini', value: 'Rp 0', tone: 'emerald' },
@@ -45,13 +46,78 @@ const quickStats = computed(() => [
 ]);
 
 const modules = [
-    'Kasir',
-    'Produk',
-    'Inventori',
-    'Pelanggan',
-    'Laporan',
-    'Pengaturan',
+    { id: 'pos', label: 'Kasir' },
+    { id: 'products', label: 'Produk' },
+    { id: 'inventory', label: 'Inventori' },
+    { id: 'purchasing', label: 'Purchasing' },
+    { id: 'accounting', label: 'Accounting' },
+    { id: 'reports', label: 'Laporan' },
+    { id: 'customers', label: 'Pelanggan' },
+    { id: 'settings', label: 'Pengaturan' },
 ];
+
+const activeModuleMeta = computed(() => modules.find((module) => module.id === activeModule.value) ?? modules[0]);
+const moduleRows = computed(() => {
+    const rowMaps = {
+        pos: pos.kitchenTickets.map((ticket) => ({
+            primary: ticket.number,
+            secondary: ticket.station,
+            value: ticket.status,
+        })),
+        products: masterData.products.map((product) => ({
+            primary: product.name,
+            secondary: product.sku,
+            value: `Rp ${product.price.toLocaleString('id-ID')}`,
+        })),
+        inventory: inventory.stockBalances.map((stock) => ({
+            primary: stock.product,
+            secondary: `${stock.quantity} ${stock.unit}`,
+            value: `Rp ${stock.value.toLocaleString('id-ID')}`,
+        })),
+        purchasing: purchasing.purchaseOrders.map((order) => ({
+            primary: order.number,
+            secondary: order.supplier,
+            value: order.status,
+        })),
+        accounting: accounting.paymentSettlements.map((settlement) => ({
+            primary: settlement.number,
+            secondary: settlement.method,
+            value: `Rp ${settlement.variance.toLocaleString('id-ID')}`,
+        })),
+        reports: reports.reportCards.map((card) => ({
+            primary: card.label,
+            secondary: reports.period,
+            value: `Rp ${card.value.toLocaleString('id-ID')}`,
+        })),
+        customers: customers.customers.map((customer) => ({
+            primary: customer.name,
+            secondary: customer.phone,
+            value: `${customer.loyaltyPoints} pts`,
+        })),
+        settings: userAccess.users.map((user) => ({
+            primary: user.name,
+            secondary: user.email,
+            value: user.roles?.[0] ?? 'User',
+        })),
+    };
+
+    return rowMaps[activeModule.value] ?? [];
+});
+
+const moduleSummary = computed(() => {
+    const summaries = {
+        pos: `${pos.activeKitchenTicketCount} kitchen tickets / ${pos.activeDeliveryCount} delivery`,
+        products: `${masterData.activeProductCount} produk / ${masterData.categoryCount} kategori`,
+        inventory: `Rp ${inventory.totalStockValue.toLocaleString('id-ID')} nilai stok`,
+        purchasing: `${purchasing.openOrderCount} PO aktif / Rp ${purchasing.payableRemaining.toLocaleString('id-ID')} payable`,
+        accounting: `${accounting.trialBalanceStatus} / ${accounting.providerImportReviewCount} provider review`,
+        reports: reports.period,
+        customers: `${customers.customerCount} pelanggan / ${customers.loyaltyPointTotal} poin`,
+        settings: `${userAccess.userCount} user / ${userAccess.permissionCount} permissions`,
+    };
+
+    return summaries[activeModule.value] ?? '';
+});
 
 const updateOnlineStatus = () => foundation.setOnlineStatus(navigator.onLine);
 const updateOfflineStatus = () => offline.setOnlineStatus(navigator.onLine);
@@ -219,6 +285,37 @@ onUnmounted(() => {
                             <p class="text-sm text-zinc-400">{{ stat.label }}</p>
                             <p class="mt-3 text-2xl font-semibold">{{ stat.value }}</p>
                         </article>
+                    </div>
+
+                    <div class="mt-6 rounded-md border border-white/10 bg-zinc-950/70 p-4">
+                        <div class="flex flex-wrap items-center justify-between gap-3">
+                            <div>
+                                <p class="text-sm text-zinc-400">Workspace</p>
+                                <h3 class="mt-1 text-lg font-semibold text-zinc-100">{{ activeModuleMeta.label }}</h3>
+                            </div>
+                            <span class="rounded-md border border-white/10 px-3 py-1 text-xs text-zinc-300">
+                                {{ moduleSummary }}
+                            </span>
+                        </div>
+                        <div class="mt-4 overflow-hidden rounded-md border border-white/10">
+                            <div class="grid grid-cols-[1.2fr_1fr_auto] gap-3 border-b border-white/10 bg-white/[0.03] px-3 py-2 text-xs uppercase text-zinc-500">
+                                <span>Data</span>
+                                <span>Info</span>
+                                <span>Status</span>
+                            </div>
+                            <div
+                                v-for="row in moduleRows.slice(0, 6)"
+                                :key="`${activeModule}-${row.primary}-${row.secondary}`"
+                                class="grid grid-cols-[1.2fr_1fr_auto] gap-3 border-b border-white/5 px-3 py-3 text-sm last:border-b-0"
+                            >
+                                <span class="font-medium text-zinc-100">{{ row.primary }}</span>
+                                <span class="text-zinc-400">{{ row.secondary }}</span>
+                                <span class="text-right text-emerald-200">{{ row.value }}</span>
+                            </div>
+                            <div v-if="moduleRows.length === 0" class="px-3 py-6 text-sm text-zinc-400">
+                                Belum ada data.
+                            </div>
+                        </div>
                     </div>
 
                     <div class="mt-6 rounded-md border border-white/10 bg-zinc-950/70 p-4">
@@ -528,10 +625,12 @@ onUnmounted(() => {
                     <div class="mt-5 grid grid-cols-2 gap-3">
                         <button
                             v-for="module in modules"
-                            :key="module"
-                            class="rounded-md border border-white/10 bg-white/[0.03] px-3 py-4 text-left text-sm font-medium transition hover:border-emerald-300/50 hover:bg-emerald-300/10"
+                            :key="module.id"
+                            class="rounded-md border px-3 py-4 text-left text-sm font-medium transition hover:border-emerald-300/50 hover:bg-emerald-300/10"
+                            :class="activeModule === module.id ? 'border-emerald-300/50 bg-emerald-300/10 text-emerald-100' : 'border-white/10 bg-white/[0.03] text-zinc-100'"
+                            @click="activeModule = module.id"
                         >
-                            {{ module }}
+                            {{ module.label }}
                         </button>
                     </div>
 

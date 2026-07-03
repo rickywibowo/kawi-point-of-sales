@@ -438,6 +438,18 @@ Status: complete.
 - Quick stats dashboard diubah menjadi computed agar mengikuti data store setelah API hydrate.
 - Dokumentasi Tahap 32 dibuat.
 
+### Tahap 33 - Frontend Module Navigation Foundation
+
+Status: complete.
+
+- State `activeModule` dibuat di dashboard Vue.
+- Sidebar modul berubah menjadi selector module aktif.
+- Workspace module ditambahkan di area utama dashboard.
+- Workspace menampilkan data ringkas sesuai module aktif.
+- Modul awal mencakup kasir, produk, inventori, purchasing, accounting, laporan, pelanggan, dan pengaturan.
+- Dashboard overview lama tetap dipertahankan.
+- Dokumentasi Tahap 33 dibuat.
+
 ## Cara Track Mundur
 
 - Setiap tahap disimpan dalam commit terpisah.
