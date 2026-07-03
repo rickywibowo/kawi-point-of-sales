@@ -494,6 +494,20 @@ Status: complete.
 - POS store reload setelah action POS berhasil.
 - Dokumentasi Tahap 37 dibuat.
 
+## 2026-07-04
+
+### Tahap 38 - Frontend Inventory Submit Actions
+
+Status: complete.
+
+- Store inventory frontend menyimpan ID warehouse, produk, dan recipe dari API.
+- Action `Stock Opname` submit ke `POST /api/stock-opnames`.
+- Action `Transfer Stock` submit ke `POST /api/stock-transfers`.
+- Action `Production` submit ke `POST /api/production-orders`.
+- Payload drawer inventory mengikuti request validation backend.
+- Inventory store reload setelah action inventory berhasil.
+- Dokumentasi Tahap 38 dibuat.
+
 ## Cara Track Mundur
 
 - Setiap tahap disimpan dalam commit terpisah.

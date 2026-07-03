@@ -148,6 +148,9 @@ const moduleActions = computed(() => {
     return actions[activeModule.value] ?? [];
 });
 const actionFields = computed(() => {
+    const firstStock = inventory.stockBalances[0] ?? {};
+    const firstRecipe = inventory.recipes[0] ?? {};
+    const transferTarget = inventory.warehouses.find((warehouse) => warehouse.id !== inventory.warehouseId);
     const fields = {
         'New Sale': [
             { key: 'customer', label: 'Customer', type: 'text', placeholder: 'Walk-in Customer' },
@@ -176,15 +179,23 @@ const actionFields = computed(() => {
         ],
         'Stock Opname': [
             { key: 'opname_number', label: 'Opname Number', type: 'text', placeholder: 'OPN-001' },
-            { key: 'warehouse', label: 'Warehouse', type: 'text', placeholder: inventory.warehouse },
+            { key: 'warehouse_id', label: 'Warehouse ID', type: 'number', placeholder: String(inventory.warehouseId ?? '') },
+            { key: 'product_id', label: 'Product ID', type: 'number', placeholder: String(firstStock.productId ?? '') },
+            { key: 'counted_quantity', label: 'Counted Quantity', type: 'number', placeholder: String(firstStock.quantity ?? 0) },
         ],
         'Transfer Stock': [
             { key: 'transfer_number', label: 'Transfer Number', type: 'text', placeholder: 'TRF-001' },
-            { key: 'target', label: 'Target Warehouse', type: 'text', placeholder: 'Gudang Tujuan' },
+            { key: 'from_warehouse_id', label: 'From Warehouse ID', type: 'number', placeholder: String(inventory.warehouseId ?? '') },
+            { key: 'to_warehouse_id', label: 'To Warehouse ID', type: 'number', placeholder: String(transferTarget?.id ?? '') },
+            { key: 'product_id', label: 'Product ID', type: 'number', placeholder: String(firstStock.productId ?? '') },
+            { key: 'quantity', label: 'Quantity', type: 'number', placeholder: '1' },
         ],
         Production: [
             { key: 'production_number', label: 'Production Number', type: 'text', placeholder: 'PROD-001' },
-            { key: 'quantity', label: 'Quantity', type: 'number', placeholder: '10' },
+            { key: 'warehouse_id', label: 'Warehouse ID', type: 'number', placeholder: String(inventory.warehouseId ?? '') },
+            { key: 'recipe_id', label: 'Recipe ID', type: 'number', placeholder: String(firstRecipe.id ?? '') },
+            { key: 'planned_quantity', label: 'Planned Quantity', type: 'number', placeholder: '10' },
+            { key: 'actual_quantity', label: 'Actual Quantity', type: 'number', placeholder: '10' },
         ],
         'New PO': [
             { key: 'order_number', label: 'PO Number', type: 'text', placeholder: 'PO-001' },
@@ -264,6 +275,9 @@ const closeAction = () => {
     activeAction.value = null;
     actionFeedback.value = '';
 };
+const draftNumber = (key, fallback = 0) => Number(actionDraft[key] || fallback || 0);
+const firstStockBalance = () => inventory.stockBalances[0] ?? {};
+const firstRecipe = () => inventory.recipes[0] ?? {};
 const actionPayload = () => {
     const payloads = {
         'New Customer': () => ({
@@ -294,17 +308,64 @@ const actionPayload = () => {
                 })),
             },
         }),
+        'Stock Opname': () => {
+            const stock = firstStockBalance();
+
+            return {
+                warehouse_id: draftNumber('warehouse_id', stock.warehouseId ?? inventory.warehouseId),
+                opname_number: actionDraft.opname_number,
+                items: [
+                    {
+                        product_id: draftNumber('product_id', stock.productId),
+                        counted_quantity: draftNumber('counted_quantity', stock.quantity),
+                    },
+                ],
+            };
+        },
+        'Transfer Stock': () => {
+            const stock = firstStockBalance();
+
+            return {
+                from_warehouse_id: draftNumber('from_warehouse_id', stock.warehouseId ?? inventory.warehouseId),
+                to_warehouse_id: draftNumber('to_warehouse_id'),
+                transfer_number: actionDraft.transfer_number,
+                items: [
+                    {
+                        product_id: draftNumber('product_id', stock.productId),
+                        quantity: draftNumber('quantity', 1),
+                    },
+                ],
+            };
+        },
+        Production: () => ({
+            warehouse_id: draftNumber('warehouse_id', inventory.warehouseId),
+            recipe_id: draftNumber('recipe_id', firstRecipe().id),
+            production_number: actionDraft.production_number,
+            planned_quantity: draftNumber('planned_quantity', 1),
+            actual_quantity: actionDraft.actual_quantity ? draftNumber('actual_quantity') : undefined,
+        }),
     };
 
     return payloads[activeAction.value]?.() ?? null;
 };
-const isApiSubmitAction = computed(() => ['New Customer', 'New Product', 'Open Shift', 'Hold Cart'].includes(activeAction.value));
+const isApiSubmitAction = computed(() => [
+    'New Customer',
+    'New Product',
+    'Open Shift',
+    'Hold Cart',
+    'Stock Opname',
+    'Transfer Stock',
+    'Production',
+].includes(activeAction.value));
 const saveActionDraft = async () => {
     const endpoints = {
         'New Customer': '/customers',
         'New Product': '/products',
         'Open Shift': '/cashier-shifts',
         'Hold Cart': '/held-transactions',
+        'Stock Opname': '/stock-opnames',
+        'Transfer Stock': '/stock-transfers',
+        Production: '/production-orders',
     };
     const endpoint = endpoints[activeAction.value];
 
@@ -327,6 +388,10 @@ const saveActionDraft = async () => {
 
         if (['Open Shift', 'Hold Cart'].includes(activeAction.value)) {
             await pos.loadFromApi();
+        }
+
+        if (['Stock Opname', 'Transfer Stock', 'Production'].includes(activeAction.value)) {
+            await inventory.loadFromApi();
         }
 
         actionFeedback.value = `${activeAction.value} berhasil disimpan ke API.`;

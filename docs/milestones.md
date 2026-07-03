@@ -18,8 +18,9 @@ Status: complete.
 - Master produk, kategori, supplier, customer, tax, UOM, modifier, dan harga per cabang.
 - Recipe, warehouse, stock ledger, stock balance, adjustment, transfer, opname, dan production order.
 - Purchase return dan production posting memengaruhi stok.
+- Frontend action drawer inventory tersambung ke API stock opname, stock transfer, dan production order.
 
-Tahap terkait: 2, 3, 12, 16, 17.
+Tahap terkait: 2, 3, 12, 16, 17, 38.
 
 ## Milestone 3 - POS Operations
 
