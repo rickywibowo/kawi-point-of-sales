@@ -7,6 +7,7 @@ use App\Models\DiningTable;
 use App\Models\HeldTransaction;
 use App\Models\Product;
 use App\Models\Sale;
+use App\Models\TableReservation;
 use App\Models\Warehouse;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -29,6 +30,13 @@ class PosController extends Controller
                 ->get(),
             'warehouses' => Warehouse::query()->forTenant($business->id, $branch->id)->where('is_active', true)->get(),
             'dining_tables' => DiningTable::query()->forTenant($business->id, $branch->id)->orderBy('section')->orderBy('code')->get(),
+            'table_reservations' => TableReservation::query()
+                ->forTenant($business->id, $branch->id)
+                ->with(['diningTable', 'customer'])
+                ->whereIn('status', ['booked', 'seated'])
+                ->whereDate('reserved_at', now()->toDateString())
+                ->orderBy('reserved_at')
+                ->get(),
             'held_transactions' => HeldTransaction::query()
                 ->forTenant($business->id, $branch->id)
                 ->whereNull('resumed_at')

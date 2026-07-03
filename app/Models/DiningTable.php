@@ -26,4 +26,9 @@ class DiningTable extends Model
     {
         return $this->hasMany(Sale::class);
     }
+
+    public function reservations(): HasMany
+    {
+        return $this->hasMany(TableReservation::class);
+    }
 }

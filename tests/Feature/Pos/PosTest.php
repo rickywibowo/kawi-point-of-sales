@@ -10,6 +10,7 @@ use App\Models\Product;
 use App\Models\Sale;
 use App\Models\StockBalance;
 use App\Models\StockLedger;
+use App\Models\TableReservation;
 use App\Models\User;
 use App\Models\Warehouse;
 use Database\Seeders\DatabaseSeeder;
@@ -206,6 +207,125 @@ class PosTest extends TestCase
             ])
             ->assertUnprocessable()
             ->assertJsonValidationErrors(['dining_table_id']);
+    }
+
+    public function test_cashier_can_create_and_seat_table_reservation(): void
+    {
+        $this->seed(DatabaseSeeder::class);
+
+        [$user, $business, $branch] = $this->context();
+        $table = DiningTable::query()->create([
+            'business_id' => $business->id,
+            'branch_id' => $branch->id,
+            'uuid' => (string) \Illuminate\Support\Str::uuid(),
+            'code' => 'RSV-01',
+            'name' => 'Reservation Table 01',
+            'capacity' => 4,
+            'status' => 'available',
+        ]);
+
+        $reservationId = $this->actingAs($user, 'sanctum')
+            ->withHeaders(['X-Business-Id' => $business->uuid, 'X-Branch-Id' => $branch->uuid])
+            ->postJson("/api/dining-tables/{$table->id}/reservations", [
+                'reservation_number' => 'RSV-TEST-001',
+                'guest_name' => 'Rina Reservation',
+                'guest_phone' => '081200000099',
+                'party_size' => 3,
+                'reserved_at' => now()->addHour()->toIso8601String(),
+            ])
+            ->assertCreated()
+            ->assertJsonPath('table_reservation.status', 'booked')
+            ->json('table_reservation.id');
+
+        $this->assertSame('reserved', $table->fresh()->status);
+
+        $this->actingAs($user, 'sanctum')
+            ->withHeaders(['X-Business-Id' => $business->uuid, 'X-Branch-Id' => $branch->uuid])
+            ->patchJson("/api/table-reservations/{$reservationId}/seat")
+            ->assertOk()
+            ->assertJsonPath('table_reservation.status', 'seated');
+
+        $this->assertSame('occupied', $table->fresh()->status);
+        $this->assertDatabaseHas('audit_logs', ['action' => 'table_reservation.created']);
+        $this->assertDatabaseHas('audit_logs', ['action' => 'table_reservation.seated']);
+    }
+
+    public function test_cashier_can_cancel_table_reservation_and_release_table(): void
+    {
+        $this->seed(DatabaseSeeder::class);
+
+        [$user, $business, $branch] = $this->context();
+        $table = DiningTable::query()->create([
+            'business_id' => $business->id,
+            'branch_id' => $branch->id,
+            'uuid' => (string) \Illuminate\Support\Str::uuid(),
+            'code' => 'RSV-02',
+            'name' => 'Reservation Table 02',
+            'capacity' => 2,
+            'status' => 'available',
+        ]);
+
+        $reservation = TableReservation::query()->create([
+            'business_id' => $business->id,
+            'branch_id' => $branch->id,
+            'dining_table_id' => $table->id,
+            'uuid' => (string) \Illuminate\Support\Str::uuid(),
+            'reservation_number' => 'RSV-CANCEL-001',
+            'guest_name' => 'Cancel Guest',
+            'party_size' => 2,
+            'reserved_at' => now()->addHour(),
+            'status' => 'booked',
+        ]);
+        $table->update(['status' => 'reserved']);
+
+        $this->actingAs($user, 'sanctum')
+            ->withHeaders(['X-Business-Id' => $business->uuid, 'X-Branch-Id' => $branch->uuid])
+            ->patchJson("/api/table-reservations/{$reservation->id}/cancel")
+            ->assertOk()
+            ->assertJsonPath('table_reservation.status', 'cancelled');
+
+        $this->assertSame('available', $table->fresh()->status);
+        $this->assertDatabaseHas('audit_logs', ['action' => 'table_reservation.cancelled']);
+    }
+
+    public function test_table_reservation_rejects_overlapping_booking(): void
+    {
+        $this->seed(DatabaseSeeder::class);
+
+        [$user, $business, $branch] = $this->context();
+        $table = DiningTable::query()->create([
+            'business_id' => $business->id,
+            'branch_id' => $branch->id,
+            'uuid' => (string) \Illuminate\Support\Str::uuid(),
+            'code' => 'RSV-03',
+            'name' => 'Reservation Table 03',
+            'capacity' => 4,
+            'status' => 'reserved',
+        ]);
+        $reservedAt = now()->addHour();
+
+        TableReservation::query()->create([
+            'business_id' => $business->id,
+            'branch_id' => $branch->id,
+            'dining_table_id' => $table->id,
+            'uuid' => (string) \Illuminate\Support\Str::uuid(),
+            'reservation_number' => 'RSV-EXISTING-001',
+            'guest_name' => 'Existing Guest',
+            'party_size' => 2,
+            'reserved_at' => $reservedAt,
+            'status' => 'booked',
+        ]);
+
+        $this->actingAs($user, 'sanctum')
+            ->withHeaders(['X-Business-Id' => $business->uuid, 'X-Branch-Id' => $branch->uuid])
+            ->postJson("/api/dining-tables/{$table->id}/reservations", [
+                'reservation_number' => 'RSV-OVERLAP-001',
+                'guest_name' => 'Overlap Guest',
+                'party_size' => 2,
+                'reserved_at' => $reservedAt->copy()->addMinutes(30)->toIso8601String(),
+            ])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors(['reserved_at']);
     }
 
     public function test_sale_idempotency_key_prevents_duplicate_sales(): void

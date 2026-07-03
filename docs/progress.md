@@ -285,6 +285,21 @@ Status: complete.
 - Dokumentasi Tahap 22 dibuat.
 - Automated test dine-in table management dibuat.
 
+### Tahap 23 - Table Reservations
+
+Status: complete.
+
+- Tabel `table_reservations` dibuat untuk booking meja.
+- Model, request validation, service workflow, dan endpoint reservasi dibuat.
+- Endpoint `POST /api/dining-tables/{table}/reservations` dibuat.
+- Endpoint cancel dan seat reservation dibuat.
+- POS index mengembalikan reservasi aktif hari berjalan.
+- Reservasi mengubah status meja menjadi `reserved`, `occupied`, atau kembali `available`.
+- Validasi kapasitas meja dan overlap reservation dibuat.
+- Vue Pinia store POS dan dashboard POS diperbarui.
+- Dokumentasi Tahap 23 dibuat.
+- Automated test table reservations dibuat.
+
 ## Cara Track Mundur
 
 - Setiap tahap disimpan dalam commit terpisah.

@@ -30,6 +30,9 @@ export const usePosStore = defineStore('pos', {
             { code: 'T-02', name: 'Table 02', status: 'cleaning', capacity: 4 },
             { code: 'VIP-01', name: 'VIP Room', status: 'reserved', capacity: 8 },
         ],
+        tableReservations: [
+            { number: 'RSV-DEMO-001', guest: 'Rina Member', table: 'VIP-01', status: 'booked', time: '19:00' },
+        ],
         heldTransactions: 1,
         todayTransactions: 0,
     }),
@@ -42,5 +45,6 @@ export const usePosStore = defineStore('pos', {
         }, 0),
         receiptCount: (state) => state.receipts.length,
         availableTableCount: (state) => state.diningTables.filter((table) => table.status === 'available').length,
+        activeReservationCount: (state) => state.tableReservations.filter((reservation) => reservation.status !== 'cancelled').length,
     },
 });

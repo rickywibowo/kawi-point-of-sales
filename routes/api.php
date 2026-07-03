@@ -85,6 +85,12 @@ Route::middleware(['auth:sanctum', 'tenant'])->group(function (): void {
         ->middleware('permission:sales.create');
     Route::patch('/dining-tables/{table}/status', [DiningTableController::class, 'updateStatus'])
         ->middleware('permission:sales.create');
+    Route::post('/dining-tables/{table}/reservations', [DiningTableController::class, 'reserve'])
+        ->middleware('permission:sales.create');
+    Route::patch('/table-reservations/{reservation}/cancel', [DiningTableController::class, 'cancelReservation'])
+        ->middleware('permission:sales.create');
+    Route::patch('/table-reservations/{reservation}/seat', [DiningTableController::class, 'seatReservation'])
+        ->middleware('permission:sales.create');
     Route::post('/cashier-shifts', [CashierShiftController::class, 'store'])
         ->middleware('permission:sales.create');
     Route::post('/cashier-shifts/{shift}/close', [CashierShiftController::class, 'close'])

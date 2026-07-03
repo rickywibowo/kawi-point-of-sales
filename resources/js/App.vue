@@ -153,7 +153,7 @@ onUnmounted(() => {
                     <div class="mt-6 rounded-md border border-white/10 bg-zinc-950/70 p-4">
                         <div class="flex flex-wrap items-center justify-between gap-3">
                             <h3 class="text-sm font-semibold text-zinc-300">POS Cart</h3>
-                            <span class="text-xs text-zinc-500">{{ pos.shift.number }} / {{ pos.shift.status }} / {{ pos.availableTableCount }} meja ready</span>
+                            <span class="text-xs text-zinc-500">{{ pos.shift.number }} / {{ pos.availableTableCount }} meja ready / {{ pos.activeReservationCount }} reservasi</span>
                         </div>
                         <div class="mt-4 grid gap-3 sm:grid-cols-[1fr_auto]">
                             <div class="space-y-2">
@@ -180,6 +180,12 @@ onUnmounted(() => {
                                 <p class="font-medium">{{ table.code }} / {{ table.capacity }} pax</p>
                                 <p class="mt-1 text-xs text-zinc-500">{{ table.status }}</p>
                             </div>
+                        </div>
+                        <div class="mt-4 rounded-md border border-white/10 bg-white/[0.03] p-3 text-sm">
+                            <p class="text-zinc-400">Reservasi Berikutnya</p>
+                            <p class="mt-1 font-semibold">
+                                {{ pos.tableReservations[0]?.time }} / {{ pos.tableReservations[0]?.guest }} / {{ pos.tableReservations[0]?.table }}
+                            </p>
                         </div>
                     </div>
 
