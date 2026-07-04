@@ -42,6 +42,9 @@ export const usePosStore = defineStore('pos', {
         receipts: [
             { number: 'SALE-DEMO-001', channel: 'digital', total: 60000 },
         ],
+        sales: [
+            { id: null, number: 'SALE-DEMO-001', status: 'completed', total: 60000 },
+        ],
         diningTables: [
             { id: null, code: 'T-01', name: 'Table 01', status: 'available', capacity: 2 },
             { id: null, code: 'T-02', name: 'Table 02', status: 'cleaning', capacity: 4 },
@@ -125,6 +128,12 @@ export const usePosStore = defineStore('pos', {
                 method: payment.method,
                 amount: Number(payment.amount ?? 0),
             })) ?? this.payments;
+            this.sales = response.today_sales?.map((sale) => ({
+                id: sale.id,
+                number: sale.sale_number,
+                status: sale.status,
+                total: Number(sale.grand_total ?? 0),
+            })) ?? this.sales;
             this.diningTables = response.dining_tables?.map((table) => ({
                 id: table.id,
                 code: table.code,

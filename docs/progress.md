@@ -624,6 +624,18 @@ Status: complete.
 - POS store reload setelah update status item kitchen berhasil.
 - Dokumentasi Tahap 48 dibuat.
 
+### Tahap 49 - Frontend POS Sale Status Actions
+
+Status: complete.
+
+- POS store menyimpan daftar sale harian dari API.
+- Action `Void Sale` ditambahkan ke modul Kasir.
+- Action `Refund Sale` ditambahkan ke modul Kasir.
+- `Void Sale` submit ke `POST /api/sales/{sale}/void`.
+- `Refund Sale` submit ke `POST /api/sales/{sale}/refund`.
+- POS store reload setelah void atau refund sale berhasil.
+- Dokumentasi Tahap 49 dibuat.
+
 ## Cara Track Mundur
 
 - Setiap tahap disimpan dalam commit terpisah.

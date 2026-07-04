@@ -135,7 +135,7 @@ const moduleSummary = computed(() => {
 });
 const moduleActions = computed(() => {
     const actions = {
-        pos: ['New Sale', 'Hold Cart', 'Open Shift', 'Cash Movement', 'Close Shift', 'New Promo', 'New Table', 'Table Status', 'Reserve Table', 'Seat Reservation', 'Cancel Reservation', 'Kitchen Station', 'Kitchen Status', 'Kitchen Item Status', 'Delivery Status'],
+        pos: ['New Sale', 'Void Sale', 'Refund Sale', 'Hold Cart', 'Open Shift', 'Cash Movement', 'Close Shift', 'New Promo', 'New Table', 'Table Status', 'Reserve Table', 'Seat Reservation', 'Cancel Reservation', 'Kitchen Station', 'Kitchen Status', 'Kitchen Item Status', 'Delivery Status'],
         products: ['New Product', 'Import CSV', 'Price Update'],
         inventory: ['Stock Opname', 'Transfer Stock', 'Production'],
         purchasing: ['New PO', 'Goods Receipt', 'Pay Supplier'],
@@ -163,6 +163,7 @@ const actionFields = computed(() => {
     const firstBranch = userAccess.branches[0] ?? {};
     const saleProduct = pos.products[0] ?? masterData.products[0] ?? {};
     const saleWarehouse = pos.warehouses[0] ?? inventory.warehouses[0] ?? {};
+    const firstCompletedSale = pos.sales.find((sale) => sale.status === 'completed') ?? pos.sales[0] ?? {};
     const firstTable = pos.diningTables.find((table) => table.status === 'available') ?? pos.diningTables[0] ?? {};
     const firstReservation = pos.tableReservations.find((reservation) => reservation.status === 'booked') ?? pos.tableReservations[0] ?? {};
     const firstKitchenTicket = pos.kitchenTickets.find((ticket) => ticket.status !== 'served') ?? pos.kitchenTickets[0] ?? {};
@@ -184,6 +185,14 @@ const actionFields = computed(() => {
         'Hold Cart': [
             { key: 'hold_number', label: 'Hold Number', type: 'text', placeholder: 'HOLD-001' },
             { key: 'reason', label: 'Reason', type: 'text', placeholder: 'Customer kembali nanti' },
+        ],
+        'Void Sale': [
+            { key: 'sale_id', label: 'Sale ID', type: 'number', placeholder: String(firstCompletedSale.id ?? '') },
+            { key: 'reason', label: 'Reason', type: 'text', placeholder: 'Transaksi batal' },
+        ],
+        'Refund Sale': [
+            { key: 'sale_id', label: 'Sale ID', type: 'number', placeholder: String(firstCompletedSale.id ?? '') },
+            { key: 'reason', label: 'Reason', type: 'text', placeholder: 'Refund pelanggan' },
         ],
         'Open Shift': [
             { key: 'shift_number', label: 'Shift Number', type: 'text', placeholder: 'SHIFT-001' },
@@ -403,6 +412,7 @@ const firstRole = () => userAccess.roles.find((role) => role.name === 'Cashier')
 const firstBranch = () => userAccess.branches[0] ?? {};
 const firstSaleProduct = () => pos.products[0] ?? masterData.products[0] ?? {};
 const firstSaleWarehouse = () => pos.warehouses[0] ?? inventory.warehouses[0] ?? {};
+const firstCompletedSale = () => pos.sales.find((sale) => sale.status === 'completed') ?? pos.sales[0] ?? {};
 const firstAvailableTable = () => pos.diningTables.find((table) => table.status === 'available') ?? pos.diningTables[0] ?? {};
 const firstBookedReservation = () => pos.tableReservations.find((reservation) => reservation.status === 'booked') ?? pos.tableReservations[0] ?? {};
 const firstActiveKitchenTicket = () => pos.kitchenTickets.find((ticket) => ticket.status !== 'served') ?? pos.kitchenTickets[0] ?? {};
@@ -468,6 +478,12 @@ const actionPayload = () => {
         'Close Shift': () => ({
             actual_cash: draftNumber('actual_cash', pos.shift.expectedCash ?? pos.shift.openingCash),
             notes: actionDraft.notes,
+        }),
+        'Void Sale': () => ({
+            reason: actionDraft.reason || 'Transaksi batal',
+        }),
+        'Refund Sale': () => ({
+            reason: actionDraft.reason || 'Refund pelanggan',
         }),
         'New Promo': () => ({
             code: actionDraft.code,
@@ -667,6 +683,8 @@ const actionPayload = () => {
 };
 const isApiSubmitAction = computed(() => [
     'New Sale',
+    'Void Sale',
+    'Refund Sale',
     'New Customer',
     'New Product',
     'Open Shift',
@@ -699,6 +717,8 @@ const isApiSubmitAction = computed(() => [
 const saveActionDraft = async () => {
     const endpoints = {
         'New Sale': '/sales',
+        'Void Sale': () => `/sales/${draftNumber('sale_id', firstCompletedSale().id)}/void`,
+        'Refund Sale': () => `/sales/${draftNumber('sale_id', firstCompletedSale().id)}/refund`,
         'New Customer': '/customers',
         'New Product': '/products',
         'Open Shift': '/cashier-shifts',
@@ -759,6 +779,8 @@ const saveActionDraft = async () => {
 
         if ([
             'New Sale',
+            'Void Sale',
+            'Refund Sale',
             'Open Shift',
             'Cash Movement',
             'Close Shift',
