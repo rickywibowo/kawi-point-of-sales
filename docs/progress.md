@@ -568,6 +568,17 @@ Status: complete.
 - POS store reload setelah cash movement atau close shift berhasil.
 - Dokumentasi Tahap 43 dibuat.
 
+### Tahap 44 - Frontend POS Setup Actions
+
+Status: complete.
+
+- Action `New Promo` ditambahkan ke modul Kasir dan submit ke `POST /api/promotions`.
+- Action `New Table` ditambahkan ke modul Kasir dan submit ke `POST /api/dining-tables`.
+- Action `Kitchen Station` ditambahkan ke modul Kasir dan submit ke `POST /api/kitchen-stations`.
+- POS store menyimpan ID promo, dining table, dan kitchen station dari API.
+- POS store reload setelah action setup POS berhasil.
+- Dokumentasi Tahap 44 dibuat.
+
 ## Cara Track Mundur
 
 - Setiap tahap disimpan dalam commit terpisah.

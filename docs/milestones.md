@@ -30,8 +30,9 @@ Status: complete.
 - Dine-in table management, reservation, promotion/voucher, KDS foundation, KDS station routing, delivery workflow, dan cash drawer audit.
 - Frontend action drawer POS tersambung ke API sale completion.
 - Frontend action drawer POS tersambung ke API cash movement dan close shift.
+- Frontend action drawer POS tersambung ke API promo, dining table, dan kitchen station setup.
 
-Tahap terkait: 4, 7, 11, 18, 22, 23, 24, 25, 26, 28, 30, 42, 43.
+Tahap terkait: 4, 7, 11, 18, 22, 23, 24, 25, 26, 28, 30, 42, 43, 44.
 
 ## Milestone 4 - Purchasing & Payables
 

@@ -43,24 +43,24 @@ export const usePosStore = defineStore('pos', {
             { number: 'SALE-DEMO-001', channel: 'digital', total: 60000 },
         ],
         diningTables: [
-            { code: 'T-01', name: 'Table 01', status: 'available', capacity: 2 },
-            { code: 'T-02', name: 'Table 02', status: 'cleaning', capacity: 4 },
-            { code: 'VIP-01', name: 'VIP Room', status: 'reserved', capacity: 8 },
+            { id: null, code: 'T-01', name: 'Table 01', status: 'available', capacity: 2 },
+            { id: null, code: 'T-02', name: 'Table 02', status: 'cleaning', capacity: 4 },
+            { id: null, code: 'VIP-01', name: 'VIP Room', status: 'reserved', capacity: 8 },
         ],
         tableReservations: [
             { number: 'RSV-DEMO-001', guest: 'Rina Member', table: 'VIP-01', status: 'booked', time: '19:00' },
         ],
         promotions: [
-            { code: 'KAWI10', name: 'KAWI 10%', type: 'percent', value: 10 },
-            { code: 'LUNCH15K', name: 'Lunch 15K', type: 'fixed', value: 15000 },
+            { id: null, code: 'KAWI10', name: 'KAWI 10%', type: 'percent', value: 10 },
+            { id: null, code: 'LUNCH15K', name: 'Lunch 15K', type: 'fixed', value: 15000 },
         ],
         kitchenTickets: [
             { number: 'KOT-SALE-DEMO-001', table: 'T-02', station: 'Hot Kitchen', status: 'preparing', itemCount: 2 },
             { number: 'KOT-SALE-DEMO-002', table: 'Takeaway', station: 'Bar', status: 'ready', itemCount: 1 },
         ],
         kitchenStations: [
-            { code: 'HOT', name: 'Hot Kitchen', activeTickets: 1 },
-            { code: 'BAR', name: 'Bar', activeTickets: 1 },
+            { id: null, code: 'HOT', name: 'Hot Kitchen', activeTickets: 1 },
+            { id: null, code: 'BAR', name: 'Bar', activeTickets: 1 },
         ],
         deliveryOrders: [
             { number: 'DO-SALE-DEMO-003', recipient: 'Member KAWI', status: 'assigned', courier: 'Andi' },
@@ -123,6 +123,7 @@ export const usePosStore = defineStore('pos', {
                 amount: Number(payment.amount ?? 0),
             })) ?? this.payments;
             this.diningTables = response.dining_tables?.map((table) => ({
+                id: table.id,
                 code: table.code,
                 name: table.name,
                 status: table.status,
@@ -136,6 +137,7 @@ export const usePosStore = defineStore('pos', {
                 time: reservation.reserved_at?.slice(11, 16),
             })) ?? this.tableReservations;
             this.promotions = response.promotions?.map((promotion) => ({
+                id: promotion.id,
                 code: promotion.code,
                 name: promotion.name,
                 type: promotion.type,
@@ -149,6 +151,7 @@ export const usePosStore = defineStore('pos', {
                 itemCount: ticket.items?.length ?? 0,
             })) ?? this.kitchenTickets;
             this.kitchenStations = response.kitchen_stations?.map((station) => ({
+                id: station.id,
                 code: station.code,
                 name: station.name,
                 activeTickets: this.kitchenTickets.filter((ticket) => ticket.station === station.name).length,

@@ -135,7 +135,7 @@ const moduleSummary = computed(() => {
 });
 const moduleActions = computed(() => {
     const actions = {
-        pos: ['New Sale', 'Hold Cart', 'Open Shift', 'Cash Movement', 'Close Shift'],
+        pos: ['New Sale', 'Hold Cart', 'Open Shift', 'Cash Movement', 'Close Shift', 'New Promo', 'New Table', 'Kitchen Station'],
         products: ['New Product', 'Import CSV', 'Price Update'],
         inventory: ['Stock Opname', 'Transfer Stock', 'Production'],
         purchasing: ['New PO', 'Goods Receipt', 'Pay Supplier'],
@@ -194,6 +194,24 @@ const actionFields = computed(() => {
             { key: 'cashier_shift_id', label: 'Shift ID', type: 'number', placeholder: String(pos.shift.id ?? '') },
             { key: 'actual_cash', label: 'Actual Cash', type: 'number', placeholder: String(pos.shift.expectedCash ?? pos.shift.openingCash ?? 0) },
             { key: 'notes', label: 'Notes', type: 'text', placeholder: 'Tutup shift' },
+        ],
+        'New Promo': [
+            { key: 'code', label: 'Code', type: 'text', placeholder: 'KAWI10' },
+            { key: 'name', label: 'Name', type: 'text', placeholder: 'KAWI 10 Percent' },
+            { key: 'type', label: 'Type', type: 'text', placeholder: 'percent' },
+            { key: 'value', label: 'Value', type: 'number', placeholder: '10' },
+            { key: 'maximum_discount', label: 'Maximum Discount', type: 'number', placeholder: '5000' },
+        ],
+        'New Table': [
+            { key: 'code', label: 'Code', type: 'text', placeholder: 'T-03' },
+            { key: 'name', label: 'Name', type: 'text', placeholder: 'Table 03' },
+            { key: 'capacity', label: 'Capacity', type: 'number', placeholder: '4' },
+            { key: 'section', label: 'Section', type: 'text', placeholder: 'Main' },
+        ],
+        'Kitchen Station': [
+            { key: 'code', label: 'Code', type: 'text', placeholder: 'HOT' },
+            { key: 'name', label: 'Name', type: 'text', placeholder: 'Hot Kitchen' },
+            { key: 'sort_order', label: 'Sort Order', type: 'number', placeholder: '10' },
         ],
         'New Product': [
             { key: 'name', label: 'Product Name', type: 'text', placeholder: 'KAWI Menu Baru' },
@@ -404,6 +422,27 @@ const actionPayload = () => {
             actual_cash: draftNumber('actual_cash', pos.shift.expectedCash ?? pos.shift.openingCash),
             notes: actionDraft.notes,
         }),
+        'New Promo': () => ({
+            code: actionDraft.code,
+            name: actionDraft.name,
+            type: actionDraft.type || 'percent',
+            value: draftNumber('value', 10),
+            maximum_discount: actionDraft.maximum_discount ? draftNumber('maximum_discount') : undefined,
+            is_active: true,
+        }),
+        'New Table': () => ({
+            code: actionDraft.code,
+            name: actionDraft.name,
+            capacity: draftNumber('capacity', 4),
+            section: actionDraft.section || 'Main',
+            status: 'available',
+        }),
+        'Kitchen Station': () => ({
+            code: actionDraft.code,
+            name: actionDraft.name,
+            sort_order: draftNumber('sort_order', 10),
+            is_active: true,
+        }),
         'Hold Cart': () => ({
             hold_number: actionDraft.hold_number,
             payload: {
@@ -562,6 +601,9 @@ const isApiSubmitAction = computed(() => [
     'Open Shift',
     'Cash Movement',
     'Close Shift',
+    'New Promo',
+    'New Table',
+    'Kitchen Station',
     'Hold Cart',
     'Stock Opname',
     'Transfer Stock',
@@ -584,6 +626,9 @@ const saveActionDraft = async () => {
         'Open Shift': '/cashier-shifts',
         'Cash Movement': () => `/cashier-shifts/${draftNumber('cashier_shift_id', pos.shift.id)}/cash-movements`,
         'Close Shift': () => `/cashier-shifts/${draftNumber('cashier_shift_id', pos.shift.id)}/close`,
+        'New Promo': '/promotions',
+        'New Table': '/dining-tables',
+        'Kitchen Station': '/kitchen-stations',
         'Hold Cart': '/held-transactions',
         'Stock Opname': '/stock-opnames',
         'Transfer Stock': '/stock-transfers',
@@ -622,7 +667,16 @@ const saveActionDraft = async () => {
             await masterData.loadFromApi();
         }
 
-        if (['New Sale', 'Open Shift', 'Cash Movement', 'Close Shift', 'Hold Cart'].includes(activeAction.value)) {
+        if ([
+            'New Sale',
+            'Open Shift',
+            'Cash Movement',
+            'Close Shift',
+            'New Promo',
+            'New Table',
+            'Kitchen Station',
+            'Hold Cart',
+        ].includes(activeAction.value)) {
             await pos.loadFromApi();
         }
 
