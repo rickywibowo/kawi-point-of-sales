@@ -556,6 +556,18 @@ Status: complete.
 - POS store reload setelah sale berhasil.
 - Dokumentasi Tahap 42 dibuat.
 
+### Tahap 43 - Frontend POS Shift Controls
+
+Status: complete.
+
+- Action `Cash Movement` ditambahkan ke modul Kasir.
+- Action `Close Shift` ditambahkan ke modul Kasir.
+- `Cash Movement` submit ke `POST /api/cashier-shifts/{shift}/cash-movements`.
+- `Close Shift` submit ke `POST /api/cashier-shifts/{shift}/close`.
+- POS store menyimpan expected cash dari active shift dan mengosongkan shift ID saat shift tidak aktif.
+- POS store reload setelah cash movement atau close shift berhasil.
+- Dokumentasi Tahap 43 dibuat.
+
 ## Cara Track Mundur
 
 - Setiap tahap disimpan dalam commit terpisah.

@@ -8,6 +8,7 @@ export const usePosStore = defineStore('pos', {
             number: 'SHIFT-DEMO',
             status: 'open',
             openingCash: 250000,
+            expectedCash: 250000,
         },
         products: [],
         warehouses: [],
@@ -88,12 +89,19 @@ export const usePosStore = defineStore('pos', {
     actions: {
         async loadFromApi() {
             const response = await apiGet('/pos');
-            this.shift = response.active_shift ? {
-                id: response.active_shift.id,
-                number: response.active_shift.shift_number,
-                status: response.active_shift.status,
-                openingCash: Number(response.active_shift.opening_cash ?? 0),
-            } : this.shift;
+            this.shift = response.active_shift
+                ? {
+                    id: response.active_shift.id,
+                    number: response.active_shift.shift_number,
+                    status: response.active_shift.status,
+                    openingCash: Number(response.active_shift.opening_cash ?? 0),
+                    expectedCash: Number(response.active_shift.expected_cash ?? 0),
+                }
+                : {
+                    ...this.shift,
+                    id: null,
+                    status: 'closed',
+                };
             this.products = response.products?.map((product) => ({
                 id: product.id,
                 name: product.name,

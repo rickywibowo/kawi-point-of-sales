@@ -135,7 +135,7 @@ const moduleSummary = computed(() => {
 });
 const moduleActions = computed(() => {
     const actions = {
-        pos: ['New Sale', 'Hold Cart', 'Open Shift'],
+        pos: ['New Sale', 'Hold Cart', 'Open Shift', 'Cash Movement', 'Close Shift'],
         products: ['New Product', 'Import CSV', 'Price Update'],
         inventory: ['Stock Opname', 'Transfer Stock', 'Production'],
         purchasing: ['New PO', 'Goods Receipt', 'Pay Supplier'],
@@ -183,6 +183,17 @@ const actionFields = computed(() => {
         'Open Shift': [
             { key: 'shift_number', label: 'Shift Number', type: 'text', placeholder: 'SHIFT-001' },
             { key: 'opening_cash', label: 'Opening Cash', type: 'number', placeholder: '250000' },
+        ],
+        'Cash Movement': [
+            { key: 'cashier_shift_id', label: 'Shift ID', type: 'number', placeholder: String(pos.shift.id ?? '') },
+            { key: 'type', label: 'Type', type: 'text', placeholder: 'cash_in' },
+            { key: 'amount', label: 'Amount', type: 'number', placeholder: '50000' },
+            { key: 'reason', label: 'Reason', type: 'text', placeholder: 'Tambahan kas kecil' },
+        ],
+        'Close Shift': [
+            { key: 'cashier_shift_id', label: 'Shift ID', type: 'number', placeholder: String(pos.shift.id ?? '') },
+            { key: 'actual_cash', label: 'Actual Cash', type: 'number', placeholder: String(pos.shift.expectedCash ?? pos.shift.openingCash ?? 0) },
+            { key: 'notes', label: 'Notes', type: 'text', placeholder: 'Tutup shift' },
         ],
         'New Product': [
             { key: 'name', label: 'Product Name', type: 'text', placeholder: 'KAWI Menu Baru' },
@@ -384,6 +395,15 @@ const actionPayload = () => {
             shift_number: actionDraft.shift_number,
             opening_cash: Number(actionDraft.opening_cash || 0),
         }),
+        'Cash Movement': () => ({
+            type: actionDraft.type || 'cash_in',
+            amount: draftNumber('amount', 50000),
+            reason: actionDraft.reason,
+        }),
+        'Close Shift': () => ({
+            actual_cash: draftNumber('actual_cash', pos.shift.expectedCash ?? pos.shift.openingCash),
+            notes: actionDraft.notes,
+        }),
         'Hold Cart': () => ({
             hold_number: actionDraft.hold_number,
             payload: {
@@ -540,6 +560,8 @@ const isApiSubmitAction = computed(() => [
     'New Customer',
     'New Product',
     'Open Shift',
+    'Cash Movement',
+    'Close Shift',
     'Hold Cart',
     'Stock Opname',
     'Transfer Stock',
@@ -560,6 +582,8 @@ const saveActionDraft = async () => {
         'New Customer': '/customers',
         'New Product': '/products',
         'Open Shift': '/cashier-shifts',
+        'Cash Movement': () => `/cashier-shifts/${draftNumber('cashier_shift_id', pos.shift.id)}/cash-movements`,
+        'Close Shift': () => `/cashier-shifts/${draftNumber('cashier_shift_id', pos.shift.id)}/close`,
         'Hold Cart': '/held-transactions',
         'Stock Opname': '/stock-opnames',
         'Transfer Stock': '/stock-transfers',
@@ -598,7 +622,7 @@ const saveActionDraft = async () => {
             await masterData.loadFromApi();
         }
 
-        if (['New Sale', 'Open Shift', 'Hold Cart'].includes(activeAction.value)) {
+        if (['New Sale', 'Open Shift', 'Cash Movement', 'Close Shift', 'Hold Cart'].includes(activeAction.value)) {
             await pos.loadFromApi();
         }
 
