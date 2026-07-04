@@ -602,6 +602,18 @@ Status: complete.
 - POS store reload setelah seat atau cancel reservation berhasil.
 - Dokumentasi Tahap 46 dibuat.
 
+### Tahap 47 - Frontend POS Status Actions
+
+Status: complete.
+
+- POS store menyimpan ID kitchen ticket dan delivery order dari API.
+- Action `Kitchen Status` ditambahkan ke modul Kasir.
+- Action `Delivery Status` ditambahkan ke modul Kasir.
+- `Kitchen Status` submit ke `PATCH /api/kitchen-tickets/{ticket}/status`.
+- `Delivery Status` submit ke `PATCH /api/delivery-orders/{delivery}/status`.
+- POS store reload setelah update status kitchen atau delivery berhasil.
+- Dokumentasi Tahap 47 dibuat.
+
 ## Cara Track Mundur
 
 - Setiap tahap disimpan dalam commit terpisah.

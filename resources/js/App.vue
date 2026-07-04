@@ -135,7 +135,7 @@ const moduleSummary = computed(() => {
 });
 const moduleActions = computed(() => {
     const actions = {
-        pos: ['New Sale', 'Hold Cart', 'Open Shift', 'Cash Movement', 'Close Shift', 'New Promo', 'New Table', 'Table Status', 'Reserve Table', 'Seat Reservation', 'Cancel Reservation', 'Kitchen Station'],
+        pos: ['New Sale', 'Hold Cart', 'Open Shift', 'Cash Movement', 'Close Shift', 'New Promo', 'New Table', 'Table Status', 'Reserve Table', 'Seat Reservation', 'Cancel Reservation', 'Kitchen Station', 'Kitchen Status', 'Delivery Status'],
         products: ['New Product', 'Import CSV', 'Price Update'],
         inventory: ['Stock Opname', 'Transfer Stock', 'Production'],
         purchasing: ['New PO', 'Goods Receipt', 'Pay Supplier'],
@@ -165,6 +165,8 @@ const actionFields = computed(() => {
     const saleWarehouse = pos.warehouses[0] ?? inventory.warehouses[0] ?? {};
     const firstTable = pos.diningTables.find((table) => table.status === 'available') ?? pos.diningTables[0] ?? {};
     const firstReservation = pos.tableReservations.find((reservation) => reservation.status === 'booked') ?? pos.tableReservations[0] ?? {};
+    const firstKitchenTicket = pos.kitchenTickets.find((ticket) => ticket.status !== 'served') ?? pos.kitchenTickets[0] ?? {};
+    const firstDelivery = pos.deliveryOrders.find((order) => order.status !== 'delivered') ?? pos.deliveryOrders[0] ?? {};
     const fields = {
         'New Sale': [
             { key: 'sale_number', label: 'Sale Number', type: 'text', placeholder: 'SALE-001' },
@@ -232,6 +234,16 @@ const actionFields = computed(() => {
             { key: 'code', label: 'Code', type: 'text', placeholder: 'HOT' },
             { key: 'name', label: 'Name', type: 'text', placeholder: 'Hot Kitchen' },
             { key: 'sort_order', label: 'Sort Order', type: 'number', placeholder: '10' },
+        ],
+        'Kitchen Status': [
+            { key: 'ticket_id', label: 'Ticket ID', type: 'number', placeholder: String(firstKitchenTicket.id ?? '') },
+            { key: 'status', label: 'Status', type: 'text', placeholder: 'preparing' },
+        ],
+        'Delivery Status': [
+            { key: 'delivery_id', label: 'Delivery ID', type: 'number', placeholder: String(firstDelivery.id ?? '') },
+            { key: 'status', label: 'Status', type: 'text', placeholder: 'assigned' },
+            { key: 'courier_name', label: 'Courier Name', type: 'text', placeholder: firstDelivery.courier ?? 'Andi Courier' },
+            { key: 'courier_phone', label: 'Courier Phone', type: 'text', placeholder: '081299900001' },
         ],
         'New Product': [
             { key: 'name', label: 'Product Name', type: 'text', placeholder: 'KAWI Menu Baru' },
@@ -388,6 +400,8 @@ const firstSaleProduct = () => pos.products[0] ?? masterData.products[0] ?? {};
 const firstSaleWarehouse = () => pos.warehouses[0] ?? inventory.warehouses[0] ?? {};
 const firstAvailableTable = () => pos.diningTables.find((table) => table.status === 'available') ?? pos.diningTables[0] ?? {};
 const firstBookedReservation = () => pos.tableReservations.find((reservation) => reservation.status === 'booked') ?? pos.tableReservations[0] ?? {};
+const firstActiveKitchenTicket = () => pos.kitchenTickets.find((ticket) => ticket.status !== 'served') ?? pos.kitchenTickets[0] ?? {};
+const firstActiveDelivery = () => pos.deliveryOrders.find((order) => order.status !== 'delivered') ?? pos.deliveryOrders[0] ?? {};
 const saleNumber = () => actionDraft.sale_number || `SALE-${Date.now()}`;
 const reservationDateTime = () => {
     const date = new Date(Date.now() + 60 * 60 * 1000);
@@ -482,6 +496,14 @@ const actionPayload = () => {
             name: actionDraft.name,
             sort_order: draftNumber('sort_order', 10),
             is_active: true,
+        }),
+        'Kitchen Status': () => ({
+            status: actionDraft.status || 'preparing',
+        }),
+        'Delivery Status': () => ({
+            status: actionDraft.status || 'assigned',
+            courier_name: actionDraft.courier_name || firstActiveDelivery().courier,
+            courier_phone: actionDraft.courier_phone,
         }),
         'Hold Cart': () => ({
             hold_number: actionDraft.hold_number,
@@ -648,6 +670,8 @@ const isApiSubmitAction = computed(() => [
     'Seat Reservation',
     'Cancel Reservation',
     'Kitchen Station',
+    'Kitchen Status',
+    'Delivery Status',
     'Hold Cart',
     'Stock Opname',
     'Transfer Stock',
@@ -677,6 +701,8 @@ const saveActionDraft = async () => {
         'Seat Reservation': () => `/table-reservations/${draftNumber('reservation_id', firstBookedReservation().id)}/seat`,
         'Cancel Reservation': () => `/table-reservations/${draftNumber('reservation_id', firstBookedReservation().id)}/cancel`,
         'Kitchen Station': '/kitchen-stations',
+        'Kitchen Status': () => `/kitchen-tickets/${draftNumber('ticket_id', firstActiveKitchenTicket().id)}/status`,
+        'Delivery Status': () => `/delivery-orders/${draftNumber('delivery_id', firstActiveDelivery().id)}/status`,
         'Hold Cart': '/held-transactions',
         'Stock Opname': '/stock-opnames',
         'Transfer Stock': '/stock-transfers',
@@ -693,7 +719,7 @@ const saveActionDraft = async () => {
     };
     const endpointConfig = endpoints[activeAction.value];
     const endpoint = typeof endpointConfig === 'function' ? endpointConfig() : endpointConfig;
-    const patchActions = ['Table Status', 'Seat Reservation', 'Cancel Reservation'];
+    const patchActions = ['Table Status', 'Seat Reservation', 'Cancel Reservation', 'Kitchen Status', 'Delivery Status'];
 
     if (!endpoint || foundation.apiStatus !== 'connected') {
         actionFeedback.value = `${activeAction.value} draft siap disambungkan ke API.`;
@@ -732,6 +758,8 @@ const saveActionDraft = async () => {
             'Seat Reservation',
             'Cancel Reservation',
             'Kitchen Station',
+            'Kitchen Status',
+            'Delivery Status',
             'Hold Cart',
         ].includes(activeAction.value)) {
             await pos.loadFromApi();

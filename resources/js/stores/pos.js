@@ -55,16 +55,16 @@ export const usePosStore = defineStore('pos', {
             { id: null, code: 'LUNCH15K', name: 'Lunch 15K', type: 'fixed', value: 15000 },
         ],
         kitchenTickets: [
-            { number: 'KOT-SALE-DEMO-001', table: 'T-02', station: 'Hot Kitchen', status: 'preparing', itemCount: 2 },
-            { number: 'KOT-SALE-DEMO-002', table: 'Takeaway', station: 'Bar', status: 'ready', itemCount: 1 },
+            { id: null, number: 'KOT-SALE-DEMO-001', table: 'T-02', station: 'Hot Kitchen', status: 'preparing', itemCount: 2 },
+            { id: null, number: 'KOT-SALE-DEMO-002', table: 'Takeaway', station: 'Bar', status: 'ready', itemCount: 1 },
         ],
         kitchenStations: [
             { id: null, code: 'HOT', name: 'Hot Kitchen', activeTickets: 1 },
             { id: null, code: 'BAR', name: 'Bar', activeTickets: 1 },
         ],
         deliveryOrders: [
-            { number: 'DO-SALE-DEMO-003', recipient: 'Member KAWI', status: 'assigned', courier: 'Andi' },
-            { number: 'DO-SALE-DEMO-004', recipient: 'Rina Member', status: 'picked_up', courier: 'Budi' },
+            { id: null, number: 'DO-SALE-DEMO-003', recipient: 'Member KAWI', status: 'assigned', courier: 'Andi' },
+            { id: null, number: 'DO-SALE-DEMO-004', recipient: 'Rina Member', status: 'picked_up', courier: 'Budi' },
         ],
         heldTransactions: 1,
         todayTransactions: 0,
@@ -145,6 +145,7 @@ export const usePosStore = defineStore('pos', {
                 value: Number(promotion.value ?? 0),
             })) ?? this.promotions;
             this.kitchenTickets = response.kitchen_tickets?.map((ticket) => ({
+                id: ticket.id,
                 number: ticket.ticket_number,
                 table: ticket.dining_table?.code ?? ticket.sale?.type ?? 'Takeaway',
                 station: ticket.items?.[0]?.station_name ?? 'General',
@@ -158,6 +159,7 @@ export const usePosStore = defineStore('pos', {
                 activeTickets: this.kitchenTickets.filter((ticket) => ticket.station === station.name).length,
             })) ?? this.kitchenStations;
             this.deliveryOrders = response.delivery_orders?.map((order) => ({
+                id: order.id,
                 number: order.delivery_number,
                 recipient: order.recipient_name,
                 status: order.status,
