@@ -60,6 +60,13 @@ export async function apiPost(path, body) {
     });
 }
 
+export async function apiPatch(path, body) {
+    return apiRequest(path, {
+        method: 'PATCH',
+        body: JSON.stringify(body),
+    });
+}
+
 async function apiRequest(path, options = {}) {
     const token = getApiToken();
     const { businessId, branchId } = getTenantContext();

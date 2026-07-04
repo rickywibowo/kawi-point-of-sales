@@ -48,7 +48,7 @@ export const usePosStore = defineStore('pos', {
             { id: null, code: 'VIP-01', name: 'VIP Room', status: 'reserved', capacity: 8 },
         ],
         tableReservations: [
-            { number: 'RSV-DEMO-001', guest: 'Rina Member', table: 'VIP-01', status: 'booked', time: '19:00' },
+            { id: null, number: 'RSV-DEMO-001', guest: 'Rina Member', table: 'VIP-01', status: 'booked', time: '19:00' },
         ],
         promotions: [
             { id: null, code: 'KAWI10', name: 'KAWI 10%', type: 'percent', value: 10 },
@@ -130,6 +130,7 @@ export const usePosStore = defineStore('pos', {
                 capacity: table.capacity,
             })) ?? this.diningTables;
             this.tableReservations = response.table_reservations?.map((reservation) => ({
+                id: reservation.id,
                 number: reservation.reservation_number,
                 guest: reservation.guest_name,
                 table: reservation.dining_table?.code,

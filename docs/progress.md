@@ -579,6 +579,18 @@ Status: complete.
 - POS store reload setelah action setup POS berhasil.
 - Dokumentasi Tahap 44 dibuat.
 
+### Tahap 45 - Frontend POS Table Actions
+
+Status: complete.
+
+- Action `Table Status` ditambahkan ke modul Kasir.
+- Action `Reserve Table` ditambahkan ke modul Kasir.
+- `Table Status` submit ke `PATCH /api/dining-tables/{table}/status`.
+- `Reserve Table` submit ke `POST /api/dining-tables/{table}/reservations`.
+- POS store menyimpan ID table reservation dari API.
+- POS store reload setelah action meja atau reservasi berhasil.
+- Dokumentasi Tahap 45 dibuat.
+
 ## Cara Track Mundur
 
 - Setiap tahap disimpan dalam commit terpisah.

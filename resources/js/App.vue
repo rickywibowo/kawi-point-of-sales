@@ -11,7 +11,7 @@ import { usePosStore } from './stores/pos';
 import { usePurchasingStore } from './stores/purchasing';
 import { useReportsStore } from './stores/reports';
 import { useUserAccessStore } from './stores/userAccess';
-import { apiPost } from './services/api';
+import { apiPatch, apiPost } from './services/api';
 
 const accounting = useAccountingStore();
 const audit = useAuditStore();
@@ -135,7 +135,7 @@ const moduleSummary = computed(() => {
 });
 const moduleActions = computed(() => {
     const actions = {
-        pos: ['New Sale', 'Hold Cart', 'Open Shift', 'Cash Movement', 'Close Shift', 'New Promo', 'New Table', 'Kitchen Station'],
+        pos: ['New Sale', 'Hold Cart', 'Open Shift', 'Cash Movement', 'Close Shift', 'New Promo', 'New Table', 'Table Status', 'Reserve Table', 'Kitchen Station'],
         products: ['New Product', 'Import CSV', 'Price Update'],
         inventory: ['Stock Opname', 'Transfer Stock', 'Production'],
         purchasing: ['New PO', 'Goods Receipt', 'Pay Supplier'],
@@ -163,6 +163,7 @@ const actionFields = computed(() => {
     const firstBranch = userAccess.branches[0] ?? {};
     const saleProduct = pos.products[0] ?? masterData.products[0] ?? {};
     const saleWarehouse = pos.warehouses[0] ?? inventory.warehouses[0] ?? {};
+    const firstTable = pos.diningTables.find((table) => table.status === 'available') ?? pos.diningTables[0] ?? {};
     const fields = {
         'New Sale': [
             { key: 'sale_number', label: 'Sale Number', type: 'text', placeholder: 'SALE-001' },
@@ -207,6 +208,18 @@ const actionFields = computed(() => {
             { key: 'name', label: 'Name', type: 'text', placeholder: 'Table 03' },
             { key: 'capacity', label: 'Capacity', type: 'number', placeholder: '4' },
             { key: 'section', label: 'Section', type: 'text', placeholder: 'Main' },
+        ],
+        'Table Status': [
+            { key: 'table_id', label: 'Table ID', type: 'number', placeholder: String(firstTable.id ?? '') },
+            { key: 'status', label: 'Status', type: 'text', placeholder: 'available' },
+        ],
+        'Reserve Table': [
+            { key: 'table_id', label: 'Table ID', type: 'number', placeholder: String(firstTable.id ?? '') },
+            { key: 'reservation_number', label: 'Reservation Number', type: 'text', placeholder: 'RSV-001' },
+            { key: 'guest_name', label: 'Guest Name', type: 'text', placeholder: customers.customers[0]?.name ?? 'Guest KAWI' },
+            { key: 'guest_phone', label: 'Guest Phone', type: 'text', placeholder: customers.customers[0]?.phone ?? '0812...' },
+            { key: 'party_size', label: 'Party Size', type: 'number', placeholder: String(firstTable.capacity ?? 2) },
+            { key: 'reserved_at', label: 'Reserved At', type: 'datetime-local', placeholder: reservationDateTime() },
         ],
         'Kitchen Station': [
             { key: 'code', label: 'Code', type: 'text', placeholder: 'HOT' },
@@ -366,7 +379,13 @@ const firstRole = () => userAccess.roles.find((role) => role.name === 'Cashier')
 const firstBranch = () => userAccess.branches[0] ?? {};
 const firstSaleProduct = () => pos.products[0] ?? masterData.products[0] ?? {};
 const firstSaleWarehouse = () => pos.warehouses[0] ?? inventory.warehouses[0] ?? {};
+const firstAvailableTable = () => pos.diningTables.find((table) => table.status === 'available') ?? pos.diningTables[0] ?? {};
 const saleNumber = () => actionDraft.sale_number || `SALE-${Date.now()}`;
+const reservationDateTime = () => {
+    const date = new Date(Date.now() + 60 * 60 * 1000);
+
+    return date.toISOString().slice(0, 16);
+};
 const actionPayload = () => {
     const payloads = {
         'New Sale': () => {
@@ -436,6 +455,17 @@ const actionPayload = () => {
             capacity: draftNumber('capacity', 4),
             section: actionDraft.section || 'Main',
             status: 'available',
+        }),
+        'Table Status': () => ({
+            status: actionDraft.status || 'available',
+        }),
+        'Reserve Table': () => ({
+            reservation_number: actionDraft.reservation_number,
+            customer_id: draftNumber('customer_id') || undefined,
+            guest_name: actionDraft.guest_name,
+            guest_phone: actionDraft.guest_phone,
+            party_size: draftNumber('party_size', firstAvailableTable().capacity ?? 2),
+            reserved_at: actionDraft.reserved_at || reservationDateTime(),
         }),
         'Kitchen Station': () => ({
             code: actionDraft.code,
@@ -603,6 +633,8 @@ const isApiSubmitAction = computed(() => [
     'Close Shift',
     'New Promo',
     'New Table',
+    'Table Status',
+    'Reserve Table',
     'Kitchen Station',
     'Hold Cart',
     'Stock Opname',
@@ -628,6 +660,8 @@ const saveActionDraft = async () => {
         'Close Shift': () => `/cashier-shifts/${draftNumber('cashier_shift_id', pos.shift.id)}/close`,
         'New Promo': '/promotions',
         'New Table': '/dining-tables',
+        'Table Status': () => `/dining-tables/${draftNumber('table_id', firstAvailableTable().id)}/status`,
+        'Reserve Table': () => `/dining-tables/${draftNumber('table_id', firstAvailableTable().id)}/reservations`,
         'Kitchen Station': '/kitchen-stations',
         'Hold Cart': '/held-transactions',
         'Stock Opname': '/stock-opnames',
@@ -645,6 +679,7 @@ const saveActionDraft = async () => {
     };
     const endpointConfig = endpoints[activeAction.value];
     const endpoint = typeof endpointConfig === 'function' ? endpointConfig() : endpointConfig;
+    const patchActions = ['Table Status'];
 
     if (!endpoint || foundation.apiStatus !== 'connected') {
         actionFeedback.value = `${activeAction.value} draft siap disambungkan ke API.`;
@@ -653,7 +688,11 @@ const saveActionDraft = async () => {
     }
 
     try {
-        await apiPost(endpoint, actionPayload());
+        if (patchActions.includes(activeAction.value)) {
+            await apiPatch(endpoint, actionPayload());
+        } else {
+            await apiPost(endpoint, actionPayload());
+        }
 
         if (activeAction.value === 'New Customer') {
             await customers.loadFromApi();
@@ -674,6 +713,8 @@ const saveActionDraft = async () => {
             'Close Shift',
             'New Promo',
             'New Table',
+            'Table Status',
+            'Reserve Table',
             'Kitchen Station',
             'Hold Cart',
         ].includes(activeAction.value)) {
