@@ -137,7 +137,7 @@ const moduleActions = computed(() => {
     const actions = {
         pos: ['New Sale', 'Void Sale', 'Refund Sale', 'View Receipt', 'Hold Cart', 'Open Shift', 'Cash Movement', 'Close Shift', 'New Promo', 'New Table', 'Table Status', 'Reserve Table', 'Seat Reservation', 'Cancel Reservation', 'Kitchen Station', 'Kitchen Status', 'Kitchen Item Status', 'Delivery Status'],
         products: ['New Product', 'Import CSV', 'Price Update'],
-        inventory: ['Stock Opname', 'Transfer Stock', 'Production'],
+        inventory: ['Stock Adjustment', 'Stock Opname', 'Transfer Stock', 'Production'],
         purchasing: ['New PO', 'Approve PO', 'Goods Receipt', 'Return Supplier', 'Pay Supplier'],
         accounting: ['New Journal', 'Operational Expense', 'Settlement', 'Import Provider'],
         reports: ['Refresh', 'Export', 'Print'],
@@ -284,6 +284,14 @@ const actionFields = computed(() => {
             { key: 'warehouse_id', label: 'Warehouse ID', type: 'number', placeholder: String(inventory.warehouseId ?? '') },
             { key: 'product_id', label: 'Product ID', type: 'number', placeholder: String(firstStock.productId ?? '') },
             { key: 'counted_quantity', label: 'Counted Quantity', type: 'number', placeholder: String(firstStock.quantity ?? 0) },
+        ],
+        'Stock Adjustment': [
+            { key: 'adjustment_number', label: 'Adjustment Number', type: 'text', placeholder: 'ADJ-001' },
+            { key: 'warehouse_id', label: 'Warehouse ID', type: 'number', placeholder: String(inventory.warehouseId ?? '') },
+            { key: 'product_id', label: 'Product ID', type: 'number', placeholder: String(firstStock.productId ?? '') },
+            { key: 'quantity_delta', label: 'Quantity Delta', type: 'number', placeholder: '1' },
+            { key: 'unit_cost', label: 'Unit Cost', type: 'number', placeholder: String(firstStock.quantity ? Math.round((firstStock.value ?? 0) / firstStock.quantity) : 0) },
+            { key: 'notes', label: 'Notes', type: 'text', placeholder: 'Penyesuaian stok' },
         ],
         'Transfer Stock': [
             { key: 'transfer_number', label: 'Transfer Number', type: 'text', placeholder: 'TRF-001' },
@@ -590,6 +598,23 @@ const actionPayload = () => {
                 ],
             };
         },
+        'Stock Adjustment': () => {
+            const stock = firstStockBalance();
+
+            return {
+                warehouse_id: draftNumber('warehouse_id', stock.warehouseId ?? inventory.warehouseId),
+                adjustment_number: actionDraft.adjustment_number || `ADJ-${Date.now()}`,
+                notes: actionDraft.notes,
+                items: [
+                    {
+                        product_id: draftNumber('product_id', stock.productId),
+                        quantity_delta: draftNumber('quantity_delta', 1),
+                        unit_cost: draftNumber('unit_cost', stock.quantity ? Math.round((stock.value ?? 0) / stock.quantity) : 0),
+                        notes: actionDraft.notes,
+                    },
+                ],
+            };
+        },
         'Transfer Stock': () => {
             const stock = firstStockBalance();
 
@@ -767,6 +792,7 @@ const isApiSubmitAction = computed(() => [
     'Kitchen Item Status',
     'Delivery Status',
     'Hold Cart',
+    'Stock Adjustment',
     'Stock Opname',
     'Transfer Stock',
     'Production',
@@ -805,6 +831,7 @@ const saveActionDraft = async () => {
         'Kitchen Item Status': () => `/kitchen-ticket-items/${draftNumber('item_id', firstActiveKitchenItem().id)}/status`,
         'Delivery Status': () => `/delivery-orders/${draftNumber('delivery_id', firstActiveDelivery().id)}/status`,
         'Hold Cart': '/held-transactions',
+        'Stock Adjustment': '/stock-adjustments',
         'Stock Opname': '/stock-opnames',
         'Transfer Stock': '/stock-transfers',
         Production: '/production-orders',
@@ -886,7 +913,7 @@ const saveActionDraft = async () => {
             await pos.loadFromApi();
         }
 
-        if (['Stock Opname', 'Transfer Stock', 'Production'].includes(activeAction.value)) {
+        if (['Stock Adjustment', 'Stock Opname', 'Transfer Stock', 'Production'].includes(activeAction.value)) {
             await inventory.loadFromApi();
         }
 

@@ -686,6 +686,16 @@ Status: complete.
 - Panel Offline Sync menampilkan waktu cek konflik terakhir.
 - Dokumentasi Tahap 54 dibuat.
 
+### Tahap 55 - Frontend Inventory Stock Adjustment Action
+
+Status: complete.
+
+- Action `Stock Adjustment` ditambahkan ke modul Inventory.
+- `Stock Adjustment` submit ke `POST /api/stock-adjustments`.
+- Payload adjustment memakai warehouse, product, quantity delta, unit cost, dan notes.
+- Inventory store reload setelah adjustment berhasil diposting.
+- Dokumentasi Tahap 55 dibuat.
+
 ## Cara Track Mundur
 
 - Setiap tahap disimpan dalam commit terpisah.
