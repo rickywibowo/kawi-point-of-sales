@@ -591,6 +591,17 @@ Status: complete.
 - POS store reload setelah action meja atau reservasi berhasil.
 - Dokumentasi Tahap 45 dibuat.
 
+### Tahap 46 - Frontend POS Reservation Lifecycle
+
+Status: complete.
+
+- Action `Seat Reservation` ditambahkan ke modul Kasir.
+- Action `Cancel Reservation` ditambahkan ke modul Kasir.
+- `Seat Reservation` submit ke `PATCH /api/table-reservations/{reservation}/seat`.
+- `Cancel Reservation` submit ke `PATCH /api/table-reservations/{reservation}/cancel`.
+- POS store reload setelah seat atau cancel reservation berhasil.
+- Dokumentasi Tahap 46 dibuat.
+
 ## Cara Track Mundur
 
 - Setiap tahap disimpan dalam commit terpisah.

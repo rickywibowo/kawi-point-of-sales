@@ -135,7 +135,7 @@ const moduleSummary = computed(() => {
 });
 const moduleActions = computed(() => {
     const actions = {
-        pos: ['New Sale', 'Hold Cart', 'Open Shift', 'Cash Movement', 'Close Shift', 'New Promo', 'New Table', 'Table Status', 'Reserve Table', 'Kitchen Station'],
+        pos: ['New Sale', 'Hold Cart', 'Open Shift', 'Cash Movement', 'Close Shift', 'New Promo', 'New Table', 'Table Status', 'Reserve Table', 'Seat Reservation', 'Cancel Reservation', 'Kitchen Station'],
         products: ['New Product', 'Import CSV', 'Price Update'],
         inventory: ['Stock Opname', 'Transfer Stock', 'Production'],
         purchasing: ['New PO', 'Goods Receipt', 'Pay Supplier'],
@@ -164,6 +164,7 @@ const actionFields = computed(() => {
     const saleProduct = pos.products[0] ?? masterData.products[0] ?? {};
     const saleWarehouse = pos.warehouses[0] ?? inventory.warehouses[0] ?? {};
     const firstTable = pos.diningTables.find((table) => table.status === 'available') ?? pos.diningTables[0] ?? {};
+    const firstReservation = pos.tableReservations.find((reservation) => reservation.status === 'booked') ?? pos.tableReservations[0] ?? {};
     const fields = {
         'New Sale': [
             { key: 'sale_number', label: 'Sale Number', type: 'text', placeholder: 'SALE-001' },
@@ -220,6 +221,12 @@ const actionFields = computed(() => {
             { key: 'guest_phone', label: 'Guest Phone', type: 'text', placeholder: customers.customers[0]?.phone ?? '0812...' },
             { key: 'party_size', label: 'Party Size', type: 'number', placeholder: String(firstTable.capacity ?? 2) },
             { key: 'reserved_at', label: 'Reserved At', type: 'datetime-local', placeholder: reservationDateTime() },
+        ],
+        'Seat Reservation': [
+            { key: 'reservation_id', label: 'Reservation ID', type: 'number', placeholder: String(firstReservation.id ?? '') },
+        ],
+        'Cancel Reservation': [
+            { key: 'reservation_id', label: 'Reservation ID', type: 'number', placeholder: String(firstReservation.id ?? '') },
         ],
         'Kitchen Station': [
             { key: 'code', label: 'Code', type: 'text', placeholder: 'HOT' },
@@ -380,6 +387,7 @@ const firstBranch = () => userAccess.branches[0] ?? {};
 const firstSaleProduct = () => pos.products[0] ?? masterData.products[0] ?? {};
 const firstSaleWarehouse = () => pos.warehouses[0] ?? inventory.warehouses[0] ?? {};
 const firstAvailableTable = () => pos.diningTables.find((table) => table.status === 'available') ?? pos.diningTables[0] ?? {};
+const firstBookedReservation = () => pos.tableReservations.find((reservation) => reservation.status === 'booked') ?? pos.tableReservations[0] ?? {};
 const saleNumber = () => actionDraft.sale_number || `SALE-${Date.now()}`;
 const reservationDateTime = () => {
     const date = new Date(Date.now() + 60 * 60 * 1000);
@@ -467,6 +475,8 @@ const actionPayload = () => {
             party_size: draftNumber('party_size', firstAvailableTable().capacity ?? 2),
             reserved_at: actionDraft.reserved_at || reservationDateTime(),
         }),
+        'Seat Reservation': () => ({}),
+        'Cancel Reservation': () => ({}),
         'Kitchen Station': () => ({
             code: actionDraft.code,
             name: actionDraft.name,
@@ -635,6 +645,8 @@ const isApiSubmitAction = computed(() => [
     'New Table',
     'Table Status',
     'Reserve Table',
+    'Seat Reservation',
+    'Cancel Reservation',
     'Kitchen Station',
     'Hold Cart',
     'Stock Opname',
@@ -662,6 +674,8 @@ const saveActionDraft = async () => {
         'New Table': '/dining-tables',
         'Table Status': () => `/dining-tables/${draftNumber('table_id', firstAvailableTable().id)}/status`,
         'Reserve Table': () => `/dining-tables/${draftNumber('table_id', firstAvailableTable().id)}/reservations`,
+        'Seat Reservation': () => `/table-reservations/${draftNumber('reservation_id', firstBookedReservation().id)}/seat`,
+        'Cancel Reservation': () => `/table-reservations/${draftNumber('reservation_id', firstBookedReservation().id)}/cancel`,
         'Kitchen Station': '/kitchen-stations',
         'Hold Cart': '/held-transactions',
         'Stock Opname': '/stock-opnames',
@@ -679,7 +693,7 @@ const saveActionDraft = async () => {
     };
     const endpointConfig = endpoints[activeAction.value];
     const endpoint = typeof endpointConfig === 'function' ? endpointConfig() : endpointConfig;
-    const patchActions = ['Table Status'];
+    const patchActions = ['Table Status', 'Seat Reservation', 'Cancel Reservation'];
 
     if (!endpoint || foundation.apiStatus !== 'connected') {
         actionFeedback.value = `${activeAction.value} draft siap disambungkan ke API.`;
@@ -715,6 +729,8 @@ const saveActionDraft = async () => {
             'New Table',
             'Table Status',
             'Reserve Table',
+            'Seat Reservation',
+            'Cancel Reservation',
             'Kitchen Station',
             'Hold Cart',
         ].includes(activeAction.value)) {
