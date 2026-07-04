@@ -58,8 +58,9 @@ Status: complete.
 
 - Chart of accounts, manual journal, auto journal, trial balance, profit and loss, general ledger, balance sheet, cash flow, operational expense, payment settlement, provider reconciliation import, dan dashboard reports.
 - Frontend action drawer accounting tersambung ke API journal entry, payment settlement, dan provider import.
+- Frontend action drawer accounting tersambung ke API operational expense.
 
-Tahap terkait: 6, 8, 13, 19, 27, 29, 40.
+Tahap terkait: 6, 8, 13, 19, 27, 29, 40, 53.
 
 ## Milestone 6 - Customer & Loyalty
 

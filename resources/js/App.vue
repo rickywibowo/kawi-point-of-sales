@@ -139,7 +139,7 @@ const moduleActions = computed(() => {
         products: ['New Product', 'Import CSV', 'Price Update'],
         inventory: ['Stock Opname', 'Transfer Stock', 'Production'],
         purchasing: ['New PO', 'Approve PO', 'Goods Receipt', 'Return Supplier', 'Pay Supplier'],
-        accounting: ['New Journal', 'Settlement', 'Import Provider'],
+        accounting: ['New Journal', 'Operational Expense', 'Settlement', 'Import Provider'],
         reports: ['Refresh', 'Export', 'Print'],
         customers: ['New Customer', 'Loyalty', 'Segment'],
         settings: ['Invite User', 'Assign Role', 'Audit'],
@@ -158,6 +158,7 @@ const actionFields = computed(() => {
     const firstReceiptItem = firstReceipt.firstItem ?? {};
     const firstPayable = purchasing.payables.find((payable) => payable.status !== 'closed') ?? purchasing.payables[0] ?? {};
     const cashAccount = accounting.accounts.find((account) => account.code === '1100') ?? accounting.accounts[0] ?? {};
+    const expenseAccount = accounting.accounts.find((account) => account.type === 'expense') ?? accounting.accounts.find((account) => account.type === 'cost_of_goods_sold') ?? accounting.accounts.find((account) => account.code === '6100') ?? accounting.accounts[0] ?? {};
     const balancingAccount = accounting.accounts.find((account) => account.code === '3100') ?? accounting.accounts[1] ?? {};
     const providerSettlement = accounting.paymentSettlements.find((settlement) => ['card', 'transfer', 'qris'].includes(settlement.method)) ?? accounting.paymentSettlements[0] ?? {};
     const firstCustomer = customers.customers[0] ?? {};
@@ -340,6 +341,17 @@ const actionFields = computed(() => {
             { key: 'credit_account_id', label: 'Credit Account ID', type: 'number', placeholder: String(balancingAccount.id ?? '') },
             { key: 'amount', label: 'Amount', type: 'number', placeholder: '100000' },
         ],
+        'Operational Expense': [
+            { key: 'expense_number', label: 'Expense Number', type: 'text', placeholder: 'EXP-001' },
+            { key: 'account_id', label: 'Expense Account ID', type: 'number', placeholder: String(expenseAccount.id ?? '') },
+            { key: 'cash_account_id', label: 'Cash Account ID', type: 'number', placeholder: String(cashAccount.id ?? '') },
+            { key: 'category', label: 'Category', type: 'text', placeholder: 'Utilities' },
+            { key: 'payee', label: 'Payee', type: 'text', placeholder: 'Vendor operasional' },
+            { key: 'description', label: 'Description', type: 'text', placeholder: 'Biaya operasional outlet' },
+            { key: 'amount', label: 'Amount', type: 'number', placeholder: '125000' },
+            { key: 'payment_method', label: 'Payment Method', type: 'text', placeholder: 'cash' },
+            { key: 'reference_number', label: 'Reference', type: 'text', placeholder: 'REF-EXP-001' },
+        ],
         Settlement: [
             { key: 'settlement_number', label: 'Settlement Number', type: 'text', placeholder: 'SETTLE-001' },
             { key: 'method', label: 'Method', type: 'text', placeholder: 'qris' },
@@ -427,6 +439,7 @@ const firstGoodsReceipt = () => purchasing.goodsReceipts[0] ?? {};
 const firstGoodsReceiptItem = () => firstGoodsReceipt().firstItem ?? {};
 const firstOpenPayable = () => purchasing.payables.find((payable) => payable.status !== 'closed') ?? purchasing.payables[0] ?? {};
 const accountByCode = (code, fallbackIndex = 0) => accounting.accounts.find((account) => account.code === code) ?? accounting.accounts[fallbackIndex] ?? {};
+const firstExpenseAccount = () => accounting.accounts.find((account) => account.type === 'expense') ?? accounting.accounts.find((account) => account.type === 'cost_of_goods_sold') ?? accounting.accounts.find((account) => account.code === '6100') ?? accounting.accounts[0] ?? {};
 const firstProviderSettlement = () => accounting.paymentSettlements.find((settlement) => ['card', 'transfer', 'qris'].includes(settlement.method)) ?? accounting.paymentSettlements[0] ?? {};
 const firstCustomer = () => customers.customers[0] ?? {};
 const firstUser = () => userAccess.users[0] ?? {};
@@ -666,6 +679,18 @@ const actionPayload = () => {
                 },
             ],
         }),
+        'Operational Expense': () => ({
+            expense_number: actionDraft.expense_number || `EXP-${Date.now()}`,
+            expense_date: todayDate(),
+            account_id: draftNumber('account_id', firstExpenseAccount().id),
+            cash_account_id: draftNumber('cash_account_id', accountByCode('1100').id) || undefined,
+            category: actionDraft.category || 'Operational',
+            payee: actionDraft.payee,
+            description: actionDraft.description,
+            amount: draftNumber('amount', 125000),
+            payment_method: actionDraft.payment_method || 'cash',
+            reference_number: actionDraft.reference_number,
+        }),
         Settlement: () => ({
             settlement_number: actionDraft.settlement_number,
             method: actionDraft.method || 'qris',
@@ -751,6 +776,7 @@ const isApiSubmitAction = computed(() => [
     'Return Supplier',
     'Pay Supplier',
     'New Journal',
+    'Operational Expense',
     'Settlement',
     'Import Provider',
     'Loyalty',
@@ -788,6 +814,7 @@ const saveActionDraft = async () => {
         'Return Supplier': '/purchase-returns',
         'Pay Supplier': () => `/supplier-payables/${draftNumber('payable_id', firstOpenPayable().id)}/payments`,
         'New Journal': '/journal-entries',
+        'Operational Expense': '/operational-expenses',
         Settlement: '/payment-settlements',
         'Import Provider': '/payment-provider-imports',
         Loyalty: () => `/customers/${draftNumber('customer_id', firstCustomer().id)}/loyalty-transactions`,
@@ -868,7 +895,7 @@ const saveActionDraft = async () => {
             await inventory.loadFromApi();
         }
 
-        if (['New Journal', 'Settlement', 'Import Provider'].includes(activeAction.value)) {
+        if (['New Journal', 'Operational Expense', 'Settlement', 'Import Provider'].includes(activeAction.value)) {
             await accounting.loadFromApi();
         }
 

@@ -666,6 +666,16 @@ Status: complete.
 - Purchasing dan inventory store reload setelah approval berhasil.
 - Dokumentasi Tahap 52 dibuat.
 
+### Tahap 53 - Frontend Accounting Operational Expense Action
+
+Status: complete.
+
+- Action `Operational Expense` ditambahkan ke modul Accounting.
+- `Operational Expense` submit ke `POST /api/operational-expenses`.
+- Payload expense memakai expense account, cash account, category, payee, description, amount, payment method, dan reference.
+- Accounting store reload setelah expense berhasil diposting.
+- Dokumentasi Tahap 53 dibuat.
+
 ## Cara Track Mundur
 
 - Setiap tahap disimpan dalam commit terpisah.
