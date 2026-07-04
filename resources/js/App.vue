@@ -154,6 +154,9 @@ const actionFields = computed(() => {
     const firstSupplier = masterData.suppliers[0] ?? {};
     const firstProduct = masterData.products[0] ?? {};
     const firstPayable = purchasing.payables.find((payable) => payable.status !== 'closed') ?? purchasing.payables[0] ?? {};
+    const cashAccount = accounting.accounts.find((account) => account.code === '1100') ?? accounting.accounts[0] ?? {};
+    const balancingAccount = accounting.accounts.find((account) => account.code === '3100') ?? accounting.accounts[1] ?? {};
+    const providerSettlement = accounting.paymentSettlements.find((settlement) => ['card', 'transfer', 'qris'].includes(settlement.method)) ?? accounting.paymentSettlements[0] ?? {};
     const fields = {
         'New Sale': [
             { key: 'customer', label: 'Customer', type: 'text', placeholder: 'Walk-in Customer' },
@@ -225,14 +228,25 @@ const actionFields = computed(() => {
         'New Journal': [
             { key: 'journal_number', label: 'Journal Number', type: 'text', placeholder: 'JE-001' },
             { key: 'description', label: 'Description', type: 'text', placeholder: 'Manual journal' },
+            { key: 'debit_account_id', label: 'Debit Account ID', type: 'number', placeholder: String(cashAccount.id ?? '') },
+            { key: 'credit_account_id', label: 'Credit Account ID', type: 'number', placeholder: String(balancingAccount.id ?? '') },
+            { key: 'amount', label: 'Amount', type: 'number', placeholder: '100000' },
         ],
         Settlement: [
             { key: 'settlement_number', label: 'Settlement Number', type: 'text', placeholder: 'SETTLE-001' },
             { key: 'method', label: 'Method', type: 'text', placeholder: 'qris' },
+            { key: 'date_from', label: 'Date From', type: 'date', placeholder: todayDate() },
+            { key: 'date_to', label: 'Date To', type: 'date', placeholder: todayDate() },
+            { key: 'reported_amount', label: 'Reported Amount', type: 'number', placeholder: '38850' },
         ],
         'Import Provider': [
+            { key: 'payment_settlement_id', label: 'Settlement ID', type: 'number', placeholder: String(providerSettlement.id ?? '') },
             { key: 'import_number', label: 'Import Number', type: 'text', placeholder: 'IMP-001' },
             { key: 'provider', label: 'Provider', type: 'text', placeholder: 'QRIS Acquirer' },
+            { key: 'method', label: 'Method', type: 'text', placeholder: providerSettlement.method || 'qris' },
+            { key: 'reference', label: 'Reference', type: 'text', placeholder: 'QRIS-REF-001' },
+            { key: 'amount', label: 'Amount', type: 'number', placeholder: String(providerSettlement.reported || 0) },
+            { key: 'fee_amount', label: 'Fee Amount', type: 'number', placeholder: '0' },
         ],
         Refresh: [
             { key: 'period', label: 'Period', type: 'text', placeholder: reports.period },
@@ -289,11 +303,14 @@ const closeAction = () => {
     actionFeedback.value = '';
 };
 const draftNumber = (key, fallback = 0) => Number(actionDraft[key] || fallback || 0);
+const todayDate = () => new Date().toISOString().slice(0, 10);
 const firstStockBalance = () => inventory.stockBalances[0] ?? {};
 const firstRecipe = () => inventory.recipes[0] ?? {};
 const firstSupplier = () => masterData.suppliers[0] ?? {};
 const firstProduct = () => masterData.products[0] ?? {};
 const firstOpenPayable = () => purchasing.payables.find((payable) => payable.status !== 'closed') ?? purchasing.payables[0] ?? {};
+const accountByCode = (code, fallbackIndex = 0) => accounting.accounts.find((account) => account.code === code) ?? accounting.accounts[fallbackIndex] ?? {};
+const firstProviderSettlement = () => accounting.paymentSettlements.find((settlement) => ['card', 'transfer', 'qris'].includes(settlement.method)) ?? accounting.paymentSettlements[0] ?? {};
 const actionPayload = () => {
     const payloads = {
         'New Customer': () => ({
@@ -391,6 +408,49 @@ const actionPayload = () => {
             amount: draftNumber('amount', Math.max((firstOpenPayable().amount ?? 0) - (firstOpenPayable().paidAmount ?? 0), 0)),
             payment_method: actionDraft.payment_method || 'cash',
         }),
+        'New Journal': () => ({
+            journal_number: actionDraft.journal_number,
+            description: actionDraft.description,
+            lines: [
+                {
+                    account_id: draftNumber('debit_account_id', accountByCode('1100').id),
+                    debit: draftNumber('amount', 100000),
+                    credit: 0,
+                    description: actionDraft.description,
+                },
+                {
+                    account_id: draftNumber('credit_account_id', accountByCode('3100', 1).id),
+                    debit: 0,
+                    credit: draftNumber('amount', 100000),
+                    description: actionDraft.description,
+                },
+            ],
+        }),
+        Settlement: () => ({
+            settlement_number: actionDraft.settlement_number,
+            method: actionDraft.method || 'qris',
+            date_from: actionDraft.date_from || todayDate(),
+            date_to: actionDraft.date_to || todayDate(),
+            reported_amount: draftNumber('reported_amount'),
+        }),
+        'Import Provider': () => {
+            const settlement = firstProviderSettlement();
+
+            return {
+                payment_settlement_id: draftNumber('payment_settlement_id', settlement.id),
+                import_number: actionDraft.import_number,
+                provider: actionDraft.provider || 'QRIS Acquirer',
+                method: actionDraft.method || settlement.method || 'qris',
+                rows: [
+                    {
+                        reference: actionDraft.reference,
+                        amount: draftNumber('amount', settlement.reported),
+                        fee_amount: draftNumber('fee_amount'),
+                        settled_at: todayDate(),
+                    },
+                ],
+            };
+        },
     };
 
     return payloads[activeAction.value]?.() ?? null;
@@ -406,6 +466,9 @@ const isApiSubmitAction = computed(() => [
     'New PO',
     'Goods Receipt',
     'Pay Supplier',
+    'New Journal',
+    'Settlement',
+    'Import Provider',
 ].includes(activeAction.value));
 const saveActionDraft = async () => {
     const endpoints = {
@@ -419,6 +482,9 @@ const saveActionDraft = async () => {
         'New PO': '/purchase-orders',
         'Goods Receipt': '/goods-receipts',
         'Pay Supplier': () => `/supplier-payables/${draftNumber('payable_id', firstOpenPayable().id)}/payments`,
+        'New Journal': '/journal-entries',
+        Settlement: '/payment-settlements',
+        'Import Provider': '/payment-provider-imports',
     };
     const endpointConfig = endpoints[activeAction.value];
     const endpoint = typeof endpointConfig === 'function' ? endpointConfig() : endpointConfig;
@@ -451,6 +517,10 @@ const saveActionDraft = async () => {
         if (['New PO', 'Goods Receipt', 'Pay Supplier'].includes(activeAction.value)) {
             await purchasing.loadFromApi();
             await inventory.loadFromApi();
+        }
+
+        if (['New Journal', 'Settlement', 'Import Provider'].includes(activeAction.value)) {
+            await accounting.loadFromApi();
         }
 
         actionFeedback.value = `${activeAction.value} berhasil disimpan ke API.`;

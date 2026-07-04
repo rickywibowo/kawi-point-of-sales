@@ -4,10 +4,11 @@ import { apiGet } from '../services/api';
 export const useAccountingStore = defineStore('accounting', {
     state: () => ({
         accounts: [
-            { code: '1100', name: 'Kas', type: 'asset' },
-            { code: '1300', name: 'Persediaan', type: 'asset' },
-            { code: '4100', name: 'Penjualan', type: 'revenue' },
-            { code: '5100', name: 'Harga Pokok Penjualan', type: 'cost_of_goods_sold' },
+            { id: null, code: '1100', name: 'Kas', type: 'asset' },
+            { id: null, code: '1300', name: 'Persediaan', type: 'asset' },
+            { id: null, code: '3100', name: 'Modal Pemilik', type: 'equity' },
+            { id: null, code: '4100', name: 'Penjualan', type: 'revenue' },
+            { id: null, code: '5100', name: 'Harga Pokok Penjualan', type: 'cost_of_goods_sold' },
         ],
         trialBalanceStatus: 'balanced',
         profitAndLoss: {
@@ -29,11 +30,11 @@ export const useAccountingStore = defineStore('accounting', {
             { number: 'EXP-DEMO-002', category: 'Packaging', amount: 87000 },
         ],
         paymentSettlements: [
-            { number: 'SETTLE-DEMO-001', method: 'qris', expected: 27750, reported: 27750, variance: 0 },
-            { number: 'SETTLE-DEMO-002', method: 'cash', expected: 38850, reported: 38800, variance: -50 },
+            { id: null, number: 'SETTLE-DEMO-001', method: 'qris', expected: 27750, reported: 27750, variance: 0 },
+            { id: null, number: 'SETTLE-DEMO-002', method: 'cash', expected: 38850, reported: 38800, variance: -50 },
         ],
         providerImports: [
-            { number: 'IMP-QRIS-001', provider: 'QRIS Acquirer', matched: 12, unmatched: 1, variance: -2500 },
+            { id: null, number: 'IMP-QRIS-001', provider: 'QRIS Acquirer', matched: 12, unmatched: 1, variance: -2500 },
         ],
     }),
 
@@ -54,6 +55,7 @@ export const useAccountingStore = defineStore('accounting', {
             ]);
 
             this.accounts = accounting.accounts?.map((account) => ({
+                id: account.id,
                 code: account.code,
                 name: account.name,
                 type: account.type,
@@ -79,6 +81,7 @@ export const useAccountingStore = defineStore('accounting', {
                 amount: Number(expense.amount ?? 0),
             })) ?? this.operationalExpenses;
             this.paymentSettlements = settlements.payment_settlements?.map((settlement) => ({
+                id: settlement.id,
                 number: settlement.settlement_number,
                 method: settlement.method,
                 expected: Number(settlement.expected_amount ?? 0),
@@ -86,6 +89,7 @@ export const useAccountingStore = defineStore('accounting', {
                 variance: Number(settlement.variance_amount ?? 0),
             })) ?? this.paymentSettlements;
             this.providerImports = providerImports.payment_provider_imports?.map((providerImport) => ({
+                id: providerImport.id,
                 number: providerImport.import_number,
                 provider: providerImport.provider,
                 matched: providerImport.matched_count ?? 0,

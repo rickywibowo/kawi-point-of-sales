@@ -521,6 +521,18 @@ Status: complete.
 - Purchasing dan inventory store reload setelah action purchasing berhasil.
 - Dokumentasi Tahap 39 dibuat.
 
+### Tahap 40 - Frontend Accounting Submit Actions
+
+Status: complete.
+
+- Store accounting frontend menyimpan ID account, payment settlement, dan provider import dari API.
+- Action `New Journal` submit ke `POST /api/journal-entries`.
+- Action `Settlement` submit ke `POST /api/payment-settlements`.
+- Action `Import Provider` submit ke `POST /api/payment-provider-imports`.
+- Payload manual journal dibuat seimbang dengan dua line debit/kredit.
+- Accounting store reload setelah action accounting berhasil.
+- Dokumentasi Tahap 40 dibuat.
+
 ## Cara Track Mundur
 
 - Setiap tahap disimpan dalam commit terpisah.
