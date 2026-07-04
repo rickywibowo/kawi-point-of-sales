@@ -636,6 +636,16 @@ Status: complete.
 - POS store reload setelah void atau refund sale berhasil.
 - Dokumentasi Tahap 49 dibuat.
 
+### Tahap 50 - Frontend POS Receipt Action
+
+Status: complete.
+
+- POS store menyimpan daftar receipt dari sale harian API.
+- Action `View Receipt` ditambahkan ke modul Kasir.
+- `View Receipt` mengambil data dari `GET /api/sales/{sale}/receipt`.
+- Feedback action menampilkan nomor receipt dan grand total.
+- Dokumentasi Tahap 50 dibuat.
+
 ## Cara Track Mundur
 
 - Setiap tahap disimpan dalam commit terpisah.

@@ -128,6 +128,11 @@ export const usePosStore = defineStore('pos', {
                 method: payment.method,
                 amount: Number(payment.amount ?? 0),
             })) ?? this.payments;
+            this.receipts = response.today_sales?.map((sale) => ({
+                number: sale.sale_number,
+                channel: 'digital',
+                total: Number(sale.grand_total ?? 0),
+            })) ?? this.receipts;
             this.sales = response.today_sales?.map((sale) => ({
                 id: sale.id,
                 number: sale.sale_number,

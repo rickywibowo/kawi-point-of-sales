@@ -11,7 +11,7 @@ import { usePosStore } from './stores/pos';
 import { usePurchasingStore } from './stores/purchasing';
 import { useReportsStore } from './stores/reports';
 import { useUserAccessStore } from './stores/userAccess';
-import { apiPatch, apiPost } from './services/api';
+import { apiGet, apiPatch, apiPost } from './services/api';
 
 const accounting = useAccountingStore();
 const audit = useAuditStore();
@@ -135,7 +135,7 @@ const moduleSummary = computed(() => {
 });
 const moduleActions = computed(() => {
     const actions = {
-        pos: ['New Sale', 'Void Sale', 'Refund Sale', 'Hold Cart', 'Open Shift', 'Cash Movement', 'Close Shift', 'New Promo', 'New Table', 'Table Status', 'Reserve Table', 'Seat Reservation', 'Cancel Reservation', 'Kitchen Station', 'Kitchen Status', 'Kitchen Item Status', 'Delivery Status'],
+        pos: ['New Sale', 'Void Sale', 'Refund Sale', 'View Receipt', 'Hold Cart', 'Open Shift', 'Cash Movement', 'Close Shift', 'New Promo', 'New Table', 'Table Status', 'Reserve Table', 'Seat Reservation', 'Cancel Reservation', 'Kitchen Station', 'Kitchen Status', 'Kitchen Item Status', 'Delivery Status'],
         products: ['New Product', 'Import CSV', 'Price Update'],
         inventory: ['Stock Opname', 'Transfer Stock', 'Production'],
         purchasing: ['New PO', 'Goods Receipt', 'Pay Supplier'],
@@ -193,6 +193,9 @@ const actionFields = computed(() => {
         'Refund Sale': [
             { key: 'sale_id', label: 'Sale ID', type: 'number', placeholder: String(firstCompletedSale.id ?? '') },
             { key: 'reason', label: 'Reason', type: 'text', placeholder: 'Refund pelanggan' },
+        ],
+        'View Receipt': [
+            { key: 'sale_id', label: 'Sale ID', type: 'number', placeholder: String(firstCompletedSale.id ?? '') },
         ],
         'Open Shift': [
             { key: 'shift_number', label: 'Shift Number', type: 'text', placeholder: 'SHIFT-001' },
@@ -685,6 +688,7 @@ const isApiSubmitAction = computed(() => [
     'New Sale',
     'Void Sale',
     'Refund Sale',
+    'View Receipt',
     'New Customer',
     'New Product',
     'Open Shift',
@@ -719,6 +723,7 @@ const saveActionDraft = async () => {
         'New Sale': '/sales',
         'Void Sale': () => `/sales/${draftNumber('sale_id', firstCompletedSale().id)}/void`,
         'Refund Sale': () => `/sales/${draftNumber('sale_id', firstCompletedSale().id)}/refund`,
+        'View Receipt': () => `/sales/${draftNumber('sale_id', firstCompletedSale().id)}/receipt`,
         'New Customer': '/customers',
         'New Product': '/products',
         'Open Shift': '/cashier-shifts',
@@ -750,6 +755,7 @@ const saveActionDraft = async () => {
     };
     const endpointConfig = endpoints[activeAction.value];
     const endpoint = typeof endpointConfig === 'function' ? endpointConfig() : endpointConfig;
+    const getActions = ['View Receipt'];
     const patchActions = ['Table Status', 'Seat Reservation', 'Cancel Reservation', 'Kitchen Status', 'Kitchen Item Status', 'Delivery Status'];
 
     if (!endpoint || foundation.apiStatus !== 'connected') {
@@ -759,10 +765,23 @@ const saveActionDraft = async () => {
     }
 
     try {
-        if (patchActions.includes(activeAction.value)) {
+        let response = null;
+
+        if (getActions.includes(activeAction.value)) {
+            response = await apiGet(endpoint);
+        } else if (patchActions.includes(activeAction.value)) {
             await apiPatch(endpoint, actionPayload());
         } else {
             await apiPost(endpoint, actionPayload());
+        }
+
+        if (activeAction.value === 'View Receipt') {
+            const receipt = response?.receipt;
+            const saleNumber = receipt?.sale?.sale_number ?? 'Receipt';
+            const grandTotal = Number(receipt?.totals?.grand_total ?? 0).toLocaleString('id-ID');
+            actionFeedback.value = `${saleNumber} siap ditampilkan. Total Rp ${grandTotal}.`;
+
+            return;
         }
 
         if (activeAction.value === 'New Customer') {
