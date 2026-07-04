@@ -656,6 +656,16 @@ Status: complete.
 - Purchasing dan inventory store reload setelah return supplier berhasil.
 - Dokumentasi Tahap 51 dibuat.
 
+### Tahap 52 - Frontend Purchasing Approve PO Action
+
+Status: complete.
+
+- Action `Approve PO` ditambahkan ke modul Purchasing.
+- `Approve PO` submit ke `POST /api/purchase-orders/{purchaseOrder}/approve`.
+- Action memakai purchase order draft pertama sebagai default.
+- Purchasing dan inventory store reload setelah approval berhasil.
+- Dokumentasi Tahap 52 dibuat.
+
 ## Cara Track Mundur
 
 - Setiap tahap disimpan dalam commit terpisah.

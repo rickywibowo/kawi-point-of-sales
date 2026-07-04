@@ -138,7 +138,7 @@ const moduleActions = computed(() => {
         pos: ['New Sale', 'Void Sale', 'Refund Sale', 'View Receipt', 'Hold Cart', 'Open Shift', 'Cash Movement', 'Close Shift', 'New Promo', 'New Table', 'Table Status', 'Reserve Table', 'Seat Reservation', 'Cancel Reservation', 'Kitchen Station', 'Kitchen Status', 'Kitchen Item Status', 'Delivery Status'],
         products: ['New Product', 'Import CSV', 'Price Update'],
         inventory: ['Stock Opname', 'Transfer Stock', 'Production'],
-        purchasing: ['New PO', 'Goods Receipt', 'Return Supplier', 'Pay Supplier'],
+        purchasing: ['New PO', 'Approve PO', 'Goods Receipt', 'Return Supplier', 'Pay Supplier'],
         accounting: ['New Journal', 'Settlement', 'Import Provider'],
         reports: ['Refresh', 'Export', 'Print'],
         customers: ['New Customer', 'Loyalty', 'Segment'],
@@ -153,6 +153,7 @@ const actionFields = computed(() => {
     const transferTarget = inventory.warehouses.find((warehouse) => warehouse.id !== inventory.warehouseId);
     const firstSupplier = masterData.suppliers[0] ?? {};
     const firstProduct = masterData.products[0] ?? {};
+    const firstDraftPo = purchasing.purchaseOrders.find((order) => order.status === 'draft') ?? purchasing.purchaseOrders[0] ?? {};
     const firstReceipt = purchasing.goodsReceipts[0] ?? {};
     const firstReceiptItem = firstReceipt.firstItem ?? {};
     const firstPayable = purchasing.payables.find((payable) => payable.status !== 'closed') ?? purchasing.payables[0] ?? {};
@@ -305,6 +306,9 @@ const actionFields = computed(() => {
             { key: 'quantity_ordered', label: 'Quantity Ordered', type: 'number', placeholder: '5' },
             { key: 'unit_cost', label: 'Unit Cost', type: 'number', placeholder: String(firstProduct.cost ?? 0) },
         ],
+        'Approve PO': [
+            { key: 'purchase_order_id', label: 'PO ID', type: 'number', placeholder: String(firstDraftPo.id ?? '') },
+        ],
         'Goods Receipt': [
             { key: 'receipt_number', label: 'Receipt Number', type: 'text', placeholder: 'GR-001' },
             { key: 'supplier_id', label: 'Supplier ID', type: 'number', placeholder: String(firstSupplier.id ?? '') },
@@ -418,6 +422,7 @@ const firstStockBalance = () => inventory.stockBalances[0] ?? {};
 const firstRecipe = () => inventory.recipes[0] ?? {};
 const firstSupplier = () => masterData.suppliers[0] ?? {};
 const firstProduct = () => masterData.products[0] ?? {};
+const firstDraftPurchaseOrder = () => purchasing.purchaseOrders.find((order) => order.status === 'draft') ?? purchasing.purchaseOrders[0] ?? {};
 const firstGoodsReceipt = () => purchasing.goodsReceipts[0] ?? {};
 const firstGoodsReceiptItem = () => firstGoodsReceipt().firstItem ?? {};
 const firstOpenPayable = () => purchasing.payables.find((payable) => payable.status !== 'closed') ?? purchasing.payables[0] ?? {};
@@ -607,6 +612,7 @@ const actionPayload = () => {
                 },
             ],
         }),
+        'Approve PO': () => ({}),
         'Goods Receipt': () => ({
             supplier_id: draftNumber('supplier_id', firstSupplier().id),
             warehouse_id: draftNumber('warehouse_id', inventory.warehouseId),
@@ -740,6 +746,7 @@ const isApiSubmitAction = computed(() => [
     'Transfer Stock',
     'Production',
     'New PO',
+    'Approve PO',
     'Goods Receipt',
     'Return Supplier',
     'Pay Supplier',
@@ -776,6 +783,7 @@ const saveActionDraft = async () => {
         'Transfer Stock': '/stock-transfers',
         Production: '/production-orders',
         'New PO': '/purchase-orders',
+        'Approve PO': () => `/purchase-orders/${draftNumber('purchase_order_id', firstDraftPurchaseOrder().id)}/approve`,
         'Goods Receipt': '/goods-receipts',
         'Return Supplier': '/purchase-returns',
         'Pay Supplier': () => `/supplier-payables/${draftNumber('payable_id', firstOpenPayable().id)}/payments`,
@@ -855,7 +863,7 @@ const saveActionDraft = async () => {
             await inventory.loadFromApi();
         }
 
-        if (['New PO', 'Goods Receipt', 'Return Supplier', 'Pay Supplier'].includes(activeAction.value)) {
+        if (['New PO', 'Approve PO', 'Goods Receipt', 'Return Supplier', 'Pay Supplier'].includes(activeAction.value)) {
             await purchasing.loadFromApi();
             await inventory.loadFromApi();
         }
