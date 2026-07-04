@@ -696,6 +696,16 @@ Status: complete.
 - Inventory store reload setelah adjustment berhasil diposting.
 - Dokumentasi Tahap 55 dibuat.
 
+### Tahap 56 - Frontend Inventory Recipe Action
+
+Status: complete.
+
+- Action `New Recipe` ditambahkan ke modul Inventory.
+- `New Recipe` submit ke `POST /api/recipes`.
+- Payload recipe memakai product, ingredient product, yield quantity, ingredient quantity, unit cost, dan waste percentage.
+- Inventory store reload setelah recipe berhasil dibuat.
+- Dokumentasi Tahap 56 dibuat.
+
 ## Cara Track Mundur
 
 - Setiap tahap disimpan dalam commit terpisah.

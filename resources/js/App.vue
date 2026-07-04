@@ -137,7 +137,7 @@ const moduleActions = computed(() => {
     const actions = {
         pos: ['New Sale', 'Void Sale', 'Refund Sale', 'View Receipt', 'Hold Cart', 'Open Shift', 'Cash Movement', 'Close Shift', 'New Promo', 'New Table', 'Table Status', 'Reserve Table', 'Seat Reservation', 'Cancel Reservation', 'Kitchen Station', 'Kitchen Status', 'Kitchen Item Status', 'Delivery Status'],
         products: ['New Product', 'Import CSV', 'Price Update'],
-        inventory: ['Stock Adjustment', 'Stock Opname', 'Transfer Stock', 'Production'],
+        inventory: ['New Recipe', 'Stock Adjustment', 'Stock Opname', 'Transfer Stock', 'Production'],
         purchasing: ['New PO', 'Approve PO', 'Goods Receipt', 'Return Supplier', 'Pay Supplier'],
         accounting: ['New Journal', 'Operational Expense', 'Settlement', 'Import Provider'],
         reports: ['Refresh', 'Export', 'Print'],
@@ -151,6 +151,8 @@ const actionFields = computed(() => {
     const firstStock = inventory.stockBalances[0] ?? {};
     const firstRecipe = inventory.recipes[0] ?? {};
     const transferTarget = inventory.warehouses.find((warehouse) => warehouse.id !== inventory.warehouseId);
+    const recipeProduct = masterData.products[0] ?? {};
+    const ingredientProduct = masterData.products[1] ?? masterData.products[0] ?? {};
     const firstSupplier = masterData.suppliers[0] ?? {};
     const firstProduct = masterData.products[0] ?? {};
     const firstDraftPo = purchasing.purchaseOrders.find((order) => order.status === 'draft') ?? purchasing.purchaseOrders[0] ?? {};
@@ -278,6 +280,15 @@ const actionFields = computed(() => {
         'Price Update': [
             { key: 'sku', label: 'SKU', type: 'text', placeholder: 'KAWI-RICE-001' },
             { key: 'price', label: 'New Price', type: 'number', placeholder: '38000' },
+        ],
+        'New Recipe': [
+            { key: 'name', label: 'Recipe Name', type: 'text', placeholder: 'Recipe KAWI Baru' },
+            { key: 'product_id', label: 'Product ID', type: 'number', placeholder: String(recipeProduct.id ?? '') },
+            { key: 'ingredient_product_id', label: 'Ingredient Product ID', type: 'number', placeholder: String(ingredientProduct.id ?? '') },
+            { key: 'yield_quantity', label: 'Yield Quantity', type: 'number', placeholder: '1' },
+            { key: 'ingredient_quantity', label: 'Ingredient Quantity', type: 'number', placeholder: '1' },
+            { key: 'unit_cost', label: 'Unit Cost', type: 'number', placeholder: String(ingredientProduct.cost ?? 0) },
+            { key: 'waste_percentage', label: 'Waste Percent', type: 'number', placeholder: '0' },
         ],
         'Stock Opname': [
             { key: 'opname_number', label: 'Opname Number', type: 'text', placeholder: 'OPN-001' },
@@ -440,6 +451,8 @@ const draftNumber = (key, fallback = 0) => Number(actionDraft[key] || fallback |
 const todayDate = () => new Date().toISOString().slice(0, 10);
 const firstStockBalance = () => inventory.stockBalances[0] ?? {};
 const firstRecipe = () => inventory.recipes[0] ?? {};
+const firstRecipeProduct = () => masterData.products[0] ?? {};
+const firstIngredientProduct = () => masterData.products[1] ?? masterData.products[0] ?? {};
 const firstSupplier = () => masterData.suppliers[0] ?? {};
 const firstProduct = () => masterData.products[0] ?? {};
 const firstDraftPurchaseOrder = () => purchasing.purchaseOrders.find((order) => order.status === 'draft') ?? purchasing.purchaseOrders[0] ?? {};
@@ -594,6 +607,27 @@ const actionPayload = () => {
                     {
                         product_id: draftNumber('product_id', stock.productId),
                         counted_quantity: draftNumber('counted_quantity', stock.quantity),
+                    },
+                ],
+            };
+        },
+        'New Recipe': () => {
+            const product = firstRecipeProduct();
+            const ingredient = firstIngredientProduct();
+
+            return {
+                product_id: draftNumber('product_id', product.id),
+                name: actionDraft.name || `Recipe ${product.name ?? Date.now()}`,
+                yield_quantity: draftNumber('yield_quantity', 1),
+                waste_percentage: draftNumber('waste_percentage', 0),
+                version: 1,
+                is_active: true,
+                items: [
+                    {
+                        ingredient_product_id: draftNumber('ingredient_product_id', ingredient.id),
+                        quantity: draftNumber('ingredient_quantity', 1),
+                        waste_percentage: draftNumber('waste_percentage', 0),
+                        unit_cost: draftNumber('unit_cost', ingredient.cost ?? 0),
                     },
                 ],
             };
@@ -792,6 +826,7 @@ const isApiSubmitAction = computed(() => [
     'Kitchen Item Status',
     'Delivery Status',
     'Hold Cart',
+    'New Recipe',
     'Stock Adjustment',
     'Stock Opname',
     'Transfer Stock',
@@ -831,6 +866,7 @@ const saveActionDraft = async () => {
         'Kitchen Item Status': () => `/kitchen-ticket-items/${draftNumber('item_id', firstActiveKitchenItem().id)}/status`,
         'Delivery Status': () => `/delivery-orders/${draftNumber('delivery_id', firstActiveDelivery().id)}/status`,
         'Hold Cart': '/held-transactions',
+        'New Recipe': '/recipes',
         'Stock Adjustment': '/stock-adjustments',
         'Stock Opname': '/stock-opnames',
         'Transfer Stock': '/stock-transfers',
@@ -913,7 +949,7 @@ const saveActionDraft = async () => {
             await pos.loadFromApi();
         }
 
-        if (['Stock Adjustment', 'Stock Opname', 'Transfer Stock', 'Production'].includes(activeAction.value)) {
+        if (['New Recipe', 'Stock Adjustment', 'Stock Opname', 'Transfer Stock', 'Production'].includes(activeAction.value)) {
             await inventory.loadFromApi();
         }
 

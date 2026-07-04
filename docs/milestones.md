@@ -20,8 +20,9 @@ Status: complete.
 - Purchase return dan production posting memengaruhi stok.
 - Frontend action drawer inventory tersambung ke API stock opname, stock transfer, dan production order.
 - Frontend action drawer inventory tersambung ke API stock adjustment.
+- Frontend action drawer inventory tersambung ke API recipe creation.
 
-Tahap terkait: 2, 3, 12, 16, 17, 38, 55.
+Tahap terkait: 2, 3, 12, 16, 17, 38, 55, 56.
 
 ## Milestone 3 - POS Operations
 
