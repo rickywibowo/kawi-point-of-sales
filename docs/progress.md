@@ -706,6 +706,16 @@ Status: complete.
 - Inventory store reload setelah recipe berhasil dibuat.
 - Dokumentasi Tahap 56 dibuat.
 
+### Tahap 57 - Frontend Customer Update Action
+
+Status: complete.
+
+- Action `Update Customer` ditambahkan ke modul Customers.
+- `Update Customer` submit ke `PATCH /api/customers/{customer}`.
+- Payload update memakai name, phone, email, notes, dan status active.
+- Customer store reload setelah update berhasil.
+- Dokumentasi Tahap 57 dibuat.
+
 ## Cara Track Mundur
 
 - Setiap tahap disimpan dalam commit terpisah.

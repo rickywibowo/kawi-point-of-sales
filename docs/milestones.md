@@ -70,9 +70,10 @@ Tahap terkait: 6, 8, 13, 19, 27, 29, 40, 53.
 Status: complete.
 
 - Customer CRM, customer profile, sales summary, recent sales, loyalty ledger, manual loyalty adjustment, dan auto earn dari sale.
+- Frontend action drawer customer tersambung ke API customer update.
 - Frontend action drawer customer tersambung ke API loyalty adjustment.
 
-Tahap terkait: 10, 21, 41.
+Tahap terkait: 10, 21, 41, 57.
 
 ## Milestone 7 - Administration UX
 

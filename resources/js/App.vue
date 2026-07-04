@@ -141,7 +141,7 @@ const moduleActions = computed(() => {
         purchasing: ['New PO', 'Approve PO', 'Goods Receipt', 'Return Supplier', 'Pay Supplier'],
         accounting: ['New Journal', 'Operational Expense', 'Settlement', 'Import Provider'],
         reports: ['Refresh', 'Export', 'Print'],
-        customers: ['New Customer', 'Loyalty', 'Segment'],
+        customers: ['New Customer', 'Update Customer', 'Loyalty', 'Segment'],
         settings: ['Invite User', 'Assign Role', 'Audit'],
     };
 
@@ -400,6 +400,13 @@ const actionFields = computed(() => {
             { key: 'name', label: 'Name', type: 'text', placeholder: 'Nama pelanggan' },
             { key: 'phone', label: 'Phone', type: 'text', placeholder: '0812...' },
         ],
+        'Update Customer': [
+            { key: 'customer_id', label: 'Customer ID', type: 'number', placeholder: String(firstCustomer.id ?? '') },
+            { key: 'name', label: 'Name', type: 'text', placeholder: firstCustomer.name ?? 'Nama pelanggan' },
+            { key: 'phone', label: 'Phone', type: 'text', placeholder: firstCustomer.phone ?? '0812...' },
+            { key: 'email', label: 'Email', type: 'email', placeholder: 'member@kawi.test' },
+            { key: 'notes', label: 'Notes', type: 'text', placeholder: 'Catatan pelanggan' },
+        ],
         Loyalty: [
             { key: 'customer_id', label: 'Customer ID', type: 'number', placeholder: String(firstCustomer.id ?? '') },
             { key: 'type', label: 'Type', type: 'text', placeholder: 'manual_bonus' },
@@ -512,6 +519,13 @@ const actionPayload = () => {
         'New Customer': () => ({
             name: actionDraft.name,
             phone: actionDraft.phone,
+            is_active: true,
+        }),
+        'Update Customer': () => ({
+            name: actionDraft.name || firstCustomer().name,
+            phone: actionDraft.phone || firstCustomer().phone,
+            email: actionDraft.email || undefined,
+            notes: actionDraft.notes || undefined,
             is_active: true,
         }),
         'New Product': () => ({
@@ -811,6 +825,7 @@ const isApiSubmitAction = computed(() => [
     'Refund Sale',
     'View Receipt',
     'New Customer',
+    'Update Customer',
     'New Product',
     'Open Shift',
     'Cash Movement',
@@ -851,6 +866,7 @@ const saveActionDraft = async () => {
         'Refund Sale': () => `/sales/${draftNumber('sale_id', firstCompletedSale().id)}/refund`,
         'View Receipt': () => `/sales/${draftNumber('sale_id', firstCompletedSale().id)}/receipt`,
         'New Customer': '/customers',
+        'Update Customer': () => `/customers/${draftNumber('customer_id', firstCustomer().id)}`,
         'New Product': '/products',
         'Open Shift': '/cashier-shifts',
         'Cash Movement': () => `/cashier-shifts/${draftNumber('cashier_shift_id', pos.shift.id)}/cash-movements`,
@@ -887,7 +903,7 @@ const saveActionDraft = async () => {
     const endpointConfig = endpoints[activeAction.value];
     const endpoint = typeof endpointConfig === 'function' ? endpointConfig() : endpointConfig;
     const getActions = ['View Receipt'];
-    const patchActions = ['Table Status', 'Seat Reservation', 'Cancel Reservation', 'Kitchen Status', 'Kitchen Item Status', 'Delivery Status'];
+    const patchActions = ['Update Customer', 'Table Status', 'Seat Reservation', 'Cancel Reservation', 'Kitchen Status', 'Kitchen Item Status', 'Delivery Status'];
 
     if (!endpoint || foundation.apiStatus !== 'connected') {
         actionFeedback.value = `${activeAction.value} draft siap disambungkan ke API.`;
@@ -916,6 +932,10 @@ const saveActionDraft = async () => {
         }
 
         if (activeAction.value === 'New Customer') {
+            await customers.loadFromApi();
+        }
+
+        if (activeAction.value === 'Update Customer') {
             await customers.loadFromApi();
         }
 
