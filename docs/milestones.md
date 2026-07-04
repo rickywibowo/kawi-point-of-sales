@@ -41,8 +41,9 @@ Status: complete.
 - Frontend action drawer POS tersambung ke API digital receipt.
 - Frontend dashboard POS memuat konflik offline dari API.
 - Frontend POS store memuat cash drawer audit dari API.
+- Frontend POS store menghitung void/refund harian dari sale API.
 
-Tahap terkait: 4, 7, 11, 18, 22, 23, 24, 25, 26, 28, 30, 42, 43, 44, 45, 46, 47, 48, 49, 50, 54, 58.
+Tahap terkait: 4, 7, 11, 18, 22, 23, 24, 25, 26, 28, 30, 42, 43, 44, 45, 46, 47, 48, 49, 50, 54, 58, 59.
 
 ## Milestone 4 - Purchasing & Payables
 

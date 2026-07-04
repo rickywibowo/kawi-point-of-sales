@@ -726,6 +726,16 @@ Status: complete.
 - Data demo drawer audit tetap menjadi fallback jika API belum mengirim audit.
 - Dokumentasi Tahap 58 dibuat.
 
+### Tahap 59 - Frontend POS Post-Sale Counts
+
+Status: complete.
+
+- POS store menghitung `voidedToday` dari sale harian berstatus `voided`.
+- POS store menghitung `refundedToday` dari sale harian berstatus `refunded`.
+- Panel Post-Sale Controls memakai counter void/refund dari API.
+- Data demo post-sale tetap menjadi fallback jika API belum mengirim sale harian.
+- Dokumentasi Tahap 59 dibuat.
+
 ## Cara Track Mundur
 
 - Setiap tahap disimpan dalam commit terpisah.

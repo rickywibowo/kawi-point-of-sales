@@ -142,6 +142,12 @@ export const usePosStore = defineStore('pos', {
                 status: sale.status,
                 total: Number(sale.grand_total ?? 0),
             })) ?? this.sales;
+            this.postSaleControls = response.today_sales
+                ? {
+                    voidedToday: response.today_sales.filter((sale) => sale.status === 'voided').length,
+                    refundedToday: response.today_sales.filter((sale) => sale.status === 'refunded').length,
+                }
+                : this.postSaleControls;
             this.diningTables = response.dining_tables?.map((table) => ({
                 id: table.id,
                 code: table.code,
