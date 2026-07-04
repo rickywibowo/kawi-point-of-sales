@@ -35,6 +35,9 @@ export const usePosStore = defineStore('pos', {
                 { denomination: 5000, quantity: 1 },
             ],
         },
+        drawerAudits: [
+            { id: null, shift: 'SHIFT-DEMO', status: 'variance_approved', variance: -50, auditedAt: null },
+        ],
         postSaleControls: {
             voidedToday: 1,
             refundedToday: 1,
@@ -189,6 +192,22 @@ export const usePosStore = defineStore('pos', {
                 status: order.status,
                 courier: order.courier_name,
             })) ?? this.deliveryOrders;
+            this.drawerAudits = response.cash_drawer_audits?.map((audit) => ({
+                id: audit.id,
+                shift: audit.cashier_shift?.shift_number,
+                status: audit.status,
+                variance: Number(audit.variance_amount ?? 0),
+                auditedAt: audit.audited_at,
+            })) ?? this.drawerAudits;
+            this.drawerAudit = response.cash_drawer_audits?.[0]
+                ? {
+                    status: response.cash_drawer_audits[0].status,
+                    expectedCash: Number(response.cash_drawer_audits[0].expected_cash ?? 0),
+                    countedCash: Number(response.cash_drawer_audits[0].counted_cash ?? 0),
+                    variance: Number(response.cash_drawer_audits[0].variance_amount ?? 0),
+                    denominations: response.cash_drawer_audits[0].denomination_breakdown ?? [],
+                }
+                : this.drawerAudit;
             this.heldTransactions = response.held_transactions?.length ?? this.heldTransactions;
             this.todayTransactions = response.today_sales?.length ?? this.todayTransactions;
         },

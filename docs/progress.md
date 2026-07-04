@@ -716,6 +716,16 @@ Status: complete.
 - Customer store reload setelah update berhasil.
 - Dokumentasi Tahap 57 dibuat.
 
+### Tahap 58 - Frontend POS Drawer Audit API
+
+Status: complete.
+
+- POS store menyimpan daftar drawer audit dari API.
+- POS store memetakan cash drawer audit terbaru ke `drawerAudit`.
+- Panel POS memakai status, expected cash, counted cash, variance, dan denomination breakdown dari API.
+- Data demo drawer audit tetap menjadi fallback jika API belum mengirim audit.
+- Dokumentasi Tahap 58 dibuat.
+
 ## Cara Track Mundur
 
 - Setiap tahap disimpan dalam commit terpisah.
