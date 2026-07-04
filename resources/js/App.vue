@@ -161,9 +161,19 @@ const actionFields = computed(() => {
     const firstUser = userAccess.users[0] ?? {};
     const firstRole = userAccess.roles.find((role) => role.name === 'Cashier') ?? userAccess.roles[0] ?? {};
     const firstBranch = userAccess.branches[0] ?? {};
+    const saleProduct = pos.products[0] ?? masterData.products[0] ?? {};
+    const saleWarehouse = pos.warehouses[0] ?? inventory.warehouses[0] ?? {};
     const fields = {
         'New Sale': [
-            { key: 'customer', label: 'Customer', type: 'text', placeholder: 'Walk-in Customer' },
+            { key: 'sale_number', label: 'Sale Number', type: 'text', placeholder: 'SALE-001' },
+            { key: 'cashier_shift_id', label: 'Shift ID', type: 'number', placeholder: String(pos.shift.id ?? '') },
+            { key: 'warehouse_id', label: 'Warehouse ID', type: 'number', placeholder: String(saleWarehouse.id ?? '') },
+            { key: 'product_id', label: 'Product ID', type: 'number', placeholder: String(saleProduct.id ?? '') },
+            { key: 'quantity', label: 'Quantity', type: 'number', placeholder: '1' },
+            { key: 'unit_price', label: 'Unit Price', type: 'number', placeholder: String(saleProduct.price ?? 0) },
+            { key: 'payment_method', label: 'Payment Method', type: 'text', placeholder: 'cash' },
+            { key: 'payment_amount', label: 'Payment Amount', type: 'number', placeholder: String(Math.ceil((saleProduct.price ?? 50000) * 1.2)) },
+            { key: 'customer_id', label: 'Customer ID', type: 'number', placeholder: String(firstCustomer.id ?? '') },
             { key: 'note', label: 'Catatan', type: 'text', placeholder: 'Catatan transaksi' },
         ],
         'Hold Cart': [
@@ -325,8 +335,38 @@ const firstCustomer = () => customers.customers[0] ?? {};
 const firstUser = () => userAccess.users[0] ?? {};
 const firstRole = () => userAccess.roles.find((role) => role.name === 'Cashier') ?? userAccess.roles[0] ?? {};
 const firstBranch = () => userAccess.branches[0] ?? {};
+const firstSaleProduct = () => pos.products[0] ?? masterData.products[0] ?? {};
+const firstSaleWarehouse = () => pos.warehouses[0] ?? inventory.warehouses[0] ?? {};
+const saleNumber = () => actionDraft.sale_number || `SALE-${Date.now()}`;
 const actionPayload = () => {
     const payloads = {
+        'New Sale': () => {
+            const product = firstSaleProduct();
+            const generatedSaleNumber = saleNumber();
+
+            return {
+                cashier_shift_id: draftNumber('cashier_shift_id', pos.shift.id),
+                warehouse_id: draftNumber('warehouse_id', firstSaleWarehouse().id),
+                customer_id: draftNumber('customer_id') || undefined,
+                sale_number: generatedSaleNumber,
+                idempotency_key: `frontend-${generatedSaleNumber}`,
+                type: 'takeaway',
+                notes: actionDraft.note,
+                items: [
+                    {
+                        product_id: draftNumber('product_id', product.id),
+                        quantity: draftNumber('quantity', 1),
+                        unit_price: draftNumber('unit_price', product.price),
+                    },
+                ],
+                payments: [
+                    {
+                        method: actionDraft.payment_method || 'cash',
+                        amount: draftNumber('payment_amount', Math.ceil((product.price ?? 0) * draftNumber('quantity', 1) * 1.2)),
+                    },
+                ],
+            };
+        },
         'New Customer': () => ({
             name: actionDraft.name,
             phone: actionDraft.phone,
@@ -496,6 +536,7 @@ const actionPayload = () => {
     return payloads[activeAction.value]?.() ?? null;
 };
 const isApiSubmitAction = computed(() => [
+    'New Sale',
     'New Customer',
     'New Product',
     'Open Shift',
@@ -515,6 +556,7 @@ const isApiSubmitAction = computed(() => [
 ].includes(activeAction.value));
 const saveActionDraft = async () => {
     const endpoints = {
+        'New Sale': '/sales',
         'New Customer': '/customers',
         'New Product': '/products',
         'Open Shift': '/cashier-shifts',
@@ -556,7 +598,7 @@ const saveActionDraft = async () => {
             await masterData.loadFromApi();
         }
 
-        if (['Open Shift', 'Hold Cart'].includes(activeAction.value)) {
+        if (['New Sale', 'Open Shift', 'Hold Cart'].includes(activeAction.value)) {
             await pos.loadFromApi();
         }
 

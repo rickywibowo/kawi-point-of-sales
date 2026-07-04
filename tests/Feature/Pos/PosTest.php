@@ -40,6 +40,12 @@ class PosTest extends TestCase
             ->assertCreated()
             ->assertJsonPath('shift.status', 'open');
 
+        $this->actingAs($user, 'sanctum')
+            ->withHeaders(['X-Business-Id' => $business->uuid, 'X-Branch-Id' => $branch->uuid])
+            ->getJson('/api/pos')
+            ->assertOk()
+            ->assertJsonPath('active_shift.shift_number', 'SHIFT-TEST-001');
+
         $this->assertDatabaseHas('audit_logs', ['action' => 'cashier_shift.opened']);
     }
 

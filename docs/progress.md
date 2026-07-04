@@ -545,6 +545,17 @@ Status: complete.
 - Customer dan user access store reload setelah submit berhasil.
 - Dokumentasi Tahap 41 dibuat.
 
+### Tahap 42 - Frontend POS Sale Submit
+
+Status: complete.
+
+- POS index API mengembalikan `active_shift` user pada branch aktif.
+- POS store frontend menyimpan shift ID, produk POS, dan warehouse POS dari API.
+- Action `New Sale` submit ke `POST /api/sales`.
+- Payload sale memakai shift aktif, warehouse, produk, quantity, payment, dan idempotency key.
+- POS store reload setelah sale berhasil.
+- Dokumentasi Tahap 42 dibuat.
+
 ## Cara Track Mundur
 
 - Setiap tahap disimpan dalam commit terpisah.

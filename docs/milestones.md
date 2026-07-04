@@ -28,8 +28,9 @@ Status: complete.
 
 - Shift kasir, cash movement, sale, payment, held transaction, void, refund, receipt digital, dan offline sync.
 - Dine-in table management, reservation, promotion/voucher, KDS foundation, KDS station routing, delivery workflow, dan cash drawer audit.
+- Frontend action drawer POS tersambung ke API sale completion.
 
-Tahap terkait: 4, 7, 11, 18, 22, 23, 24, 25, 26, 28, 30.
+Tahap terkait: 4, 7, 11, 18, 22, 23, 24, 25, 26, 28, 30, 42.
 
 ## Milestone 4 - Purchasing & Payables
 

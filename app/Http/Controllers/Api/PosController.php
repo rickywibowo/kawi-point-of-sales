@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\CashDrawerAudit;
+use App\Models\CashierShift;
 use App\Models\DeliveryOrder;
 use App\Models\DiningTable;
 use App\Models\HeldTransaction;
@@ -27,6 +28,12 @@ class PosController extends Controller
         abort_unless($branch, 422, 'Branch context is required for POS.');
 
         return response()->json([
+            'active_shift' => CashierShift::query()
+                ->forTenant($business->id, $branch->id)
+                ->where('user_id', $request->user()->id)
+                ->where('status', 'open')
+                ->latest('opened_at')
+                ->first(),
             'products' => Product::query()
                 ->forBusiness($business->id)
                 ->with(['category', 'tax', 'branchPrices', 'modifierGroups.modifiers'])

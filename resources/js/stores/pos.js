@@ -4,10 +4,13 @@ import { apiGet } from '../services/api';
 export const usePosStore = defineStore('pos', {
     state: () => ({
         shift: {
+            id: null,
             number: 'SHIFT-DEMO',
             status: 'open',
             openingCash: 250000,
         },
+        products: [],
+        warehouses: [],
         cart: [
             { name: 'KAWI Rice Bowl', quantity: 1, price: 35000 },
             { name: 'KAWI Iced Coffee', quantity: 1, price: 25000 },
@@ -85,7 +88,24 @@ export const usePosStore = defineStore('pos', {
     actions: {
         async loadFromApi() {
             const response = await apiGet('/pos');
+            this.shift = response.active_shift ? {
+                id: response.active_shift.id,
+                number: response.active_shift.shift_number,
+                status: response.active_shift.status,
+                openingCash: Number(response.active_shift.opening_cash ?? 0),
+            } : this.shift;
+            this.products = response.products?.map((product) => ({
+                id: product.id,
+                name: product.name,
+                price: Number(product.branch_prices?.[0]?.price ?? product.base_price ?? 0),
+            })) ?? this.products;
+            this.warehouses = response.warehouses?.map((warehouse) => ({
+                id: warehouse.id,
+                name: warehouse.name,
+                code: warehouse.code,
+            })) ?? this.warehouses;
             this.cart = response.today_sales?.[0]?.items?.map((item) => ({
+                productId: item.product_id,
                 name: item.product_name,
                 quantity: Number(item.quantity ?? 0),
                 price: Number(item.unit_price ?? 0),
