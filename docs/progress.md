@@ -533,6 +533,18 @@ Status: complete.
 - Accounting store reload setelah action accounting berhasil.
 - Dokumentasi Tahap 40 dibuat.
 
+### Tahap 41 - Frontend Customer & User Submit Actions
+
+Status: complete.
+
+- Store customer frontend menyimpan ID customer dari paginator API.
+- Store user access frontend menyimpan ID user, role, dan branch dari API.
+- Action `Loyalty` submit ke `POST /api/customers/{customer}/loyalty-transactions`.
+- Action `Invite User` submit ke `POST /api/user-access/users`.
+- Action `Assign Role` submit ke `POST /api/user-access/users/{user}/roles`.
+- Customer dan user access store reload setelah submit berhasil.
+- Dokumentasi Tahap 41 dibuat.
+
 ## Cara Track Mundur
 
 - Setiap tahap disimpan dalam commit terpisah.

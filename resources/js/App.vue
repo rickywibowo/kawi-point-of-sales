@@ -157,6 +157,10 @@ const actionFields = computed(() => {
     const cashAccount = accounting.accounts.find((account) => account.code === '1100') ?? accounting.accounts[0] ?? {};
     const balancingAccount = accounting.accounts.find((account) => account.code === '3100') ?? accounting.accounts[1] ?? {};
     const providerSettlement = accounting.paymentSettlements.find((settlement) => ['card', 'transfer', 'qris'].includes(settlement.method)) ?? accounting.paymentSettlements[0] ?? {};
+    const firstCustomer = customers.customers[0] ?? {};
+    const firstUser = userAccess.users[0] ?? {};
+    const firstRole = userAccess.roles.find((role) => role.name === 'Cashier') ?? userAccess.roles[0] ?? {};
+    const firstBranch = userAccess.branches[0] ?? {};
     const fields = {
         'New Sale': [
             { key: 'customer', label: 'Customer', type: 'text', placeholder: 'Walk-in Customer' },
@@ -262,8 +266,10 @@ const actionFields = computed(() => {
             { key: 'phone', label: 'Phone', type: 'text', placeholder: '0812...' },
         ],
         Loyalty: [
-            { key: 'customer', label: 'Customer', type: 'text', placeholder: customers.customers[0]?.name },
-            { key: 'points', label: 'Points', type: 'number', placeholder: '10' },
+            { key: 'customer_id', label: 'Customer ID', type: 'number', placeholder: String(firstCustomer.id ?? '') },
+            { key: 'type', label: 'Type', type: 'text', placeholder: 'manual_bonus' },
+            { key: 'points_delta', label: 'Points Delta', type: 'number', placeholder: '10' },
+            { key: 'notes', label: 'Notes', type: 'text', placeholder: 'Manual loyalty adjustment' },
         ],
         Segment: [
             { key: 'name', label: 'Segment Name', type: 'text', placeholder: 'VIP' },
@@ -271,10 +277,14 @@ const actionFields = computed(() => {
         'Invite User': [
             { key: 'name', label: 'Name', type: 'text', placeholder: 'Kasir Baru' },
             { key: 'email', label: 'Email', type: 'email', placeholder: 'user@kawi.test' },
+            { key: 'password', label: 'Password', type: 'password', placeholder: 'password123' },
+            { key: 'role_id', label: 'Role ID', type: 'number', placeholder: String(firstRole.id ?? '') },
+            { key: 'branch_id', label: 'Branch ID', type: 'number', placeholder: String(firstBranch.id ?? '') },
         ],
         'Assign Role': [
-            { key: 'email', label: 'Email', type: 'email', placeholder: 'user@kawi.test' },
-            { key: 'role', label: 'Role', type: 'text', placeholder: 'Cashier' },
+            { key: 'user_id', label: 'User ID', type: 'number', placeholder: String(firstUser.id ?? '') },
+            { key: 'role_id', label: 'Role ID', type: 'number', placeholder: String(firstRole.id ?? '') },
+            { key: 'branch_id', label: 'Branch ID', type: 'number', placeholder: String(firstBranch.id ?? '') },
         ],
         Audit: [
             { key: 'action', label: 'Action Filter', type: 'text', placeholder: 'sale.completed' },
@@ -311,6 +321,10 @@ const firstProduct = () => masterData.products[0] ?? {};
 const firstOpenPayable = () => purchasing.payables.find((payable) => payable.status !== 'closed') ?? purchasing.payables[0] ?? {};
 const accountByCode = (code, fallbackIndex = 0) => accounting.accounts.find((account) => account.code === code) ?? accounting.accounts[fallbackIndex] ?? {};
 const firstProviderSettlement = () => accounting.paymentSettlements.find((settlement) => ['card', 'transfer', 'qris'].includes(settlement.method)) ?? accounting.paymentSettlements[0] ?? {};
+const firstCustomer = () => customers.customers[0] ?? {};
+const firstUser = () => userAccess.users[0] ?? {};
+const firstRole = () => userAccess.roles.find((role) => role.name === 'Cashier') ?? userAccess.roles[0] ?? {};
+const firstBranch = () => userAccess.branches[0] ?? {};
 const actionPayload = () => {
     const payloads = {
         'New Customer': () => ({
@@ -451,6 +465,32 @@ const actionPayload = () => {
                 ],
             };
         },
+        Loyalty: () => ({
+            type: actionDraft.type || 'manual_bonus',
+            points_delta: draftNumber('points_delta', 10),
+            notes: actionDraft.notes,
+        }),
+        'Invite User': () => {
+            const roleId = draftNumber('role_id', firstRole().id);
+            const branchId = draftNumber('branch_id', firstBranch().id);
+
+            return {
+                name: actionDraft.name,
+                email: actionDraft.email,
+                password: actionDraft.password || 'password123',
+                branch_id: branchId || undefined,
+                roles: roleId ? [
+                    {
+                        role_id: roleId,
+                        branch_id: branchId || undefined,
+                    },
+                ] : [],
+            };
+        },
+        'Assign Role': () => ({
+            role_id: draftNumber('role_id', firstRole().id),
+            branch_id: draftNumber('branch_id', firstBranch().id) || undefined,
+        }),
     };
 
     return payloads[activeAction.value]?.() ?? null;
@@ -469,6 +509,9 @@ const isApiSubmitAction = computed(() => [
     'New Journal',
     'Settlement',
     'Import Provider',
+    'Loyalty',
+    'Invite User',
+    'Assign Role',
 ].includes(activeAction.value));
 const saveActionDraft = async () => {
     const endpoints = {
@@ -485,6 +528,9 @@ const saveActionDraft = async () => {
         'New Journal': '/journal-entries',
         Settlement: '/payment-settlements',
         'Import Provider': '/payment-provider-imports',
+        Loyalty: () => `/customers/${draftNumber('customer_id', firstCustomer().id)}/loyalty-transactions`,
+        'Invite User': '/user-access/users',
+        'Assign Role': () => `/user-access/users/${draftNumber('user_id', firstUser().id)}/roles`,
     };
     const endpointConfig = endpoints[activeAction.value];
     const endpoint = typeof endpointConfig === 'function' ? endpointConfig() : endpointConfig;
@@ -499,6 +545,10 @@ const saveActionDraft = async () => {
         await apiPost(endpoint, actionPayload());
 
         if (activeAction.value === 'New Customer') {
+            await customers.loadFromApi();
+        }
+
+        if (activeAction.value === 'Loyalty') {
             await customers.loadFromApi();
         }
 
@@ -521,6 +571,10 @@ const saveActionDraft = async () => {
 
         if (['New Journal', 'Settlement', 'Import Provider'].includes(activeAction.value)) {
             await accounting.loadFromApi();
+        }
+
+        if (['Invite User', 'Assign Role'].includes(activeAction.value)) {
+            await userAccess.loadFromApi();
         }
 
         actionFeedback.value = `${activeAction.value} berhasil disimpan ke API.`;

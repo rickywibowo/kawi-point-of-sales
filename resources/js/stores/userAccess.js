@@ -4,18 +4,19 @@ import { apiGet } from '../services/api';
 export const useUserAccessStore = defineStore('userAccess', {
     state: () => ({
         users: [
-            { name: 'KAWI Owner', email: 'owner@kawi.test', roles: ['Business Owner'] },
-            { name: 'Kasir Demo', email: 'cashier@kawi.test', roles: ['Cashier'] },
+            { id: null, name: 'KAWI Owner', email: 'owner@kawi.test', roles: ['Business Owner'] },
+            { id: null, name: 'Kasir Demo', email: 'cashier@kawi.test', roles: ['Cashier'] },
         ],
         roles: [
-            'Business Owner',
-            'Branch Manager',
-            'Cashier',
-            'Inventory Staff',
-            'Purchasing',
-            'Accountant',
-            'Viewer',
+            { id: null, name: 'Business Owner' },
+            { id: null, name: 'Branch Manager' },
+            { id: null, name: 'Cashier' },
+            { id: null, name: 'Inventory Staff' },
+            { id: null, name: 'Purchasing' },
+            { id: null, name: 'Accountant' },
+            { id: null, name: 'Viewer' },
         ],
+        branches: [],
         permissions: [
             'sales.create',
             'inventory.adjust',
@@ -35,11 +36,20 @@ export const useUserAccessStore = defineStore('userAccess', {
         async loadFromApi() {
             const response = await apiGet('/user-access');
             this.users = response.users?.map((user) => ({
+                id: user.id,
                 name: user.name,
                 email: user.email,
                 roles: user.roles?.map((role) => role.name) ?? [],
             })) ?? this.users;
-            this.roles = response.roles?.map((role) => role.name) ?? this.roles;
+            this.roles = response.roles?.map((role) => ({
+                id: role.id,
+                name: role.name,
+            })) ?? this.roles;
+            this.branches = response.branches?.map((branch) => ({
+                id: branch.id,
+                name: branch.name,
+                code: branch.code,
+            })) ?? this.branches;
             this.permissions = response.permissions?.map((permission) => permission.name) ?? this.permissions;
         },
     },
