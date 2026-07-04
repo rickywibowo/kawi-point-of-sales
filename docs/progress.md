@@ -508,6 +508,19 @@ Status: complete.
 - Inventory store reload setelah action inventory berhasil.
 - Dokumentasi Tahap 38 dibuat.
 
+### Tahap 39 - Frontend Purchasing Submit Actions
+
+Status: complete.
+
+- Store master data frontend menyimpan ID supplier dan produk untuk payload purchasing.
+- Store purchasing frontend menyimpan ID purchase order, goods receipt, purchase return, dan supplier payable.
+- Action `New PO` submit ke `POST /api/purchase-orders`.
+- Action `Goods Receipt` submit ke `POST /api/goods-receipts`.
+- Action `Pay Supplier` submit ke `POST /api/supplier-payables/{payable}/payments`.
+- Payload drawer purchasing mengikuti request validation backend.
+- Purchasing dan inventory store reload setelah action purchasing berhasil.
+- Dokumentasi Tahap 39 dibuat.
+
 ## Cara Track Mundur
 
 - Setiap tahap disimpan dalam commit terpisah.

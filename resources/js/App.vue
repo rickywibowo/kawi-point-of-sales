@@ -151,6 +151,9 @@ const actionFields = computed(() => {
     const firstStock = inventory.stockBalances[0] ?? {};
     const firstRecipe = inventory.recipes[0] ?? {};
     const transferTarget = inventory.warehouses.find((warehouse) => warehouse.id !== inventory.warehouseId);
+    const firstSupplier = masterData.suppliers[0] ?? {};
+    const firstProduct = masterData.products[0] ?? {};
+    const firstPayable = purchasing.payables.find((payable) => payable.status !== 'closed') ?? purchasing.payables[0] ?? {};
     const fields = {
         'New Sale': [
             { key: 'customer', label: 'Customer', type: 'text', placeholder: 'Walk-in Customer' },
@@ -198,16 +201,26 @@ const actionFields = computed(() => {
             { key: 'actual_quantity', label: 'Actual Quantity', type: 'number', placeholder: '10' },
         ],
         'New PO': [
-            { key: 'order_number', label: 'PO Number', type: 'text', placeholder: 'PO-001' },
-            { key: 'supplier', label: 'Supplier', type: 'text', placeholder: 'Supplier KAWI' },
+            { key: 'po_number', label: 'PO Number', type: 'text', placeholder: 'PO-001' },
+            { key: 'supplier_id', label: 'Supplier ID', type: 'number', placeholder: String(firstSupplier.id ?? '') },
+            { key: 'warehouse_id', label: 'Warehouse ID', type: 'number', placeholder: String(inventory.warehouseId ?? '') },
+            { key: 'product_id', label: 'Product ID', type: 'number', placeholder: String(firstProduct.id ?? '') },
+            { key: 'quantity_ordered', label: 'Quantity Ordered', type: 'number', placeholder: '5' },
+            { key: 'unit_cost', label: 'Unit Cost', type: 'number', placeholder: String(firstProduct.cost ?? 0) },
         ],
         'Goods Receipt': [
             { key: 'receipt_number', label: 'Receipt Number', type: 'text', placeholder: 'GR-001' },
-            { key: 'po_number', label: 'PO Number', type: 'text', placeholder: 'PO-001' },
+            { key: 'supplier_id', label: 'Supplier ID', type: 'number', placeholder: String(firstSupplier.id ?? '') },
+            { key: 'warehouse_id', label: 'Warehouse ID', type: 'number', placeholder: String(inventory.warehouseId ?? '') },
+            { key: 'product_id', label: 'Product ID', type: 'number', placeholder: String(firstProduct.id ?? '') },
+            { key: 'quantity_received', label: 'Quantity Received', type: 'number', placeholder: '5' },
+            { key: 'unit_cost', label: 'Unit Cost', type: 'number', placeholder: String(firstProduct.cost ?? 0) },
         ],
         'Pay Supplier': [
+            { key: 'payable_id', label: 'Payable ID', type: 'number', placeholder: String(firstPayable.id ?? '') },
             { key: 'payment_number', label: 'Payment Number', type: 'text', placeholder: 'PAY-001' },
-            { key: 'amount', label: 'Amount', type: 'number', placeholder: '50000' },
+            { key: 'amount', label: 'Amount', type: 'number', placeholder: String(Math.max((firstPayable.amount ?? 0) - (firstPayable.paidAmount ?? 0), 0) || 50000) },
+            { key: 'payment_method', label: 'Payment Method', type: 'text', placeholder: 'cash' },
         ],
         'New Journal': [
             { key: 'journal_number', label: 'Journal Number', type: 'text', placeholder: 'JE-001' },
@@ -278,6 +291,9 @@ const closeAction = () => {
 const draftNumber = (key, fallback = 0) => Number(actionDraft[key] || fallback || 0);
 const firstStockBalance = () => inventory.stockBalances[0] ?? {};
 const firstRecipe = () => inventory.recipes[0] ?? {};
+const firstSupplier = () => masterData.suppliers[0] ?? {};
+const firstProduct = () => masterData.products[0] ?? {};
+const firstOpenPayable = () => purchasing.payables.find((payable) => payable.status !== 'closed') ?? purchasing.payables[0] ?? {};
 const actionPayload = () => {
     const payloads = {
         'New Customer': () => ({
@@ -344,6 +360,37 @@ const actionPayload = () => {
             planned_quantity: draftNumber('planned_quantity', 1),
             actual_quantity: actionDraft.actual_quantity ? draftNumber('actual_quantity') : undefined,
         }),
+        'New PO': () => ({
+            supplier_id: draftNumber('supplier_id', firstSupplier().id),
+            warehouse_id: draftNumber('warehouse_id', inventory.warehouseId),
+            po_number: actionDraft.po_number,
+            items: [
+                {
+                    product_id: draftNumber('product_id', firstProduct().id),
+                    quantity_ordered: draftNumber('quantity_ordered', 1),
+                    unit_cost: draftNumber('unit_cost', firstProduct().cost),
+                    tax_rate: 0,
+                },
+            ],
+        }),
+        'Goods Receipt': () => ({
+            supplier_id: draftNumber('supplier_id', firstSupplier().id),
+            warehouse_id: draftNumber('warehouse_id', inventory.warehouseId),
+            receipt_number: actionDraft.receipt_number,
+            items: [
+                {
+                    product_id: draftNumber('product_id', firstProduct().id),
+                    quantity_received: draftNumber('quantity_received', 1),
+                    unit_cost: draftNumber('unit_cost', firstProduct().cost),
+                    tax_rate: 0,
+                },
+            ],
+        }),
+        'Pay Supplier': () => ({
+            payment_number: actionDraft.payment_number,
+            amount: draftNumber('amount', Math.max((firstOpenPayable().amount ?? 0) - (firstOpenPayable().paidAmount ?? 0), 0)),
+            payment_method: actionDraft.payment_method || 'cash',
+        }),
     };
 
     return payloads[activeAction.value]?.() ?? null;
@@ -356,6 +403,9 @@ const isApiSubmitAction = computed(() => [
     'Stock Opname',
     'Transfer Stock',
     'Production',
+    'New PO',
+    'Goods Receipt',
+    'Pay Supplier',
 ].includes(activeAction.value));
 const saveActionDraft = async () => {
     const endpoints = {
@@ -366,8 +416,12 @@ const saveActionDraft = async () => {
         'Stock Opname': '/stock-opnames',
         'Transfer Stock': '/stock-transfers',
         Production: '/production-orders',
+        'New PO': '/purchase-orders',
+        'Goods Receipt': '/goods-receipts',
+        'Pay Supplier': () => `/supplier-payables/${draftNumber('payable_id', firstOpenPayable().id)}/payments`,
     };
-    const endpoint = endpoints[activeAction.value];
+    const endpointConfig = endpoints[activeAction.value];
+    const endpoint = typeof endpointConfig === 'function' ? endpointConfig() : endpointConfig;
 
     if (!endpoint || foundation.apiStatus !== 'connected') {
         actionFeedback.value = `${activeAction.value} draft siap disambungkan ke API.`;
@@ -391,6 +445,11 @@ const saveActionDraft = async () => {
         }
 
         if (['Stock Opname', 'Transfer Stock', 'Production'].includes(activeAction.value)) {
+            await inventory.loadFromApi();
+        }
+
+        if (['New PO', 'Goods Receipt', 'Pay Supplier'].includes(activeAction.value)) {
+            await purchasing.loadFromApi();
             await inventory.loadFromApi();
         }
 

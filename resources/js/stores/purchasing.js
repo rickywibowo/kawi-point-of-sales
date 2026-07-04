@@ -4,14 +4,14 @@ import { apiGet } from '../services/api';
 export const usePurchasingStore = defineStore('purchasing', {
     state: () => ({
         purchaseOrders: [
-            { number: 'PO-SEED-001', supplier: 'Supplier Bahan Baku KAWI', status: 'approved', total: 99900 },
+            { id: null, number: 'PO-SEED-001', supplier: 'Supplier Bahan Baku KAWI', status: 'approved', total: 99900 },
         ],
         goodsReceipts: [],
         purchaseReturns: [
             { number: 'PR-DEMO-001', status: 'posted', total: 18000 },
         ],
         payables: [
-            { number: 'AP-GR-DEMO-001', status: 'partial', amount: 99900, paidAmount: 40000 },
+            { id: null, number: 'AP-GR-DEMO-001', status: 'partial', amount: 99900, paidAmount: 40000 },
         ],
         supplierPayments: [
             { number: 'PAY-DEMO-001', supplier: 'Supplier Bahan Baku KAWI', amount: 40000 },
@@ -30,18 +30,27 @@ export const usePurchasingStore = defineStore('purchasing', {
         async loadFromApi() {
             const response = await apiGet('/purchasing');
             this.purchaseOrders = response.purchase_orders?.map((order) => ({
+                id: order.id,
                 number: order.order_number,
                 supplier: order.supplier?.name,
                 status: order.status,
                 total: Number(order.grand_total ?? 0),
             })) ?? this.purchaseOrders;
-            this.goodsReceipts = response.goods_receipts ?? this.goodsReceipts;
+            this.goodsReceipts = response.goods_receipts?.map((receipt) => ({
+                id: receipt.id,
+                number: receipt.receipt_number,
+                supplier: receipt.supplier?.name,
+                status: receipt.status,
+                total: Number(receipt.grand_total ?? 0),
+            })) ?? this.goodsReceipts;
             this.purchaseReturns = response.purchase_returns?.map((purchaseReturn) => ({
+                id: purchaseReturn.id,
                 number: purchaseReturn.return_number,
                 status: purchaseReturn.status,
                 total: Number(purchaseReturn.grand_total ?? 0),
             })) ?? this.purchaseReturns;
             this.payables = response.supplier_payables?.map((payable) => ({
+                id: payable.id,
                 number: payable.payable_number,
                 status: payable.status,
                 amount: Number(payable.amount ?? 0),
