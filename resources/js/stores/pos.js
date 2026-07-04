@@ -58,6 +58,9 @@ export const usePosStore = defineStore('pos', {
             { id: null, number: 'KOT-SALE-DEMO-001', table: 'T-02', station: 'Hot Kitchen', status: 'preparing', itemCount: 2 },
             { id: null, number: 'KOT-SALE-DEMO-002', table: 'Takeaway', station: 'Bar', status: 'ready', itemCount: 1 },
         ],
+        kitchenTicketItems: [
+            { id: null, ticket: 'KOT-SALE-DEMO-001', product: 'KAWI Rice Bowl', station: 'Hot Kitchen', status: 'pending' },
+        ],
         kitchenStations: [
             { id: null, code: 'HOT', name: 'Hot Kitchen', activeTickets: 1 },
             { id: null, code: 'BAR', name: 'Bar', activeTickets: 1 },
@@ -152,6 +155,13 @@ export const usePosStore = defineStore('pos', {
                 status: ticket.status,
                 itemCount: ticket.items?.length ?? 0,
             })) ?? this.kitchenTickets;
+            this.kitchenTicketItems = response.kitchen_tickets?.flatMap((ticket) => ticket.items?.map((item) => ({
+                id: item.id,
+                ticket: ticket.ticket_number,
+                product: item.product_name,
+                station: item.station_name ?? 'General',
+                status: item.status,
+            })) ?? []) ?? this.kitchenTicketItems;
             this.kitchenStations = response.kitchen_stations?.map((station) => ({
                 id: station.id,
                 code: station.code,

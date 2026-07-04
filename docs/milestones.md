@@ -34,8 +34,9 @@ Status: complete.
 - Frontend action drawer POS tersambung ke API table status dan reservation.
 - Frontend action drawer POS tersambung ke API seat dan cancel reservation.
 - Frontend action drawer POS tersambung ke API kitchen ticket dan delivery order status.
+- Frontend action drawer POS tersambung ke API kitchen ticket item status.
 
-Tahap terkait: 4, 7, 11, 18, 22, 23, 24, 25, 26, 28, 30, 42, 43, 44, 45, 46, 47.
+Tahap terkait: 4, 7, 11, 18, 22, 23, 24, 25, 26, 28, 30, 42, 43, 44, 45, 46, 47, 48.
 
 ## Milestone 4 - Purchasing & Payables
 

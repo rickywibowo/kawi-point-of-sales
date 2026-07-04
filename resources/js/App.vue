@@ -135,7 +135,7 @@ const moduleSummary = computed(() => {
 });
 const moduleActions = computed(() => {
     const actions = {
-        pos: ['New Sale', 'Hold Cart', 'Open Shift', 'Cash Movement', 'Close Shift', 'New Promo', 'New Table', 'Table Status', 'Reserve Table', 'Seat Reservation', 'Cancel Reservation', 'Kitchen Station', 'Kitchen Status', 'Delivery Status'],
+        pos: ['New Sale', 'Hold Cart', 'Open Shift', 'Cash Movement', 'Close Shift', 'New Promo', 'New Table', 'Table Status', 'Reserve Table', 'Seat Reservation', 'Cancel Reservation', 'Kitchen Station', 'Kitchen Status', 'Kitchen Item Status', 'Delivery Status'],
         products: ['New Product', 'Import CSV', 'Price Update'],
         inventory: ['Stock Opname', 'Transfer Stock', 'Production'],
         purchasing: ['New PO', 'Goods Receipt', 'Pay Supplier'],
@@ -166,6 +166,7 @@ const actionFields = computed(() => {
     const firstTable = pos.diningTables.find((table) => table.status === 'available') ?? pos.diningTables[0] ?? {};
     const firstReservation = pos.tableReservations.find((reservation) => reservation.status === 'booked') ?? pos.tableReservations[0] ?? {};
     const firstKitchenTicket = pos.kitchenTickets.find((ticket) => ticket.status !== 'served') ?? pos.kitchenTickets[0] ?? {};
+    const firstKitchenItem = pos.kitchenTicketItems.find((item) => !['served', 'cancelled'].includes(item.status)) ?? pos.kitchenTicketItems[0] ?? {};
     const firstDelivery = pos.deliveryOrders.find((order) => order.status !== 'delivered') ?? pos.deliveryOrders[0] ?? {};
     const fields = {
         'New Sale': [
@@ -237,6 +238,10 @@ const actionFields = computed(() => {
         ],
         'Kitchen Status': [
             { key: 'ticket_id', label: 'Ticket ID', type: 'number', placeholder: String(firstKitchenTicket.id ?? '') },
+            { key: 'status', label: 'Status', type: 'text', placeholder: 'preparing' },
+        ],
+        'Kitchen Item Status': [
+            { key: 'item_id', label: 'Item ID', type: 'number', placeholder: String(firstKitchenItem.id ?? '') },
             { key: 'status', label: 'Status', type: 'text', placeholder: 'preparing' },
         ],
         'Delivery Status': [
@@ -401,6 +406,7 @@ const firstSaleWarehouse = () => pos.warehouses[0] ?? inventory.warehouses[0] ??
 const firstAvailableTable = () => pos.diningTables.find((table) => table.status === 'available') ?? pos.diningTables[0] ?? {};
 const firstBookedReservation = () => pos.tableReservations.find((reservation) => reservation.status === 'booked') ?? pos.tableReservations[0] ?? {};
 const firstActiveKitchenTicket = () => pos.kitchenTickets.find((ticket) => ticket.status !== 'served') ?? pos.kitchenTickets[0] ?? {};
+const firstActiveKitchenItem = () => pos.kitchenTicketItems.find((item) => !['served', 'cancelled'].includes(item.status)) ?? pos.kitchenTicketItems[0] ?? {};
 const firstActiveDelivery = () => pos.deliveryOrders.find((order) => order.status !== 'delivered') ?? pos.deliveryOrders[0] ?? {};
 const saleNumber = () => actionDraft.sale_number || `SALE-${Date.now()}`;
 const reservationDateTime = () => {
@@ -498,6 +504,9 @@ const actionPayload = () => {
             is_active: true,
         }),
         'Kitchen Status': () => ({
+            status: actionDraft.status || 'preparing',
+        }),
+        'Kitchen Item Status': () => ({
             status: actionDraft.status || 'preparing',
         }),
         'Delivery Status': () => ({
@@ -671,6 +680,7 @@ const isApiSubmitAction = computed(() => [
     'Cancel Reservation',
     'Kitchen Station',
     'Kitchen Status',
+    'Kitchen Item Status',
     'Delivery Status',
     'Hold Cart',
     'Stock Opname',
@@ -702,6 +712,7 @@ const saveActionDraft = async () => {
         'Cancel Reservation': () => `/table-reservations/${draftNumber('reservation_id', firstBookedReservation().id)}/cancel`,
         'Kitchen Station': '/kitchen-stations',
         'Kitchen Status': () => `/kitchen-tickets/${draftNumber('ticket_id', firstActiveKitchenTicket().id)}/status`,
+        'Kitchen Item Status': () => `/kitchen-ticket-items/${draftNumber('item_id', firstActiveKitchenItem().id)}/status`,
         'Delivery Status': () => `/delivery-orders/${draftNumber('delivery_id', firstActiveDelivery().id)}/status`,
         'Hold Cart': '/held-transactions',
         'Stock Opname': '/stock-opnames',
@@ -719,7 +730,7 @@ const saveActionDraft = async () => {
     };
     const endpointConfig = endpoints[activeAction.value];
     const endpoint = typeof endpointConfig === 'function' ? endpointConfig() : endpointConfig;
-    const patchActions = ['Table Status', 'Seat Reservation', 'Cancel Reservation', 'Kitchen Status', 'Delivery Status'];
+    const patchActions = ['Table Status', 'Seat Reservation', 'Cancel Reservation', 'Kitchen Status', 'Kitchen Item Status', 'Delivery Status'];
 
     if (!endpoint || foundation.apiStatus !== 'connected') {
         actionFeedback.value = `${activeAction.value} draft siap disambungkan ke API.`;
@@ -759,6 +770,7 @@ const saveActionDraft = async () => {
             'Cancel Reservation',
             'Kitchen Station',
             'Kitchen Status',
+            'Kitchen Item Status',
             'Delivery Status',
             'Hold Cart',
         ].includes(activeAction.value)) {

@@ -614,6 +614,16 @@ Status: complete.
 - POS store reload setelah update status kitchen atau delivery berhasil.
 - Dokumentasi Tahap 47 dibuat.
 
+### Tahap 48 - Frontend POS Kitchen Item Status
+
+Status: complete.
+
+- POS store menyimpan daftar kitchen ticket item dari API.
+- Action `Kitchen Item Status` ditambahkan ke modul Kasir.
+- `Kitchen Item Status` submit ke `PATCH /api/kitchen-ticket-items/{item}/status`.
+- POS store reload setelah update status item kitchen berhasil.
+- Dokumentasi Tahap 48 dibuat.
+
 ## Cara Track Mundur
 
 - Setiap tahap disimpan dalam commit terpisah.
