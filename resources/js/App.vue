@@ -138,7 +138,7 @@ const moduleActions = computed(() => {
         pos: ['New Sale', 'Void Sale', 'Refund Sale', 'View Receipt', 'Hold Cart', 'Open Shift', 'Cash Movement', 'Close Shift', 'New Promo', 'New Table', 'Table Status', 'Reserve Table', 'Seat Reservation', 'Cancel Reservation', 'Kitchen Station', 'Kitchen Status', 'Kitchen Item Status', 'Delivery Status'],
         products: ['New Product', 'Import CSV', 'Price Update'],
         inventory: ['Stock Opname', 'Transfer Stock', 'Production'],
-        purchasing: ['New PO', 'Goods Receipt', 'Pay Supplier'],
+        purchasing: ['New PO', 'Goods Receipt', 'Return Supplier', 'Pay Supplier'],
         accounting: ['New Journal', 'Settlement', 'Import Provider'],
         reports: ['Refresh', 'Export', 'Print'],
         customers: ['New Customer', 'Loyalty', 'Segment'],
@@ -153,6 +153,8 @@ const actionFields = computed(() => {
     const transferTarget = inventory.warehouses.find((warehouse) => warehouse.id !== inventory.warehouseId);
     const firstSupplier = masterData.suppliers[0] ?? {};
     const firstProduct = masterData.products[0] ?? {};
+    const firstReceipt = purchasing.goodsReceipts[0] ?? {};
+    const firstReceiptItem = firstReceipt.firstItem ?? {};
     const firstPayable = purchasing.payables.find((payable) => payable.status !== 'closed') ?? purchasing.payables[0] ?? {};
     const cashAccount = accounting.accounts.find((account) => account.code === '1100') ?? accounting.accounts[0] ?? {};
     const balancingAccount = accounting.accounts.find((account) => account.code === '3100') ?? accounting.accounts[1] ?? {};
@@ -311,6 +313,16 @@ const actionFields = computed(() => {
             { key: 'quantity_received', label: 'Quantity Received', type: 'number', placeholder: '5' },
             { key: 'unit_cost', label: 'Unit Cost', type: 'number', placeholder: String(firstProduct.cost ?? 0) },
         ],
+        'Return Supplier': [
+            { key: 'return_number', label: 'Return Number', type: 'text', placeholder: 'PR-001' },
+            { key: 'supplier_id', label: 'Supplier ID', type: 'number', placeholder: String(firstReceipt.supplierId ?? firstSupplier.id ?? '') },
+            { key: 'goods_receipt_id', label: 'Goods Receipt ID', type: 'number', placeholder: String(firstReceipt.id ?? '') },
+            { key: 'goods_receipt_item_id', label: 'Receipt Item ID', type: 'number', placeholder: String(firstReceiptItem.id ?? '') },
+            { key: 'product_id', label: 'Product ID', type: 'number', placeholder: String(firstReceiptItem.productId ?? firstProduct.id ?? '') },
+            { key: 'quantity_returned', label: 'Quantity Returned', type: 'number', placeholder: '1' },
+            { key: 'unit_cost', label: 'Unit Cost', type: 'number', placeholder: String(firstReceiptItem.unitCost ?? firstProduct.cost ?? 0) },
+            { key: 'reason', label: 'Reason', type: 'text', placeholder: 'Barang rusak' },
+        ],
         'Pay Supplier': [
             { key: 'payable_id', label: 'Payable ID', type: 'number', placeholder: String(firstPayable.id ?? '') },
             { key: 'payment_number', label: 'Payment Number', type: 'text', placeholder: 'PAY-001' },
@@ -406,6 +418,8 @@ const firstStockBalance = () => inventory.stockBalances[0] ?? {};
 const firstRecipe = () => inventory.recipes[0] ?? {};
 const firstSupplier = () => masterData.suppliers[0] ?? {};
 const firstProduct = () => masterData.products[0] ?? {};
+const firstGoodsReceipt = () => purchasing.goodsReceipts[0] ?? {};
+const firstGoodsReceiptItem = () => firstGoodsReceipt().firstItem ?? {};
 const firstOpenPayable = () => purchasing.payables.find((payable) => payable.status !== 'closed') ?? purchasing.payables[0] ?? {};
 const accountByCode = (code, fallbackIndex = 0) => accounting.accounts.find((account) => account.code === code) ?? accounting.accounts[fallbackIndex] ?? {};
 const firstProviderSettlement = () => accounting.paymentSettlements.find((settlement) => ['card', 'transfer', 'qris'].includes(settlement.method)) ?? accounting.paymentSettlements[0] ?? {};
@@ -606,6 +620,23 @@ const actionPayload = () => {
                 },
             ],
         }),
+        'Return Supplier': () => ({
+            supplier_id: draftNumber('supplier_id', firstGoodsReceipt().supplierId ?? firstSupplier().id),
+            goods_receipt_id: draftNumber('goods_receipt_id', firstGoodsReceipt().id),
+            return_number: actionDraft.return_number || `PR-${Date.now()}`,
+            return_date: todayDate(),
+            reason: actionDraft.reason,
+            items: [
+                {
+                    goods_receipt_item_id: draftNumber('goods_receipt_item_id', firstGoodsReceiptItem().id) || undefined,
+                    product_id: draftNumber('product_id', firstGoodsReceiptItem().productId ?? firstProduct().id),
+                    quantity_returned: draftNumber('quantity_returned', 1),
+                    unit_cost: draftNumber('unit_cost', firstGoodsReceiptItem().unitCost ?? firstProduct().cost),
+                    tax_rate: draftNumber('tax_rate', firstGoodsReceiptItem().taxRate ?? 0),
+                    reason: actionDraft.reason,
+                },
+            ],
+        }),
         'Pay Supplier': () => ({
             payment_number: actionDraft.payment_number,
             amount: draftNumber('amount', Math.max((firstOpenPayable().amount ?? 0) - (firstOpenPayable().paidAmount ?? 0), 0)),
@@ -710,6 +741,7 @@ const isApiSubmitAction = computed(() => [
     'Production',
     'New PO',
     'Goods Receipt',
+    'Return Supplier',
     'Pay Supplier',
     'New Journal',
     'Settlement',
@@ -745,6 +777,7 @@ const saveActionDraft = async () => {
         Production: '/production-orders',
         'New PO': '/purchase-orders',
         'Goods Receipt': '/goods-receipts',
+        'Return Supplier': '/purchase-returns',
         'Pay Supplier': () => `/supplier-payables/${draftNumber('payable_id', firstOpenPayable().id)}/payments`,
         'New Journal': '/journal-entries',
         Settlement: '/payment-settlements',
@@ -822,7 +855,7 @@ const saveActionDraft = async () => {
             await inventory.loadFromApi();
         }
 
-        if (['New PO', 'Goods Receipt', 'Pay Supplier'].includes(activeAction.value)) {
+        if (['New PO', 'Goods Receipt', 'Return Supplier', 'Pay Supplier'].includes(activeAction.value)) {
             await purchasing.loadFromApi();
             await inventory.loadFromApi();
         }

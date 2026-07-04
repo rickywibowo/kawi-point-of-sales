@@ -6,7 +6,9 @@ export const usePurchasingStore = defineStore('purchasing', {
         purchaseOrders: [
             { id: null, number: 'PO-SEED-001', supplier: 'Supplier Bahan Baku KAWI', status: 'approved', total: 99900 },
         ],
-        goodsReceipts: [],
+        goodsReceipts: [
+            { id: null, supplierId: null, number: 'GR-DEMO-001', supplier: 'Supplier Bahan Baku KAWI', status: 'posted', total: 99900, firstItem: null },
+        ],
         purchaseReturns: [
             { number: 'PR-DEMO-001', status: 'posted', total: 18000 },
         ],
@@ -38,10 +40,18 @@ export const usePurchasingStore = defineStore('purchasing', {
             })) ?? this.purchaseOrders;
             this.goodsReceipts = response.goods_receipts?.map((receipt) => ({
                 id: receipt.id,
+                supplierId: receipt.supplier_id,
                 number: receipt.receipt_number,
                 supplier: receipt.supplier?.name,
                 status: receipt.status,
                 total: Number(receipt.grand_total ?? 0),
+                firstItem: receipt.items?.[0] ? {
+                    id: receipt.items[0].id,
+                    productId: receipt.items[0].product_id,
+                    quantity: Number(receipt.items[0].quantity_received ?? 0),
+                    unitCost: Number(receipt.items[0].unit_cost ?? 0),
+                    taxRate: Number(receipt.items[0].tax_rate ?? 0),
+                } : null,
             })) ?? this.goodsReceipts;
             this.purchaseReturns = response.purchase_returns?.map((purchaseReturn) => ({
                 id: purchaseReturn.id,

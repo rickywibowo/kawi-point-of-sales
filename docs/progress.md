@@ -646,6 +646,16 @@ Status: complete.
 - Feedback action menampilkan nomor receipt dan grand total.
 - Dokumentasi Tahap 50 dibuat.
 
+### Tahap 51 - Frontend Purchasing Return Action
+
+Status: complete.
+
+- Purchasing store menyimpan supplier ID dan item pertama dari goods receipt.
+- Action `Return Supplier` ditambahkan ke modul Purchasing.
+- `Return Supplier` submit ke `POST /api/purchase-returns`.
+- Purchasing dan inventory store reload setelah return supplier berhasil.
+- Dokumentasi Tahap 51 dibuat.
+
 ## Cara Track Mundur
 
 - Setiap tahap disimpan dalam commit terpisah.

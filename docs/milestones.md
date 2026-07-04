@@ -47,8 +47,9 @@ Status: complete.
 - Purchase order, approval, goods receipt, supplier payable, purchase return, dan supplier payment.
 - Goods receipt dan supplier payment otomatis masuk accounting journal.
 - Frontend action drawer purchasing tersambung ke API purchase order, goods receipt, dan supplier payment.
+- Frontend action drawer purchasing tersambung ke API purchase return.
 
-Tahap terkait: 5, 16, 20, 39.
+Tahap terkait: 5, 16, 20, 39, 51.
 
 ## Milestone 5 - Accounting & Reports
 
