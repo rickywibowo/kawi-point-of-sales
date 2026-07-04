@@ -1,4 +1,5 @@
 import { defineStore } from 'pinia';
+import { apiGet } from '../services/api';
 import { enqueueSale, listQueuedSales, removeQueuedSale } from '../services/offlineDb';
 
 export const useOfflineStore = defineStore('offline', {
@@ -7,6 +8,7 @@ export const useOfflineStore = defineStore('offline', {
         queuedSales: [],
         conflicts: [],
         lastSyncStatus: 'idle',
+        lastConflictCheckAt: null,
     }),
 
     getters: {
@@ -25,6 +27,18 @@ export const useOfflineStore = defineStore('offline', {
             }
 
             this.queuedSales = await listQueuedSales();
+        },
+
+        async loadConflicts() {
+            const response = await apiGet('/offline/conflicts');
+            this.conflicts = response.conflicts?.map((conflict) => ({
+                id: conflict.id,
+                clientUuid: conflict.client_uuid,
+                status: conflict.status,
+                reason: conflict.reason,
+                createdAt: conflict.created_at,
+            })) ?? this.conflicts;
+            this.lastConflictCheckAt = new Date().toISOString();
         },
 
         async queueSale(payload) {

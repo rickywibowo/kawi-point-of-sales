@@ -676,6 +676,16 @@ Status: complete.
 - Accounting store reload setelah expense berhasil diposting.
 - Dokumentasi Tahap 53 dibuat.
 
+### Tahap 54 - Frontend Offline Conflicts
+
+Status: complete.
+
+- Offline store menambahkan action `loadConflicts`.
+- `loadConflicts` mengambil data dari `GET /api/offline/conflicts`.
+- Dashboard memuat konflik offline bersama data modul lain.
+- Panel Offline Sync menampilkan waktu cek konflik terakhir.
+- Dokumentasi Tahap 54 dibuat.
+
 ## Cara Track Mundur
 
 - Setiap tahap disimpan dalam commit terpisah.

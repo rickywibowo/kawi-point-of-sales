@@ -931,6 +931,7 @@ const loadDashboard = async () => {
         customers.loadFromApi(),
         userAccess.loadFromApi(),
         audit.loadFromApi(),
+        offline.loadConflicts(),
     ]);
     dashboardLoading.value = false;
 };
@@ -1524,6 +1525,10 @@ onUnmounted(() => {
                             <div class="rounded-md border border-white/10 bg-white/[0.03] p-3">
                                 <p class="text-zinc-400">Queue / Conflict</p>
                                 <p class="mt-1 font-medium">{{ offline.queuedCount }} / {{ offline.conflictCount }}</p>
+                            </div>
+                            <div class="rounded-md border border-white/10 bg-white/[0.03] p-3">
+                                <p class="text-zinc-400">Conflict Check</p>
+                                <p class="mt-1 font-medium">{{ offline.lastConflictCheckAt ? offline.lastConflictCheckAt.slice(11, 16) : 'Not synced' }}</p>
                             </div>
                         </div>
                     </div>
