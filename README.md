@@ -89,6 +89,12 @@ Resource awal:
 - Supplier Payables
 - Supplier Payments
 
+Panduan cara pakai tersedia di menu `Support > Help` atau:
+
+```text
+http://127.0.0.1:8000/admin/help
+```
+
 Vue dashboard tetap dipakai untuk layar operasional POS, sedangkan Filament dipakai untuk CRUD back office.
 
 ## Data Demo

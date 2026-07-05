@@ -854,6 +854,15 @@ Status: complete.
 - Admin route Filament bertambah menjadi 66 route.
 - Dokumentasi Tahap 71 dibuat.
 
+### Tahap 72 - Filament Help Page
+
+Status: complete.
+
+- Halaman Help / Cara Pakai ditambahkan ke Filament.
+- Menu Support > Help tersedia di `/admin/help`.
+- Panduan login, maintenance lokal, master data, menu back office, dan catatan migration ditulis di halaman Help.
+- Dokumentasi Tahap 72 dibuat.
+
 ## Cara Track Mundur
 
 - Setiap tahap disimpan dalam commit terpisah.
