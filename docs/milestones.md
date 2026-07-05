@@ -107,9 +107,10 @@ Status: in progress.
 - CRUD supplier, customer, UOM, tax, warehouse, dining table, promotion, dan kitchen station tersedia.
 - CRUD header inventory, production, purchasing, payable, dan supplier payment tersedia.
 - Halaman Help / Cara Pakai tersedia langsung di Filament.
+- CRUD perusahaan/pusat dan cabang/outlet tersedia di Administration.
 - Vue tetap difokuskan untuk layar operasional POS.
 
-Tahap terkait: 69, 70, 71, 72.
+Tahap terkait: 69, 70, 71, 72, 73.
 
 ## Release Lokal
 

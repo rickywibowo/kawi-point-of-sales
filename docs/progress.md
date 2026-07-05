@@ -863,6 +863,16 @@ Status: complete.
 - Panduan login, maintenance lokal, master data, menu back office, dan catatan migration ditulis di halaman Help.
 - Dokumentasi Tahap 72 dibuat.
 
+### Tahap 73 - Filament Business and Branch Resources
+
+Status: complete.
+
+- CRUD Businesses ditambahkan untuk pengaturan perusahaan/pusat.
+- CRUD Branches ditambahkan untuk pengaturan outlet/cabang.
+- Kedua resource masuk navigation group Administration.
+- Audit CRUD Filament yang sudah ada dan belum dibuat ditulis di dokumentasi tahap.
+- Dokumentasi Tahap 73 dibuat.
+
 ## Cara Track Mundur
 
 - Setiap tahap disimpan dalam commit terpisah.

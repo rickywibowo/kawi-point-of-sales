@@ -88,6 +88,8 @@ Resource awal:
 - Purchase Returns
 - Supplier Payables
 - Supplier Payments
+- Businesses
+- Branches
 
 Panduan cara pakai tersedia di menu `Support > Help` atau:
 
