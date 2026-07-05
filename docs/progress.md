@@ -736,6 +736,16 @@ Status: complete.
 - Data demo post-sale tetap menjadi fallback jika API belum mengirim sale harian.
 - Dokumentasi Tahap 59 dibuat.
 
+### Tahap 60 - Frontend POS Held Transaction List
+
+Status: complete.
+
+- POS store menyimpan `heldTransactionItems` dari held transactions API.
+- Counter `heldTransactions` tetap dihitung dari jumlah hold aktif.
+- Panel Post-Sale Controls menampilkan hold aktif terbaru dan jumlah itemnya.
+- Data demo held transaction tetap menjadi fallback jika API belum mengirim hold aktif.
+- Dokumentasi Tahap 60 dibuat.
+
 ## Cara Track Mundur
 
 - Setiap tahap disimpan dalam commit terpisah.

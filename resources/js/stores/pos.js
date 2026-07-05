@@ -75,6 +75,9 @@ export const usePosStore = defineStore('pos', {
             { id: null, number: 'DO-SALE-DEMO-003', recipient: 'Member KAWI', status: 'assigned', courier: 'Andi' },
             { id: null, number: 'DO-SALE-DEMO-004', recipient: 'Rina Member', status: 'picked_up', courier: 'Budi' },
         ],
+        heldTransactionItems: [
+            { id: null, number: 'HOLD-DEMO-001', itemCount: 2, heldAt: null, note: 'Customer kembali nanti' },
+        ],
         heldTransactions: 1,
         todayTransactions: 0,
     }),
@@ -214,6 +217,13 @@ export const usePosStore = defineStore('pos', {
                     denominations: response.cash_drawer_audits[0].denomination_breakdown ?? [],
                 }
                 : this.drawerAudit;
+            this.heldTransactionItems = response.held_transactions?.map((transaction) => ({
+                id: transaction.id,
+                number: transaction.hold_number,
+                itemCount: transaction.payload?.items?.length ?? 0,
+                heldAt: transaction.held_at,
+                note: transaction.payload?.note,
+            })) ?? this.heldTransactionItems;
             this.heldTransactions = response.held_transactions?.length ?? this.heldTransactions;
             this.todayTransactions = response.today_sales?.length ?? this.todayTransactions;
         },

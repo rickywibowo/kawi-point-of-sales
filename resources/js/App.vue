@@ -1384,6 +1384,11 @@ onUnmounted(() => {
                                 <p class="text-zinc-400">Denominasi</p>
                                 <p class="mt-1 font-semibold">{{ pos.drawerDenominationCount }} lembar/koin</p>
                             </div>
+                            <div class="rounded-md border border-white/10 bg-white/[0.03] p-3 text-sm">
+                                <p class="text-zinc-400">Hold Aktif</p>
+                                <p class="mt-1 font-semibold">{{ pos.heldTransactionItems[0]?.number ?? '-' }}</p>
+                                <p class="mt-1 text-xs text-zinc-500">{{ pos.heldTransactionItems[0]?.itemCount ?? 0 }} item</p>
+                            </div>
                         </div>
                     </div>
 
