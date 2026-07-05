@@ -773,6 +773,15 @@ Status: complete.
 - Panel Customer CRM menampilkan AOV, last purchase, recent sale, dan loyalty terakhir.
 - Dokumentasi Tahap 63 dibuat.
 
+### Tahap 64 - Frontend Reports API Detail
+
+Status: complete.
+
+- Reports store membaca payload dari wrapper `reports` sesuai response API.
+- Reports store memetakan purchasing, payment methods, top products, dan settlement summary.
+- Panel Reports menampilkan top product, payment method terbesar, dan open payable.
+- Dokumentasi Tahap 64 dibuat.
+
 ## Cara Track Mundur
 
 - Setiap tahap disimpan dalam commit terpisah.

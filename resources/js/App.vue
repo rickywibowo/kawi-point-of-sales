@@ -1513,6 +1513,27 @@ onUnmounted(() => {
                                 <p class="mt-1 font-semibold">Rp {{ card.value.toLocaleString('id-ID') }}</p>
                             </div>
                         </div>
+                        <div class="mt-4 grid gap-3 sm:grid-cols-3">
+                            <div class="rounded-md border border-white/10 bg-white/[0.03] p-3 text-sm">
+                                <p class="text-zinc-400">Top Product</p>
+                                <p class="mt-1 font-semibold">{{ reports.topProducts[0]?.product ?? '-' }}</p>
+                                <p class="mt-1 text-xs text-zinc-500">
+                                    {{ reports.topProducts[0]?.quantity ?? 0 }} qty / Rp {{ (reports.topProducts[0]?.total ?? 0).toLocaleString('id-ID') }}
+                                </p>
+                            </div>
+                            <div class="rounded-md border border-white/10 bg-white/[0.03] p-3 text-sm">
+                                <p class="text-zinc-400">Payment Method</p>
+                                <p class="mt-1 font-semibold">{{ reports.paymentMethods[0]?.method ?? '-' }}</p>
+                                <p class="mt-1 text-xs text-zinc-500">
+                                    {{ reports.paymentMethods[0]?.count ?? 0 }} trx / Rp {{ (reports.paymentMethods[0]?.amount ?? 0).toLocaleString('id-ID') }}
+                                </p>
+                            </div>
+                            <div class="rounded-md border border-white/10 bg-white/[0.03] p-3 text-sm">
+                                <p class="text-zinc-400">Payable</p>
+                                <p class="mt-1 font-semibold">Rp {{ reports.purchasing.openPayableTotal.toLocaleString('id-ID') }}</p>
+                                <p class="mt-1 text-xs text-zinc-500">{{ reports.purchasing.purchaseOrderCount }} PO periode ini</p>
+                            </div>
+                        </div>
                     </div>
 
                     <div class="mt-6 rounded-md border border-white/10 bg-zinc-950/70 p-4">
