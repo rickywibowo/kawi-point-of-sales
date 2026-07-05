@@ -3,7 +3,11 @@ import { apiGet } from '../services/api';
 
 export const useMasterDataStore = defineStore('masterData', {
     state: () => ({
-        categories: ['Makanan', 'Minuman', 'Kopi'],
+        categories: [
+            { id: null, name: 'Makanan' },
+            { id: null, name: 'Minuman' },
+            { id: null, name: 'Kopi' },
+        ],
         products: [
             { id: null, sku: 'KAWI-RICE-001', name: 'KAWI Rice Bowl', price: 35000, cost: 18000, type: 'food' },
             { id: null, sku: 'KAWI-COFFEE-001', name: 'KAWI Iced Coffee', price: 25000, cost: 9000, type: 'beverage' },
@@ -21,7 +25,10 @@ export const useMasterDataStore = defineStore('masterData', {
     actions: {
         async loadFromApi() {
             const response = await apiGet('/master-data');
-            this.categories = response.categories?.map((category) => category.name) ?? this.categories;
+            this.categories = response.categories?.map((category) => ({
+                id: category.id,
+                name: category.name,
+            })) ?? this.categories;
             this.suppliers = response.suppliers?.map((supplier) => ({
                 id: supplier.id,
                 name: supplier.name,

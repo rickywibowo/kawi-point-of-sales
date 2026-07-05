@@ -61,6 +61,7 @@ const modules = [
     { id: 'reports', label: 'Laporan' },
     { id: 'customers', label: 'Pelanggan' },
     { id: 'settings', label: 'Pengaturan' },
+    { id: 'help', label: 'Help' },
 ];
 
 const activeModuleMeta = computed(() => modules.find((module) => module.id === activeModule.value) ?? modules[0]);
@@ -106,6 +107,11 @@ const moduleRows = computed(() => {
             secondary: user.email,
             value: user.roles?.[0] ?? 'User',
         })),
+        help: [
+            { primary: 'Add Product', secondary: 'Buat kategori dulu bila belum ada', value: 'Produk' },
+            { primary: 'Login Demo', secondary: 'owner@kawi.test / password', value: 'Akses' },
+            { primary: 'Release Docs', secondary: 'README dan docs/release-readiness.md', value: 'Docs' },
+        ],
     };
 
     return rowMaps[activeModule.value] ?? [];
@@ -131,6 +137,7 @@ const moduleSummary = computed(() => {
         reports: reports.period,
         customers: `${customers.customerCount} pelanggan / ${customers.loyaltyPointTotal} poin`,
         settings: `${userAccess.userCount} user / ${userAccess.permissionCount} permissions`,
+        help: 'Panduan pakai dan alur operasional',
     };
 
     return summaries[activeModule.value] ?? '';
@@ -159,7 +166,7 @@ const formatPromotionWindow = (promotion) => {
 const moduleActions = computed(() => {
     const actions = {
         pos: ['New Sale', 'Void Sale', 'Refund Sale', 'View Receipt', 'Hold Cart', 'Open Shift', 'Cash Movement', 'Close Shift', 'New Promo', 'New Table', 'Table Status', 'Reserve Table', 'Seat Reservation', 'Cancel Reservation', 'Kitchen Station', 'Kitchen Status', 'Kitchen Item Status', 'Delivery Status'],
-        products: ['New Product', 'Import CSV', 'Price Update'],
+        products: ['New Category', 'New Product', 'Import CSV', 'Price Update'],
         inventory: ['New Recipe', 'Stock Adjustment', 'Stock Opname', 'Transfer Stock', 'Production'],
         purchasing: ['New PO', 'Approve PO', 'Goods Receipt', 'Return Supplier', 'Pay Supplier'],
         accounting: ['New Journal', 'Operational Expense', 'Settlement', 'Import Provider'],
@@ -178,6 +185,7 @@ const actionFields = computed(() => {
     const ingredientProduct = masterData.products[1] ?? masterData.products[0] ?? {};
     const firstSupplier = masterData.suppliers[0] ?? {};
     const firstProduct = masterData.products[0] ?? {};
+    const firstCategory = masterData.categories[0] ?? {};
     const firstDraftPo = purchasing.purchaseOrders.find((order) => order.status === 'draft') ?? purchasing.purchaseOrders[0] ?? {};
     const firstReceipt = purchasing.goodsReceipts[0] ?? {};
     const firstReceiptItem = firstReceipt.firstItem ?? {};
@@ -292,9 +300,14 @@ const actionFields = computed(() => {
             { key: 'courier_phone', label: 'Courier Phone', type: 'text', placeholder: '081299900001' },
         ],
         'New Product': [
+            { key: 'category_id', label: 'Category ID', type: 'number', placeholder: String(firstCategory.id ?? '') },
             { key: 'name', label: 'Product Name', type: 'text', placeholder: 'KAWI Menu Baru' },
             { key: 'type', label: 'Type', type: 'text', placeholder: 'food' },
             { key: 'price', label: 'Base Price', type: 'number', placeholder: '35000' },
+        ],
+        'New Category': [
+            { key: 'name', label: 'Category Name', type: 'text', placeholder: 'Dessert' },
+            { key: 'sort_order', label: 'Sort Order', type: 'number', placeholder: '10' },
         ],
         'Import CSV': [
             { key: 'source', label: 'Source', type: 'text', placeholder: 'products.csv' },
@@ -485,6 +498,7 @@ const firstRecipeProduct = () => masterData.products[0] ?? {};
 const firstIngredientProduct = () => masterData.products[1] ?? masterData.products[0] ?? {};
 const firstSupplier = () => masterData.suppliers[0] ?? {};
 const firstProduct = () => masterData.products[0] ?? {};
+const firstCategory = () => masterData.categories[0] ?? {};
 const firstDraftPurchaseOrder = () => purchasing.purchaseOrders.find((order) => order.status === 'draft') ?? purchasing.purchaseOrders[0] ?? {};
 const firstGoodsReceipt = () => purchasing.goodsReceipts[0] ?? {};
 const firstGoodsReceiptItem = () => firstGoodsReceipt().firstItem ?? {};
@@ -552,11 +566,17 @@ const actionPayload = () => {
             is_active: true,
         }),
         'New Product': () => ({
+            category_id: draftNumber('category_id', firstCategory().id) || undefined,
             name: actionDraft.name,
             type: actionDraft.type || 'food',
             base_price: Number(actionDraft.price || 0),
             cost_price: 0,
             track_stock: false,
+            is_active: true,
+        }),
+        'New Category': () => ({
+            name: actionDraft.name,
+            sort_order: draftNumber('sort_order', 10),
             is_active: true,
         }),
         'Open Shift': () => ({
@@ -849,6 +869,7 @@ const isApiSubmitAction = computed(() => [
     'View Receipt',
     'New Customer',
     'Update Customer',
+    'New Category',
     'New Product',
     'Open Shift',
     'Cash Movement',
@@ -897,6 +918,7 @@ const saveActionDraft = async () => {
         'View Receipt': () => `/sales/${draftNumber('sale_id', firstCompletedSale().id)}/receipt`,
         'New Customer': '/customers',
         'Update Customer': () => `/customers/${draftNumber('customer_id', firstCustomer().id)}`,
+        'New Category': '/categories',
         'New Product': '/products',
         'Open Shift': '/cashier-shifts',
         'Cash Movement': () => `/cashier-shifts/${draftNumber('cashier_shift_id', pos.shift.id)}/cash-movements`,
@@ -973,7 +995,7 @@ const saveActionDraft = async () => {
             await customers.loadFromApi();
         }
 
-        if (activeAction.value === 'New Product') {
+        if (['New Category', 'New Product'].includes(activeAction.value)) {
             await masterData.loadFromApi();
         }
 
@@ -1685,6 +1707,30 @@ onUnmounted(() => {
                             </div>
                         </div>
                     </div>
+
+                    <div class="mt-6 rounded-md border border-white/10 bg-zinc-950/70 p-4">
+                        <div class="flex flex-wrap items-center justify-between gap-3">
+                            <h3 class="text-sm font-semibold text-zinc-300">Help</h3>
+                            <span class="text-xs text-zinc-500">Panduan cepat operasional</span>
+                        </div>
+                        <div class="mt-4 grid gap-3 sm:grid-cols-3">
+                            <div class="rounded-md border border-white/10 bg-white/[0.03] p-3 text-sm">
+                                <p class="text-zinc-400">Tambah Kategori</p>
+                                <p class="mt-1 font-semibold">Produk / New Category</p>
+                                <p class="mt-1 text-xs text-zinc-500">Isi nama kategori, simpan, lalu dashboard refresh master data.</p>
+                            </div>
+                            <div class="rounded-md border border-white/10 bg-white/[0.03] p-3 text-sm">
+                                <p class="text-zinc-400">Tambah Produk</p>
+                                <p class="mt-1 font-semibold">Produk / New Product</p>
+                                <p class="mt-1 text-xs text-zinc-500">Gunakan Category ID dari kategori yang sudah dibuat atau seed demo.</p>
+                            </div>
+                            <div class="rounded-md border border-white/10 bg-white/[0.03] p-3 text-sm">
+                                <p class="text-zinc-400">Dokumentasi</p>
+                                <p class="mt-1 font-semibold">README / release-readiness</p>
+                                <p class="mt-1 text-xs text-zinc-500">Panduan setup lokal, login demo, demo flow, dan checklist test.</p>
+                            </div>
+                        </div>
+                    </div>
                 </section>
 
                 <aside class="rounded-lg border border-white/10 bg-zinc-900 p-5">
@@ -1708,6 +1754,16 @@ onUnmounted(() => {
 
                     <div class="mt-6 border-t border-white/10 pt-5">
                         <h3 class="text-sm font-semibold text-zinc-300">Master Data</h3>
+                        <div class="mt-3 grid gap-2 text-sm">
+                            <div
+                                v-for="category in masterData.categories"
+                                :key="`${category.id}-${category.name}`"
+                                class="flex items-center justify-between rounded-md border border-white/10 bg-white/[0.03] px-3 py-2"
+                            >
+                                <span>{{ category.name }}</span>
+                                <span class="text-xs text-zinc-500">ID {{ category.id ?? 'demo' }}</span>
+                            </div>
+                        </div>
                         <div class="mt-3 space-y-3">
                             <article
                                 v-for="product in masterData.products"

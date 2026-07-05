@@ -799,6 +799,17 @@ Status: complete.
 - Dokumen `docs/release-readiness.md` dibuat untuk local run checklist, demo flow, API notes, dan release notes.
 - Dokumentasi Tahap 66 dibuat.
 
+### Tahap 67 - Help and Product Category UX
+
+Status: complete.
+
+- Modul Help ditambahkan ke navigasi dashboard.
+- Panel Help menampilkan panduan cepat tambah kategori, tambah produk, dan dokumentasi.
+- Action `New Category` ditambahkan ke modul Produk dan tersambung ke API categories.
+- Action `New Product` mendukung `Category ID`.
+- Sidebar Master Data menampilkan daftar kategori beserta ID.
+- Dokumentasi Tahap 67 dibuat.
+
 ## Cara Track Mundur
 
 - Setiap tahap disimpan dalam commit terpisah.

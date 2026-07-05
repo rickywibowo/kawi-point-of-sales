@@ -68,6 +68,18 @@ Reset data lokal:
 php artisan migrate:fresh --seed
 ```
 
+## Cara Tambah Produk dan Kategori
+
+1. Login dashboard.
+2. Buka modul `Produk`.
+3. Klik `New Category` bila kategori belum ada.
+4. Setelah tersimpan, lihat `Category ID` di sidebar Master Data.
+5. Klik `New Product`.
+6. Isi `Category ID`, nama produk, type, dan harga.
+7. Simpan produk.
+
+Panduan cepat juga tersedia di modul `Help` pada dashboard.
+
 ## Verifikasi
 
 ```bash
