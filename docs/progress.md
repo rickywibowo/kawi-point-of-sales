@@ -755,6 +755,15 @@ Status: complete.
 - Data demo promo tetap menjadi fallback jika API belum mengirim promo aktif.
 - Dokumentasi Tahap 61 dibuat.
 
+### Tahap 62 - Frontend Audit Log List
+
+Status: complete.
+
+- Audit store membaca summary action dan recent security event sesuai response API.
+- Audit store menyimpan daftar audit log terbaru dari paginator API.
+- Panel Audit Review menampilkan action, actor, branch, entity, dan waktu audit terbaru.
+- Dokumentasi Tahap 62 dibuat.
+
 ## Cara Track Mundur
 
 - Setiap tahap disimpan dalam commit terpisah.

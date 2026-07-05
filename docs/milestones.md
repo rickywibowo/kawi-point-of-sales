@@ -81,11 +81,12 @@ Tahap terkait: 10, 21, 41, 57.
 
 ## Milestone 7 - Administration UX
 
-Status: in progress.
+Status: complete.
 
 - Frontend action drawer user access tersambung ke API invite user dan assign role.
+- Frontend dashboard settings menampilkan audit log terbaru dari API.
 
-Tahap terkait: 41.
+Tahap terkait: 41, 62.
 
 ## Milestone Berikutnya
 

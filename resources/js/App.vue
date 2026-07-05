@@ -1570,7 +1570,7 @@ onUnmounted(() => {
                     <div class="mt-6 rounded-md border border-white/10 bg-zinc-950/70 p-4">
                         <div class="flex flex-wrap items-center justify-between gap-3">
                             <h3 class="text-sm font-semibold text-zinc-300">Audit Review</h3>
-                            <span class="text-xs text-zinc-500">{{ audit.securityEventCount }} security events</span>
+                            <span class="text-xs text-zinc-500">{{ audit.securityEventCount }} security events / {{ audit.recentAuditCount }} recent logs</span>
                         </div>
                         <div class="mt-4 grid gap-3 sm:grid-cols-3">
                             <div class="rounded-md border border-white/10 bg-white/[0.03] p-3 text-sm">
@@ -1584,6 +1584,19 @@ onUnmounted(() => {
                             <div class="rounded-md border border-white/10 bg-white/[0.03] p-3 text-sm">
                                 <p class="text-zinc-400">Top Action</p>
                                 <p class="mt-1 font-semibold">{{ audit.topActionLabel }}</p>
+                            </div>
+                        </div>
+                        <div class="mt-4 space-y-2">
+                            <div
+                                v-for="log in audit.auditLogs.slice(0, 4)"
+                                :key="`${log.id}-${log.action}`"
+                                class="flex flex-wrap items-center justify-between gap-2 rounded-md border border-white/10 bg-white/[0.03] px-3 py-2 text-sm"
+                            >
+                                <div>
+                                    <p class="font-medium">{{ log.action }}</p>
+                                    <p class="mt-1 text-xs text-zinc-500">{{ log.actor }} / {{ log.branch }} / {{ log.entity }}</p>
+                                </div>
+                                <span class="text-xs text-zinc-500">{{ log.occurredAt?.slice(0, 16) ?? 'demo' }}</span>
                             </div>
                         </div>
                     </div>
