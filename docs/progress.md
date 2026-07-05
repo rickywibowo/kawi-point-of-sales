@@ -782,6 +782,15 @@ Status: complete.
 - Panel Reports menampilkan top product, payment method terbesar, dan open payable.
 - Dokumentasi Tahap 64 dibuat.
 
+### Tahap 65 - Frontend Dashboard Refresh State
+
+Status: complete.
+
+- Dashboard menampilkan waktu refresh terakhir saat semua modul berhasil dimuat.
+- Dashboard menampilkan modul yang gagal jika refresh parsial bermasalah.
+- Tombol Refresh global dan action Refresh modul Reports memakai flow refresh yang sama.
+- Dokumentasi Tahap 65 dibuat.
+
 ## Cara Track Mundur
 
 - Setiap tahap disimpan dalam commit terpisah.

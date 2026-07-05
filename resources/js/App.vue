@@ -36,6 +36,8 @@ const moduleSearch = ref('');
 const activeAction = ref(null);
 const actionDraft = reactive({});
 const actionFeedback = ref('');
+const dashboardError = ref('');
+const lastDashboardRefresh = ref('');
 
 const quickStats = computed(() => [
     { label: 'Penjualan Hari Ini', value: 'Rp 0', tone: 'emerald' },
@@ -876,11 +878,18 @@ const isApiSubmitAction = computed(() => [
     'Operational Expense',
     'Settlement',
     'Import Provider',
+    'Refresh',
     'Loyalty',
     'Invite User',
     'Assign Role',
 ].includes(activeAction.value));
 const saveActionDraft = async () => {
+    if (activeAction.value === 'Refresh') {
+        await refreshDashboard();
+
+        return;
+    }
+
     const endpoints = {
         'New Sale': '/sales',
         'Void Sale': () => `/sales/${draftNumber('sale_id', firstCompletedSale().id)}/void`,
@@ -1017,27 +1026,48 @@ const updateOnlineStatus = () => foundation.setOnlineStatus(navigator.onLine);
 const updateOfflineStatus = () => offline.setOnlineStatus(navigator.onLine);
 const loadDashboard = async () => {
     dashboardLoading.value = true;
+    dashboardError.value = '';
     await foundation.loadSession();
 
     if (foundation.apiStatus !== 'connected') {
         dashboardLoading.value = false;
+        dashboardError.value = foundation.apiMessage;
 
         return;
     }
 
-    await Promise.allSettled([
-        masterData.loadFromApi(),
-        inventory.loadFromApi(),
-        pos.loadFromApi(),
-        purchasing.loadFromApi(),
-        accounting.loadFromApi(),
-        reports.loadFromApi(),
-        customers.loadFromApi(),
-        userAccess.loadFromApi(),
-        audit.loadFromApi(),
-        offline.loadConflicts(),
-    ]);
+    const refreshTasks = [
+        ['Master Data', masterData.loadFromApi()],
+        ['Inventory', inventory.loadFromApi()],
+        ['POS', pos.loadFromApi()],
+        ['Purchasing', purchasing.loadFromApi()],
+        ['Accounting', accounting.loadFromApi()],
+        ['Reports', reports.loadFromApi()],
+        ['Customers', customers.loadFromApi()],
+        ['User Access', userAccess.loadFromApi()],
+        ['Audit', audit.loadFromApi()],
+        ['Offline Conflicts', offline.loadConflicts()],
+    ];
+    const results = await Promise.allSettled(refreshTasks.map((task) => task[1]));
+    const failedModules = results
+        .map((result, index) => (result.status === 'rejected' ? refreshTasks[index][0] : null))
+        .filter(Boolean);
+
+    if (failedModules.length) {
+        dashboardError.value = `Refresh sebagian gagal: ${failedModules.join(', ')}`;
+    } else {
+        lastDashboardRefresh.value = new Date().toLocaleTimeString('id-ID', {
+            hour: '2-digit',
+            minute: '2-digit',
+        });
+    }
+
     dashboardLoading.value = false;
+};
+
+const refreshDashboard = async () => {
+    await loadDashboard();
+    actionFeedback.value = dashboardError.value || `Dashboard refresh ${lastDashboardRefresh.value}`;
 };
 
 const submitLogin = async () => {
@@ -1093,6 +1123,21 @@ onUnmounted(() => {
                     >
                         {{ dashboardLoading || foundation.isLoadingSession ? 'Loading API' : foundation.apiMessage }}
                     </span>
+                    <span
+                        v-if="dashboardError || lastDashboardRefresh"
+                        class="rounded-md border px-3 py-2 text-sm"
+                        :class="dashboardError ? 'border-amber-300/50 text-amber-200' : 'border-white/10 text-zinc-300'"
+                    >
+                        {{ dashboardError || `Refresh ${lastDashboardRefresh}` }}
+                    </span>
+                    <button
+                        class="rounded-md border border-white/10 px-4 py-2 text-sm font-semibold text-zinc-100 transition hover:border-emerald-300/50 hover:bg-emerald-300/10 disabled:cursor-not-allowed disabled:opacity-60"
+                        type="button"
+                        :disabled="dashboardLoading"
+                        @click="refreshDashboard"
+                    >
+                        Refresh
+                    </button>
                     <button
                         v-if="foundation.apiStatus !== 'connected'"
                         class="rounded-md border border-white/10 px-4 py-2 text-sm font-semibold text-zinc-100 transition hover:border-emerald-300/50 hover:bg-emerald-300/10"

@@ -94,4 +94,5 @@ Tahap terkait: 41, 62.
 
 Prioritas yang masih natural untuk dilanjutkan:
 
-- Frontend UX lanjutan: forms nyata dan API submit per modul.
+- Final QA dan release checklist MVP.
+- Dokumentasi cara run lokal, seed demo, dan akses dashboard.
