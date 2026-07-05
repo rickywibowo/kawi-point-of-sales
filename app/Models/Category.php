@@ -6,6 +6,7 @@ use App\Models\Concerns\BelongsToBusiness;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Validation\ValidationException;
 
 class Category extends Model
 {
@@ -25,6 +26,23 @@ class Category extends Model
         return [
             'is_active' => 'boolean',
         ];
+    }
+
+    protected static function booted(): void
+    {
+        static::deleting(function (Category $category): void {
+            if ($category->children()->exists()) {
+                throw ValidationException::withMessages([
+                    'category_id' => ['Category with child categories cannot be deleted.'],
+                ]);
+            }
+
+            if ($category->products()->exists()) {
+                throw ValidationException::withMessages([
+                    'category_id' => ['Category with products cannot be deleted.'],
+                ]);
+            }
+        });
     }
 
     public function parent(): BelongsTo

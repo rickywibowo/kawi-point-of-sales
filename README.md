@@ -50,6 +50,28 @@ Password: password
 
 Setelah login, dashboard otomatis menyimpan token Sanctum dan tenant context demo untuk business dan branch KAWI.
 
+## Back Office Filament
+
+Back office CRUD tersedia di:
+
+```text
+http://127.0.0.1:8000/admin
+```
+
+Gunakan credential demo yang sama:
+
+```text
+Email: owner@kawi.test
+Password: password
+```
+
+Resource awal:
+
+- Categories
+- Products
+
+Vue dashboard tetap dipakai untuk layar operasional POS, sedangkan Filament dipakai untuk CRUD back office.
+
 ## Data Demo
 
 Seeder utama menjalankan:

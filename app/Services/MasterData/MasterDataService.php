@@ -117,18 +117,6 @@ class MasterDataService
             ]);
         }
 
-        if ($category->children()->exists()) {
-            throw ValidationException::withMessages([
-                'category_id' => ['Category with child categories cannot be deleted.'],
-            ]);
-        }
-
-        if ($category->products()->exists()) {
-            throw ValidationException::withMessages([
-                'category_id' => ['Category with products cannot be deleted.'],
-            ]);
-        }
-
         DB::transaction(function () use ($category, $request): void {
             $before = $category->toArray();
             $category->delete();

@@ -821,6 +821,18 @@ Status: complete.
 - Automated test delete category ditambahkan.
 - Dokumentasi Tahap 68 dibuat.
 
+### Tahap 69 - Filament Back Office Foundation
+
+Status: complete.
+
+- Paket Filament ditambahkan ke project.
+- Panel back office `/admin` dibuat.
+- Filament resource kategori dan produk dibuat untuk CRUD back office.
+- Form/table kategori dan produk dirapikan untuk business aktif KAWI.
+- User model diberi akses panel Filament.
+- Guard delete kategori dipakai oleh API dan Filament.
+- Dokumentasi Tahap 69 dibuat.
+
 ## Cara Track Mundur
 
 - Setiap tahap disimpan dalam commit terpisah.

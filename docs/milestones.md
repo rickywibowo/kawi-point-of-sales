@@ -95,7 +95,18 @@ Tahap terkait: 41, 62.
 Prioritas yang masih natural untuk dilanjutkan:
 
 - Final QA checklist MVP.
+- Tambah Filament resource untuk supplier, customer, inventory, purchasing, accounting, user, audit, dan reports.
 - Enhancement lanjutan untuk Segment, Export, dan Print bila dibutuhkan.
+
+## Back Office Filament
+
+Status: in progress.
+
+- Panel Filament tersedia di `/admin`.
+- CRUD kategori dan produk tersedia sebagai resource awal.
+- Vue tetap difokuskan untuk layar operasional POS.
+
+Tahap terkait: 69.
 
 ## Release Lokal
 

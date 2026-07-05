@@ -4,6 +4,8 @@ namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Database\Factories\UserFactory;
+use Filament\Models\Contracts\FilamentUser;
+use Filament\Panel;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
@@ -15,7 +17,7 @@ use Laravel\Sanctum\HasApiTokens;
 
 #[Fillable(['name', 'email', 'password', 'current_business_id', 'current_branch_id'])]
 #[Hidden(['password', 'remember_token'])]
-class User extends Authenticatable
+class User extends Authenticatable implements FilamentUser
 {
     /** @use HasFactory<UserFactory> */
     use HasApiTokens, HasFactory, Notifiable;
@@ -56,6 +58,11 @@ class User extends Authenticatable
     public function belongsToBusiness(int $businessId): bool
     {
         return $this->businesses()->whereKey($businessId)->exists();
+    }
+
+    public function canAccessPanel(Panel $panel): bool
+    {
+        return $this->businesses()->exists();
     }
 
     public function canInTenant(string $permission, int $businessId, ?int $branchId = null): bool
