@@ -843,6 +843,17 @@ Status: complete.
 - Form/table dining table, promotion, dan kitchen station dibuat manual agar CRUD langsung usable.
 - Dokumentasi Tahap 70 dibuat.
 
+### Tahap 71 - Filament Inventory, Purchasing, and Production Resources
+
+Status: complete.
+
+- Filament resource recipe, stock balance, stock adjustment, stock opname, stock transfer, dan production order dibuat.
+- Filament resource purchase order, goods receipt, purchase return, supplier payable, dan supplier payment dibuat.
+- Resource operasional dikelompokkan ke menu Inventory, Production, dan Purchasing.
+- Form header dokumen memakai tenant otomatis dan dropdown relasi agar tidak perlu input ID mentah.
+- Admin route Filament bertambah menjadi 66 route.
+- Dokumentasi Tahap 71 dibuat.
+
 ## Cara Track Mundur
 
 - Setiap tahap disimpan dalam commit terpisah.

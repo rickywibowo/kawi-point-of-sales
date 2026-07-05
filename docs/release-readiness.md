@@ -62,7 +62,7 @@ Password: password
 - Buka modul Help untuk melihat panduan cepat operasional.
 - Buka modul Produk, cek listing kategori, buat kategori lewat `New Category`, lalu gunakan `Category ID` saat `New Product`.
 - Uji `Delete Category` pada kategori kosong. Kategori yang masih punya produk harus ditolak.
-- Buka `/admin` untuk CRUD kategori, produk, supplier, customer, UOM, tax, warehouse, table, promotion, dan kitchen station via Filament back office.
+- Buka `/admin` untuk CRUD kategori, produk, supplier, customer, UOM, tax, warehouse, table, promotion, kitchen station, inventory, production, purchasing, payable, dan supplier payment via Filament back office.
 - Jalankan action POS ringan seperti `Cash Movement`, `New Promo`, atau `View Receipt` bila data seed tersedia.
 - Buka modul Inventori dan cek stock balance, recipe, stock adjustment, opname, transfer, dan production.
 - Buka modul Purchasing dan cek PO, goods receipt, return supplier, payable, dan supplier payment.
@@ -81,7 +81,7 @@ php artisan test
 Expected baseline:
 
 - Frontend build sukses.
-- Laravel test sukses: 80 tests, 460 assertions.
+- Laravel test sukses: 82 tests, 469 assertions.
 
 ## API Notes
 
@@ -93,5 +93,6 @@ Expected baseline:
 ## Release Notes
 
 - Semua milestone utama 1 sampai 7 berstatus complete.
-- Stage terakhir sebelum dokumen ini: Stage 65 - Frontend Dashboard Refresh State.
+- Back office Filament tersedia untuk master data, POS setup, inventory, production, dan purchasing header.
+- Stage terakhir sebelum dokumen ini: Stage 71 - Filament Inventory, Purchasing, and Production Resources.
 - Action `Segment`, `Export`, dan `Print` masih bisa dijadikan enhancement berikutnya bila dibutuhkan workflow backend khusus.

@@ -77,6 +77,17 @@ Resource awal:
 - Dining Tables
 - Promotions
 - Kitchen Stations
+- Recipes
+- Stock Balances
+- Stock Adjustments
+- Stock Opnames
+- Stock Transfers
+- Production Orders
+- Purchase Orders
+- Goods Receipts
+- Purchase Returns
+- Supplier Payables
+- Supplier Payments
 
 Vue dashboard tetap dipakai untuk layar operasional POS, sedangkan Filament dipakai untuk CRUD back office.
 
@@ -119,10 +130,10 @@ npm run build
 php artisan test
 ```
 
-Baseline terakhir Stage 65:
+Baseline terakhir Stage 71:
 
 - Frontend build sukses.
-- Laravel test sukses: 80 tests, 460 assertions.
+- Laravel test sukses: 82 tests, 469 assertions.
 
 ## Dokumentasi Project
 
