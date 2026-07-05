@@ -791,6 +791,14 @@ Status: complete.
 - Tombol Refresh global dan action Refresh modul Reports memakai flow refresh yang sama.
 - Dokumentasi Tahap 65 dibuat.
 
+### Tahap 66 - Release Readiness Docs
+
+Status: complete.
+
+- README project KAWI POS dibuat untuk setup lokal, login demo, seed demo, dan verifikasi.
+- Dokumen `docs/release-readiness.md` dibuat untuk local run checklist, demo flow, API notes, dan release notes.
+- Dokumentasi Tahap 66 dibuat.
+
 ## Cara Track Mundur
 
 - Setiap tahap disimpan dalam commit terpisah.

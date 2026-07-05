@@ -94,5 +94,14 @@ Tahap terkait: 41, 62.
 
 Prioritas yang masih natural untuk dilanjutkan:
 
-- Final QA dan release checklist MVP.
-- Dokumentasi cara run lokal, seed demo, dan akses dashboard.
+- Final QA checklist MVP.
+- Enhancement lanjutan untuk Segment, Export, dan Print bila dibutuhkan.
+
+## Release Lokal
+
+Status: ready for local demo.
+
+- README project menjelaskan setup lokal, login demo, seed demo, dan verifikasi.
+- `docs/release-readiness.md` menyediakan checklist local run dan demo flow.
+
+Tahap terkait: 66.
