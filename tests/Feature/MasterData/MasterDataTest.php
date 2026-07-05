@@ -86,6 +86,48 @@ class MasterDataTest extends TestCase
         $this->assertDatabaseHas('audit_logs', ['action' => 'product.created']);
     }
 
+    public function test_inventory_staff_can_delete_empty_category(): void
+    {
+        $this->seed(DatabaseSeeder::class);
+
+        $user = User::query()->where('email', 'owner@kawi.test')->firstOrFail();
+        $business = Business::query()->where('name', 'KAWI Demo Business')->firstOrFail();
+
+        $category = $this->actingAs($user, 'sanctum')
+            ->withHeader('X-Business-Id', $business->uuid)
+            ->postJson('/api/categories', ['name' => 'Temporary Category'])
+            ->assertCreated()
+            ->json('category');
+
+        $this->actingAs($user, 'sanctum')
+            ->withHeader('X-Business-Id', $business->uuid)
+            ->deleteJson('/api/categories/'.$category['id'])
+            ->assertNoContent();
+
+        $this->assertDatabaseMissing('categories', ['id' => $category['id']]);
+        $this->assertDatabaseHas('audit_logs', ['action' => 'category.deleted']);
+    }
+
+    public function test_category_with_products_cannot_be_deleted(): void
+    {
+        $this->seed(DatabaseSeeder::class);
+
+        $user = User::query()->where('email', 'owner@kawi.test')->firstOrFail();
+        $business = Business::query()->where('name', 'KAWI Demo Business')->firstOrFail();
+        $category = Category::query()
+            ->where('business_id', $business->id)
+            ->whereHas('products')
+            ->firstOrFail();
+
+        $this->actingAs($user, 'sanctum')
+            ->withHeader('X-Business-Id', $business->uuid)
+            ->deleteJson('/api/categories/'.$category->id)
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors(['category_id']);
+
+        $this->assertDatabaseHas('categories', ['id' => $category->id]);
+    }
+
     public function test_product_creation_rejects_branch_from_other_business(): void
     {
         $this->seed(DatabaseSeeder::class);

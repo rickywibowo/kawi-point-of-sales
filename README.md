@@ -78,6 +78,8 @@ php artisan migrate:fresh --seed
 6. Isi `Category ID`, nama produk, type, dan harga.
 7. Simpan produk.
 
+Listing kategori juga tampil di workspace modul `Produk`. Untuk menghapus kategori, gunakan action `Delete Category`. Kategori yang masih memiliki produk atau child category tidak bisa dihapus.
+
 Panduan cepat juga tersedia di modul `Help` pada dashboard.
 
 ## Verifikasi

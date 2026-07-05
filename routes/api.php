@@ -58,6 +58,8 @@ Route::middleware(['auth:sanctum', 'tenant'])->group(function (): void {
         ->middleware('permission:inventory.view');
     Route::post('/categories', [CategoryController::class, 'store'])
         ->middleware('permission:inventory.adjust');
+    Route::delete('/categories/{category}', [CategoryController::class, 'destroy'])
+        ->middleware('permission:inventory.adjust');
     Route::post('/products', [ProductController::class, 'store'])
         ->middleware('permission:inventory.adjust');
     Route::get('/customers', [CustomerController::class, 'index'])

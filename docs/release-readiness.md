@@ -54,7 +54,8 @@ Password: password
 - Login dashboard memakai credential demo.
 - Buka modul Kasir dan cek POS cart, promo, table, reservation, kitchen, delivery, held transaction, dan post-sale controls.
 - Buka modul Help untuk melihat panduan cepat operasional.
-- Buka modul Produk, buat kategori lewat `New Category`, lalu gunakan `Category ID` saat `New Product`.
+- Buka modul Produk, cek listing kategori, buat kategori lewat `New Category`, lalu gunakan `Category ID` saat `New Product`.
+- Uji `Delete Category` pada kategori kosong. Kategori yang masih punya produk harus ditolak.
 - Jalankan action POS ringan seperti `Cash Movement`, `New Promo`, atau `View Receipt` bila data seed tersedia.
 - Buka modul Inventori dan cek stock balance, recipe, stock adjustment, opname, transfer, dan production.
 - Buka modul Purchasing dan cek PO, goods receipt, return supplier, payable, dan supplier payment.

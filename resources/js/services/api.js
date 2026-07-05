@@ -67,6 +67,12 @@ export async function apiPatch(path, body) {
     });
 }
 
+export async function apiDelete(path) {
+    return apiRequest(path, {
+        method: 'DELETE',
+    });
+}
+
 async function apiRequest(path, options = {}) {
     const token = getApiToken();
     const { businessId, branchId } = getTenantContext();

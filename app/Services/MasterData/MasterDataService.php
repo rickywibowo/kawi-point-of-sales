@@ -104,6 +104,39 @@ class MasterDataService
         });
     }
 
+    public function deleteCategory(Business $business, int $categoryId, Request $request): void
+    {
+        $category = Category::query()
+            ->forBusiness($business->id)
+            ->whereKey($categoryId)
+            ->first();
+
+        if (! $category) {
+            throw ValidationException::withMessages([
+                'category_id' => ['The selected category is outside the active business.'],
+            ]);
+        }
+
+        if ($category->children()->exists()) {
+            throw ValidationException::withMessages([
+                'category_id' => ['Category with child categories cannot be deleted.'],
+            ]);
+        }
+
+        if ($category->products()->exists()) {
+            throw ValidationException::withMessages([
+                'category_id' => ['Category with products cannot be deleted.'],
+            ]);
+        }
+
+        DB::transaction(function () use ($category, $request): void {
+            $before = $category->toArray();
+            $category->delete();
+
+            $this->audit->record('category.deleted', $category, before: $before, request: $request);
+        });
+    }
+
     private function assertBusinessEntity(string $model, int $businessId, ?int $id, string $field): void
     {
         if ($id === null) {

@@ -11,7 +11,7 @@ import { usePosStore } from './stores/pos';
 import { usePurchasingStore } from './stores/purchasing';
 import { useReportsStore } from './stores/reports';
 import { useUserAccessStore } from './stores/userAccess';
-import { apiGet, apiPatch, apiPost } from './services/api';
+import { apiDelete, apiGet, apiPatch, apiPost } from './services/api';
 
 const accounting = useAccountingStore();
 const audit = useAuditStore();
@@ -72,11 +72,18 @@ const moduleRows = computed(() => {
             secondary: ticket.station,
             value: ticket.status,
         })),
-        products: masterData.products.map((product) => ({
-            primary: product.name,
-            secondary: product.sku,
-            value: `Rp ${product.price.toLocaleString('id-ID')}`,
-        })),
+        products: [
+            ...masterData.categories.map((category) => ({
+                primary: category.name,
+                secondary: `Category ID ${category.id ?? 'demo'}`,
+                value: 'Kategori',
+            })),
+            ...masterData.products.map((product) => ({
+                primary: product.name,
+                secondary: product.sku,
+                value: `Rp ${product.price.toLocaleString('id-ID')}`,
+            })),
+        ],
         inventory: inventory.stockBalances.map((stock) => ({
             primary: stock.product,
             secondary: `${stock.quantity} ${stock.unit}`,
@@ -166,7 +173,7 @@ const formatPromotionWindow = (promotion) => {
 const moduleActions = computed(() => {
     const actions = {
         pos: ['New Sale', 'Void Sale', 'Refund Sale', 'View Receipt', 'Hold Cart', 'Open Shift', 'Cash Movement', 'Close Shift', 'New Promo', 'New Table', 'Table Status', 'Reserve Table', 'Seat Reservation', 'Cancel Reservation', 'Kitchen Station', 'Kitchen Status', 'Kitchen Item Status', 'Delivery Status'],
-        products: ['New Category', 'New Product', 'Import CSV', 'Price Update'],
+        products: ['New Category', 'Delete Category', 'New Product', 'Import CSV', 'Price Update'],
         inventory: ['New Recipe', 'Stock Adjustment', 'Stock Opname', 'Transfer Stock', 'Production'],
         purchasing: ['New PO', 'Approve PO', 'Goods Receipt', 'Return Supplier', 'Pay Supplier'],
         accounting: ['New Journal', 'Operational Expense', 'Settlement', 'Import Provider'],
@@ -308,6 +315,9 @@ const actionFields = computed(() => {
         'New Category': [
             { key: 'name', label: 'Category Name', type: 'text', placeholder: 'Dessert' },
             { key: 'sort_order', label: 'Sort Order', type: 'number', placeholder: '10' },
+        ],
+        'Delete Category': [
+            { key: 'category_id', label: 'Category ID', type: 'number', placeholder: String(firstCategory.id ?? '') },
         ],
         'Import CSV': [
             { key: 'source', label: 'Source', type: 'text', placeholder: 'products.csv' },
@@ -870,6 +880,7 @@ const isApiSubmitAction = computed(() => [
     'New Customer',
     'Update Customer',
     'New Category',
+    'Delete Category',
     'New Product',
     'Open Shift',
     'Cash Movement',
@@ -919,6 +930,7 @@ const saveActionDraft = async () => {
         'New Customer': '/customers',
         'Update Customer': () => `/customers/${draftNumber('customer_id', firstCustomer().id)}`,
         'New Category': '/categories',
+        'Delete Category': () => `/categories/${draftNumber('category_id', firstCategory().id)}`,
         'New Product': '/products',
         'Open Shift': '/cashier-shifts',
         'Cash Movement': () => `/cashier-shifts/${draftNumber('cashier_shift_id', pos.shift.id)}/cash-movements`,
@@ -955,6 +967,7 @@ const saveActionDraft = async () => {
     const endpointConfig = endpoints[activeAction.value];
     const endpoint = typeof endpointConfig === 'function' ? endpointConfig() : endpointConfig;
     const getActions = ['View Receipt'];
+    const deleteActions = ['Delete Category'];
     const patchActions = ['Update Customer', 'Table Status', 'Seat Reservation', 'Cancel Reservation', 'Kitchen Status', 'Kitchen Item Status', 'Delivery Status'];
 
     if (!endpoint || foundation.apiStatus !== 'connected') {
@@ -968,6 +981,8 @@ const saveActionDraft = async () => {
 
         if (getActions.includes(activeAction.value)) {
             response = await apiGet(endpoint);
+        } else if (deleteActions.includes(activeAction.value)) {
+            await apiDelete(endpoint);
         } else if (patchActions.includes(activeAction.value)) {
             await apiPatch(endpoint, actionPayload());
         } else {
@@ -995,7 +1010,7 @@ const saveActionDraft = async () => {
             await customers.loadFromApi();
         }
 
-        if (['New Category', 'New Product'].includes(activeAction.value)) {
+        if (['New Category', 'Delete Category', 'New Product'].includes(activeAction.value)) {
             await masterData.loadFromApi();
         }
 
@@ -1725,9 +1740,9 @@ onUnmounted(() => {
                                 <p class="mt-1 text-xs text-zinc-500">Gunakan Category ID dari kategori yang sudah dibuat atau seed demo.</p>
                             </div>
                             <div class="rounded-md border border-white/10 bg-white/[0.03] p-3 text-sm">
-                                <p class="text-zinc-400">Dokumentasi</p>
-                                <p class="mt-1 font-semibold">README / release-readiness</p>
-                                <p class="mt-1 text-xs text-zinc-500">Panduan setup lokal, login demo, demo flow, dan checklist test.</p>
+                                <p class="text-zinc-400">Hapus Kategori</p>
+                                <p class="mt-1 font-semibold">Produk / Delete Category</p>
+                                <p class="mt-1 text-xs text-zinc-500">Kategori yang masih punya produk atau child category tidak bisa dihapus.</p>
                             </div>
                         </div>
                     </div>

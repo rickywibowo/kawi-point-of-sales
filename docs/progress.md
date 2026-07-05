@@ -810,6 +810,17 @@ Status: complete.
 - Sidebar Master Data menampilkan daftar kategori beserta ID.
 - Dokumentasi Tahap 67 dibuat.
 
+### Tahap 68 - Product Category List and Delete
+
+Status: complete.
+
+- Workspace modul Produk menampilkan listing kategori beserta `Category ID`.
+- Action `Delete Category` ditambahkan ke modul Produk.
+- Endpoint `DELETE /api/categories/{category}` ditambahkan.
+- Delete category ditolak jika kategori masih memiliki produk atau child category.
+- Automated test delete category ditambahkan.
+- Dokumentasi Tahap 68 dibuat.
+
 ## Cara Track Mundur
 
 - Setiap tahap disimpan dalam commit terpisah.

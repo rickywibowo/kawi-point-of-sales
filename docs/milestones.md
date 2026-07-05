@@ -104,5 +104,6 @@ Status: ready for local demo.
 - README project menjelaskan setup lokal, login demo, seed demo, dan verifikasi.
 - `docs/release-readiness.md` menyediakan checklist local run dan demo flow.
 - Dashboard menyediakan modul Help dan panduan tambah kategori/produk.
+- Modul Produk menyediakan listing kategori dan delete category yang aman.
 
-Tahap terkait: 66, 67.
+Tahap terkait: 66, 67, 68.

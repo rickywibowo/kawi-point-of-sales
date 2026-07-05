@@ -19,4 +19,15 @@ class CategoryController extends Controller
 
         return response()->json(['category' => $category], 201);
     }
+
+    public function destroy(\Illuminate\Http\Request $request, MasterDataService $service, int $category): JsonResponse
+    {
+        $service->deleteCategory(
+            $request->attributes->get('business'),
+            $category,
+            $request,
+        );
+
+        return response()->json(status: 204);
+    }
 }
