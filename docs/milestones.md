@@ -104,9 +104,10 @@ Status: in progress.
 
 - Panel Filament tersedia di `/admin`.
 - CRUD kategori dan produk tersedia sebagai resource awal.
+- CRUD supplier, customer, UOM, tax, warehouse, dining table, promotion, dan kitchen station tersedia.
 - Vue tetap difokuskan untuk layar operasional POS.
 
-Tahap terkait: 69.
+Tahap terkait: 69, 70.
 
 ## Release Lokal
 

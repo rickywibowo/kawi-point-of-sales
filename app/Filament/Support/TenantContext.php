@@ -3,6 +3,7 @@
 namespace App\Filament\Support;
 
 use App\Models\Business;
+use App\Models\Branch;
 
 class TenantContext
 {
@@ -11,5 +12,13 @@ class TenantContext
         return auth()->user()?->current_business_id
             ?? auth()->user()?->businesses()->value('businesses.id')
             ?? Business::query()->value('id');
+    }
+
+    public static function branchId(): ?int
+    {
+        return auth()->user()?->current_branch_id
+            ?? Branch::query()
+                ->where('business_id', static::businessId())
+                ->value('id');
     }
 }

@@ -833,6 +833,16 @@ Status: complete.
 - Guard delete kategori dipakai oleh API dan Filament.
 - Dokumentasi Tahap 69 dibuat.
 
+### Tahap 70 - Filament Master and POS Setup Resources
+
+Status: complete.
+
+- Filament resource supplier, customer, UOM, tax, warehouse, dining table, promotion, dan kitchen station dibuat.
+- Helper scope business dan branch dibuat untuk resource Filament.
+- Form master data mengisi tenant aktif secara otomatis.
+- Form/table dining table, promotion, dan kitchen station dibuat manual agar CRUD langsung usable.
+- Dokumentasi Tahap 70 dibuat.
+
 ## Cara Track Mundur
 
 - Setiap tahap disimpan dalam commit terpisah.

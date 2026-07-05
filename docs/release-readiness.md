@@ -62,7 +62,7 @@ Password: password
 - Buka modul Help untuk melihat panduan cepat operasional.
 - Buka modul Produk, cek listing kategori, buat kategori lewat `New Category`, lalu gunakan `Category ID` saat `New Product`.
 - Uji `Delete Category` pada kategori kosong. Kategori yang masih punya produk harus ditolak.
-- Buka `/admin` untuk CRUD kategori dan produk via Filament back office.
+- Buka `/admin` untuk CRUD kategori, produk, supplier, customer, UOM, tax, warehouse, table, promotion, dan kitchen station via Filament back office.
 - Jalankan action POS ringan seperti `Cash Movement`, `New Promo`, atau `View Receipt` bila data seed tersedia.
 - Buka modul Inventori dan cek stock balance, recipe, stock adjustment, opname, transfer, dan production.
 - Buka modul Purchasing dan cek PO, goods receipt, return supplier, payable, dan supplier payment.

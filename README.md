@@ -69,6 +69,14 @@ Resource awal:
 
 - Categories
 - Products
+- Suppliers
+- Customers
+- Unit of Measures
+- Taxes
+- Warehouses
+- Dining Tables
+- Promotions
+- Kitchen Stations
 
 Vue dashboard tetap dipakai untuk layar operasional POS, sedangkan Filament dipakai untuk CRUD back office.
 
