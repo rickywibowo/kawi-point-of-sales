@@ -43,8 +43,9 @@ Status: complete.
 - Frontend POS store memuat cash drawer audit dari API.
 - Frontend POS store menghitung void/refund harian dari sale API.
 - Frontend POS store memuat held transaction aktif dari API.
+- Frontend POS store memuat detail promo aktif dari API.
 
-Tahap terkait: 4, 7, 11, 18, 22, 23, 24, 25, 26, 28, 30, 42, 43, 44, 45, 46, 47, 48, 49, 50, 54, 58, 59, 60.
+Tahap terkait: 4, 7, 11, 18, 22, 23, 24, 25, 26, 28, 30, 42, 43, 44, 45, 46, 47, 48, 49, 50, 54, 58, 59, 60, 61.
 
 ## Milestone 4 - Purchasing & Payables
 

@@ -133,6 +133,27 @@ const moduleSummary = computed(() => {
 
     return summaries[activeModule.value] ?? '';
 });
+
+const formatPromotionValue = (promotion) => {
+    if (!promotion) {
+        return '-';
+    }
+
+    if (promotion.type === 'percent') {
+        return `${promotion.value}%`;
+    }
+
+    return `Rp ${promotion.value.toLocaleString('id-ID')}`;
+};
+
+const formatPromotionWindow = (promotion) => {
+    if (!promotion?.startsOn && !promotion?.endsOn) {
+        return 'Tanpa batas tanggal';
+    }
+
+    return [promotion.startsOn, promotion.endsOn].filter(Boolean).join(' - ');
+};
+
 const moduleActions = computed(() => {
     const actions = {
         pos: ['New Sale', 'Void Sale', 'Refund Sale', 'View Receipt', 'Hold Cart', 'Open Shift', 'Cash Movement', 'Close Shift', 'New Promo', 'New Table', 'Table Status', 'Reserve Table', 'Seat Reservation', 'Cancel Reservation', 'Kitchen Station', 'Kitchen Status', 'Kitchen Item Status', 'Delivery Status'],
@@ -1331,8 +1352,15 @@ onUnmounted(() => {
                         <div class="mt-4 rounded-md border border-white/10 bg-white/[0.03] p-3 text-sm">
                             <p class="text-zinc-400">Promo Aktif</p>
                             <p class="mt-1 font-semibold">
-                                {{ pos.promotions[0]?.code }} / {{ pos.promotions[0]?.name }}
+                                {{ pos.promotions[0]?.code }} / {{ pos.promotions[0]?.name }} / {{ formatPromotionValue(pos.promotions[0]) }}
                             </p>
+                            <p class="mt-1 text-xs text-zinc-500">
+                                Min. Rp {{ (pos.promotions[0]?.minimumSubtotal ?? 0).toLocaleString('id-ID') }}
+                                <span v-if="pos.promotions[0]?.maximumDiscount">
+                                    / Maks. Rp {{ pos.promotions[0].maximumDiscount.toLocaleString('id-ID') }}
+                                </span>
+                            </p>
+                            <p class="mt-1 text-xs text-zinc-500">{{ formatPromotionWindow(pos.promotions[0]) }}</p>
                         </div>
                         <div class="mt-4 rounded-md border border-white/10 bg-white/[0.03] p-3 text-sm">
                             <p class="text-zinc-400">Kitchen Queue</p>

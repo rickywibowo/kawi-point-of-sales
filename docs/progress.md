@@ -746,6 +746,15 @@ Status: complete.
 - Data demo held transaction tetap menjadi fallback jika API belum mengirim hold aktif.
 - Dokumentasi Tahap 60 dibuat.
 
+### Tahap 61 - Frontend POS Promotion Details
+
+Status: complete.
+
+- POS store memetakan detail aturan promo dari promotions API.
+- Panel POS menampilkan nilai promo, minimum transaksi, maksimum diskon, dan periode berlaku.
+- Data demo promo tetap menjadi fallback jika API belum mengirim promo aktif.
+- Dokumentasi Tahap 61 dibuat.
+
 ## Cara Track Mundur
 
 - Setiap tahap disimpan dalam commit terpisah.
