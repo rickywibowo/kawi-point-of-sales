@@ -76,8 +76,9 @@ Status: complete.
 - Customer CRM, customer profile, sales summary, recent sales, loyalty ledger, manual loyalty adjustment, dan auto earn dari sale.
 - Frontend action drawer customer tersambung ke API customer update.
 - Frontend action drawer customer tersambung ke API loyalty adjustment.
+- Frontend dashboard Customer CRM menampilkan profile summary dan recent sales dari API.
 
-Tahap terkait: 10, 21, 41, 57.
+Tahap terkait: 10, 21, 41, 57, 63.
 
 ## Milestone 7 - Administration UX
 

@@ -1539,10 +1539,29 @@ onUnmounted(() => {
                             </article>
                         </div>
                         <div class="mt-4 rounded-md border border-white/10 bg-white/[0.03] p-3 text-sm">
-                            <p class="text-zinc-400">Loyalty Terakhir</p>
+                            <p class="text-zinc-400">Profile Aktif</p>
                             <p class="mt-1 font-semibold">
-                                {{ customers.loyaltyTransactions[0]?.type }} / {{ customers.loyaltyTransactions[0]?.points }} poin
+                                {{ customers.customerProfile.name }} / Rp {{ customers.customerProfile.averageOrderValue.toLocaleString('id-ID') }} AOV
                             </p>
+                            <p class="mt-1 text-xs text-zinc-500">
+                                {{ customers.customerProfile.transactionCount }} transaksi / last {{ customers.customerProfile.lastPurchaseAt?.slice(0, 10) ?? 'belum ada' }}
+                            </p>
+                        </div>
+                        <div class="mt-4 grid gap-3 sm:grid-cols-2">
+                            <div class="rounded-md border border-white/10 bg-white/[0.03] p-3 text-sm">
+                                <p class="text-zinc-400">Recent Sale</p>
+                                <p class="mt-1 font-semibold">
+                                    {{ customers.recentSales[0]?.number }} / Rp {{ (customers.recentSales[0]?.total ?? 0).toLocaleString('id-ID') }}
+                                </p>
+                                <p class="mt-1 text-xs text-zinc-500">{{ customers.recentSales[0]?.status ?? 'no sale' }}</p>
+                            </div>
+                            <div class="rounded-md border border-white/10 bg-white/[0.03] p-3 text-sm">
+                                <p class="text-zinc-400">Loyalty Terakhir</p>
+                                <p class="mt-1 font-semibold">
+                                    {{ customers.loyaltyTransactions[0]?.type }} / {{ customers.loyaltyTransactions[0]?.points }} poin
+                                </p>
+                                <p class="mt-1 text-xs text-zinc-500">{{ customers.loyaltyTransactions[0]?.note ?? 'no note' }}</p>
+                            </div>
                         </div>
                     </div>
 

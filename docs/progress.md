@@ -764,6 +764,15 @@ Status: complete.
 - Panel Audit Review menampilkan action, actor, branch, entity, dan waktu audit terbaru.
 - Dokumentasi Tahap 62 dibuat.
 
+### Tahap 63 - Frontend Customer Profile Summary
+
+Status: complete.
+
+- Customer store mengambil profile customer aktif dari API.
+- Customer store menyimpan customer summary, recent sales, dan loyalty transaction terbaru.
+- Panel Customer CRM menampilkan AOV, last purchase, recent sale, dan loyalty terakhir.
+- Dokumentasi Tahap 63 dibuat.
+
 ## Cara Track Mundur
 
 - Setiap tahap disimpan dalam commit terpisah.
