@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\GoodsReceipts\Schemas;
 
+use App\Filament\Support\BranchOptions;
 use App\Filament\Support\TenantContext;
 use App\Models\PurchaseOrder;
 use App\Models\Supplier;
@@ -23,13 +24,19 @@ class GoodsReceiptForm
                 Hidden::make('business_id')
                     ->default(fn () => TenantContext::businessId())
                     ->required(),
-                Hidden::make('branch_id')
-                    ->default(fn () => TenantContext::branchId()),
+                Select::make('branch_id')
+                    ->label('Branch')
+                    ->options(fn () => BranchOptions::forCurrentBusiness())
+                    ->default(fn () => TenantContext::branchId())
+                    ->searchable()
+                    ->preload()
+                    ->live()
+                    ->required(),
                 Select::make('purchase_order_id')
                     ->label('Purchase Order')
-                    ->options(fn () => PurchaseOrder::query()
+                    ->options(fn ($get) => PurchaseOrder::query()
                         ->where('business_id', TenantContext::businessId())
-                        ->when(TenantContext::branchId(), fn ($query, $branchId) => $query->where('branch_id', $branchId))
+                        ->when($get('branch_id'), fn ($query, $branchId) => $query->where('branch_id', $branchId))
                         ->orderByDesc('order_date')
                         ->pluck('po_number', 'id'))
                     ->searchable()
@@ -45,9 +52,9 @@ class GoodsReceiptForm
                     ->required(),
                 Select::make('warehouse_id')
                     ->label('Warehouse')
-                    ->options(fn () => Warehouse::query()
+                    ->options(fn ($get) => Warehouse::query()
                         ->where('business_id', TenantContext::businessId())
-                        ->when(TenantContext::branchId(), fn ($query, $branchId) => $query->where('branch_id', $branchId))
+                        ->when($get('branch_id'), fn ($query, $branchId) => $query->where('branch_id', $branchId))
                         ->orderBy('name')
                         ->pluck('name', 'id'))
                     ->searchable()

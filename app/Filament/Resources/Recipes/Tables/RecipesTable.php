@@ -19,6 +19,10 @@ class RecipesTable
                     ->searchable(),
                 TextColumn::make('product.name')
                     ->searchable(),
+                TextColumn::make('product.branch.name')
+                    ->label('Branch')
+                    ->searchable()
+                    ->sortable(),
                 TextColumn::make('uuid')
                     ->label('UUID')
                     ->searchable(),

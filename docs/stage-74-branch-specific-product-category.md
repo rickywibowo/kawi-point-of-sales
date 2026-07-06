@@ -18,14 +18,14 @@ Tahap ini mengubah katalog produk dan kategori agar bisa berbeda per cabang. Ini
 - Validasi sale menolak produk dari cabang lain.
 - Validasi create category/product menempelkan data ke branch aktif.
 - Validasi inventory, purchasing, dan production diperketat agar product sesuai branch transaksi.
-- Filament Categories dan Products sekarang otomatis scoped ke branch aktif.
-- Dropdown kategori, produk, kitchen station, stock balance, recipe, dan production order difilter sesuai branch aktif.
+- Filament Categories dan Products memakai branch aktif sebagai default awal pada tahap ini.
+- Dropdown kategori, produk, kitchen station, stock balance, recipe, dan production order difilter sesuai branch aktif pada tahap ini.
 - Seeder demo mengisi kategori dan produk dengan `branch_id`.
 
 ## Cara Pakai
 
 1. Buka `Administration > Branches` untuk membuat cabang/outlet.
-2. Pastikan user memakai `current_branch_id` cabang yang ingin disetup.
+2. Pada hasil tahap ini, pastikan user memakai `current_branch_id` cabang yang ingin disetup.
 3. Buka `Master Data > Categories` dan buat kategori untuk cabang itu.
 4. Buka `Master Data > Products` dan buat produk untuk cabang itu.
 5. Produk/kategori cabang lain tidak akan muncul di POS branch aktif.
@@ -36,6 +36,7 @@ Tahap ini mengubah katalog produk dan kategori agar bisa berbeda per cabang. Ini
 - `Branch` sekarang menjadi scope katalog untuk kategori dan produk.
 - Unit, tax, supplier, dan customer masih business-level.
 - Warehouse tetap branch-level dan dapat bertipe `branch`, `central`, atau `production`.
+- Stage 75 menyempurnakan Filament back office agar admin bisa memilih Branch langsung dari form create/edit.
 
 ## Verifikasi
 

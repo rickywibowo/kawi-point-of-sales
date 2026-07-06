@@ -880,9 +880,22 @@ Status: complete.
 - Kategori dan produk diberi `branch_id`.
 - Unique slug kategori dan SKU/barcode produk menjadi per business + branch.
 - API master data dan POS memfilter kategori/produk sesuai branch aktif.
-- Filament Categories dan Products memfilter dan membuat data sesuai branch aktif.
+- Filament Categories dan Products pada tahap ini masih memakai branch aktif sebagai default awal.
 - Validasi POS, inventory, purchasing, dan production diperketat agar product sesuai branch transaksi.
 - Dokumentasi Tahap 74 dibuat.
+
+### Tahap 75 - Filament Branch Selector CRUD Audit
+
+Status: complete.
+
+- Helper `BranchOptions` dibuat untuk dropdown cabang berdasarkan business aktif.
+- Form Filament Categories dan Products sekarang menampilkan field Branch saat create/edit.
+- Listing Categories dan Products tidak lagi terkunci ke branch aktif, tetapi tetap dibatasi business aktif.
+- Dropdown relasi kategori, produk, kitchen station, warehouse, PO, goods receipt, payable, dan recipe mengikuti Branch yang dipilih di form.
+- Form Warehouses, Dining Tables, Kitchen Stations, Purchase Orders, Goods Receipts, Purchase Returns, Supplier Payables, Supplier Payments, Stock Balances, Stock Adjustments, Stock Opnames, dan Production Orders menampilkan Branch di create/edit.
+- Recipe menampilkan pilihan Output Product lintas cabang dengan label cabang.
+- Halaman Help Filament diperbarui untuk workflow setup multi-cabang.
+- Dokumentasi Tahap 75 dibuat.
 
 ## Cara Track Mundur
 

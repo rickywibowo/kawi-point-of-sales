@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\StockBalances\Schemas;
 
+use App\Filament\Support\BranchOptions;
 use App\Filament\Support\TenantContext;
 use App\Models\Product;
 use App\Models\Warehouse;
@@ -19,13 +20,19 @@ class StockBalanceForm
                 Hidden::make('business_id')
                     ->default(fn () => TenantContext::businessId())
                     ->required(),
-                Hidden::make('branch_id')
-                    ->default(fn () => TenantContext::branchId()),
+                Select::make('branch_id')
+                    ->label('Branch')
+                    ->options(fn () => BranchOptions::forCurrentBusiness())
+                    ->default(fn () => TenantContext::branchId())
+                    ->searchable()
+                    ->preload()
+                    ->live()
+                    ->required(),
                 Select::make('warehouse_id')
                     ->label('Warehouse')
-                    ->options(fn () => Warehouse::query()
+                    ->options(fn ($get) => Warehouse::query()
                         ->where('business_id', TenantContext::businessId())
-                        ->when(TenantContext::branchId(), fn ($query, $branchId) => $query->where('branch_id', $branchId))
+                        ->when($get('branch_id'), fn ($query, $branchId) => $query->where('branch_id', $branchId))
                         ->orderBy('name')
                         ->pluck('name', 'id'))
                     ->searchable()
@@ -33,9 +40,9 @@ class StockBalanceForm
                     ->required(),
                 Select::make('product_id')
                     ->label('Product')
-                    ->options(fn () => Product::query()
+                    ->options(fn ($get) => Product::query()
                         ->where('business_id', TenantContext::businessId())
-                        ->when(TenantContext::branchId(), fn ($query, $branchId) => $query->where('branch_id', $branchId))
+                        ->when($get('branch_id'), fn ($query, $branchId) => $query->where('branch_id', $branchId))
                         ->orderBy('name')
                         ->pluck('name', 'id'))
                     ->searchable()
