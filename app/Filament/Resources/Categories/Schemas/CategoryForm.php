@@ -2,7 +2,6 @@
 
 namespace App\Filament\Resources\Categories\Schemas;
 
-use App\Filament\Support\BranchOptions;
 use App\Filament\Support\TenantContext;
 use App\Models\Category;
 use Filament\Forms\Components\Hidden;
@@ -21,19 +20,13 @@ class CategoryForm
                 Hidden::make('business_id')
                     ->default(fn () => TenantContext::businessId())
                     ->required(),
-                Select::make('branch_id')
-                    ->label('Branch')
-                    ->options(fn () => BranchOptions::forCurrentBusiness())
-                    ->default(fn () => TenantContext::branchId())
-                    ->searchable()
-                    ->preload()
-                    ->live()
-                    ->required(),
+                Hidden::make('branch_id')
+                    ->default(fn () => TenantContext::branchId()),
                 Select::make('parent_id')
                     ->label('Parent Category')
-                    ->options(fn ($get) => Category::query()
+                    ->options(fn () => Category::query()
                         ->where('business_id', TenantContext::businessId())
-                        ->when($get('branch_id'), fn ($query, $branchId) => $query->where('branch_id', $branchId))
+                        ->when(TenantContext::branchId(), fn ($query, $branchId) => $query->where('branch_id', $branchId))
                         ->orderBy('name')
                         ->pluck('name', 'id'))
                     ->searchable()

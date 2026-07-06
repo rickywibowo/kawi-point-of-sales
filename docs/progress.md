@@ -888,14 +888,27 @@ Status: complete.
 
 Status: complete.
 
-- Helper `BranchOptions` dibuat untuk dropdown cabang berdasarkan business aktif.
-- Form Filament Categories dan Products sekarang menampilkan field Branch saat create/edit.
-- Listing Categories dan Products tidak lagi terkunci ke branch aktif, tetapi tetap dibatasi business aktif.
-- Dropdown relasi kategori, produk, kitchen station, warehouse, PO, goods receipt, payable, dan recipe mengikuti Branch yang dipilih di form.
-- Form Warehouses, Dining Tables, Kitchen Stations, Purchase Orders, Goods Receipts, Purchase Returns, Supplier Payables, Supplier Payments, Stock Balances, Stock Adjustments, Stock Opnames, dan Production Orders menampilkan Branch di create/edit.
-- Recipe menampilkan pilihan Output Product lintas cabang dengan label cabang.
-- Halaman Help Filament diperbarui untuk workflow setup multi-cabang.
-- Dokumentasi Tahap 75 dibuat.
+- Audit CRUD Filament branch-level dilakukan.
+- Branch selector per form sempat dicoba untuk Product, Category, dan dokumen branch-level.
+- Hasil evaluasi: pola final dipindahkan ke context selector di Tahap 76 agar user tidak memilih Branch berulang di setiap form.
+- Dokumentasi Tahap 75 dibuat sebagai catatan keputusan desain.
+
+### Tahap 76 - Spatie RBAC and Context Selection
+
+Status: complete.
+
+- Dependency `spatie/laravel-permission` ditambahkan.
+- Model Role dan Permission dipindahkan ke basis Spatie dengan model custom KAWI.
+- Migration kompatibilitas Spatie dibuat tanpa menghapus tabel RBAC lama.
+- Data role-permission dan user-role lama dicopy ke `role_has_permissions` dan `model_has_roles`.
+- User memakai trait `HasRoles` Spatie dengan pivot tambahan `business_id` dan `branch_id`.
+- Endpoint `GET /api/auth/contexts` dan `POST /api/auth/context` dibuat.
+- Login dan `/api/auth/me` mengembalikan context business/branch yang boleh dipilih.
+- Tenant resolver memakai current branch user sebagai fallback jika header branch tidak dikirim.
+- Admin branch hanya bisa memilih branch sesuai role assignment; owner/super admin bisa memilih context yang lebih luas.
+- Halaman Filament `Administration > Context` ditambahkan untuk switch business/branch back office.
+- Form Filament branch-level kembali otomatis mengikuti branch context aktif.
+- Dokumentasi Tahap 76 dibuat.
 
 ## Cara Track Mundur
 

@@ -42,10 +42,14 @@ export function getTenantContext() {
 export function setTenantContext({ businessId, branchId }) {
     if (businessId) {
         localStorage.setItem('kawi_business_id', businessId);
+    } else {
+        localStorage.removeItem('kawi_business_id');
     }
 
     if (branchId) {
         localStorage.setItem('kawi_branch_id', branchId);
+    } else {
+        localStorage.removeItem('kawi_branch_id');
     }
 }
 

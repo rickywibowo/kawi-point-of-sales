@@ -2,7 +2,6 @@
 
 namespace App\Filament\Resources\SupplierPayments\Schemas;
 
-use App\Filament\Support\BranchOptions;
 use App\Filament\Support\TenantContext;
 use App\Models\Account;
 use App\Models\Supplier;
@@ -24,14 +23,8 @@ class SupplierPaymentForm
                 Hidden::make('business_id')
                     ->default(fn () => TenantContext::businessId())
                     ->required(),
-                Select::make('branch_id')
-                    ->label('Branch')
-                    ->options(fn () => BranchOptions::forCurrentBusiness())
-                    ->default(fn () => TenantContext::branchId())
-                    ->searchable()
-                    ->preload()
-                    ->live()
-                    ->required(),
+                Hidden::make('branch_id')
+                    ->default(fn () => TenantContext::branchId()),
                 Select::make('supplier_id')
                     ->label('Supplier')
                     ->options(fn () => Supplier::query()
@@ -43,9 +36,9 @@ class SupplierPaymentForm
                     ->required(),
                 Select::make('supplier_payable_id')
                     ->label('Payable')
-                    ->options(fn ($get) => SupplierPayable::query()
+                    ->options(fn () => SupplierPayable::query()
                         ->where('business_id', TenantContext::businessId())
-                        ->when($get('branch_id'), fn ($query, $branchId) => $query->where('branch_id', $branchId))
+                        ->when(TenantContext::branchId(), fn ($query, $branchId) => $query->where('branch_id', $branchId))
                         ->orderByDesc('due_date')
                         ->pluck('payable_number', 'id'))
                     ->searchable()

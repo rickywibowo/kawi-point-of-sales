@@ -2,7 +2,6 @@
 
 namespace App\Filament\Resources\Products\Schemas;
 
-use App\Filament\Support\BranchOptions;
 use App\Filament\Support\TenantContext;
 use App\Models\Category;
 use App\Models\KitchenStation;
@@ -23,19 +22,13 @@ class ProductForm
                 Hidden::make('business_id')
                     ->default(fn () => TenantContext::businessId())
                     ->required(),
-                Select::make('branch_id')
-                    ->label('Branch')
-                    ->options(fn () => BranchOptions::forCurrentBusiness())
-                    ->default(fn () => TenantContext::branchId())
-                    ->searchable()
-                    ->preload()
-                    ->live()
-                    ->required(),
+                Hidden::make('branch_id')
+                    ->default(fn () => TenantContext::branchId()),
                 Select::make('category_id')
                     ->label('Category')
-                    ->options(fn ($get) => Category::query()
+                    ->options(fn () => Category::query()
                         ->where('business_id', TenantContext::businessId())
-                        ->when($get('branch_id'), fn ($query, $branchId) => $query->where('branch_id', $branchId))
+                        ->when(TenantContext::branchId(), fn ($query, $branchId) => $query->where('branch_id', $branchId))
                         ->orderBy('name')
                         ->pluck('name', 'id'))
                     ->searchable()
@@ -58,9 +51,9 @@ class ProductForm
                     ->preload(),
                 Select::make('kitchen_station_id')
                     ->label('Kitchen Station')
-                    ->options(fn ($get) => KitchenStation::query()
+                    ->options(fn () => KitchenStation::query()
                         ->where('business_id', TenantContext::businessId())
-                        ->when($get('branch_id'), fn ($query, $branchId) => $query->where('branch_id', $branchId))
+                        ->when(TenantContext::branchId(), fn ($query, $branchId) => $query->where('branch_id', $branchId))
                         ->orderBy('name')
                         ->pluck('name', 'id'))
                     ->searchable()

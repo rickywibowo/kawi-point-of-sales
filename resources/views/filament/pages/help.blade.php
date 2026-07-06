@@ -60,7 +60,7 @@
                     <p class="font-semibold text-gray-950 dark:text-white">2. Buat produk</p>
                     <p class="mt-2 text-sm leading-6 text-gray-600 dark:text-gray-300">
                         Buka Products, pilih kategori, unit, tax, dan kitchen station bila produk perlu dikirim ke dapur.
-                        Pilih Branch di form Categories dan Products agar tiap cabang bisa punya katalog berbeda.
+                        Pastikan context Branch aktif sudah benar sebelum membuat Categories dan Products agar tiap cabang bisa punya katalog berbeda.
                     </p>
                 </div>
                 <div class="rounded-md bg-gray-50 p-4 dark:bg-gray-800">
@@ -109,6 +109,12 @@
                         </p>
                     </div>
                     <div>
+                        <p class="font-semibold text-gray-950 dark:text-white">Administration</p>
+                        <p class="text-sm leading-6 text-gray-600 dark:text-gray-300">
+                            Context, Businesses, dan Branches untuk memilih scope kerja dan mengatur perusahaan/cabang.
+                        </p>
+                    </div>
+                    <div>
                         <p class="font-semibold text-gray-950 dark:text-white">CRM</p>
                         <p class="text-sm leading-6 text-gray-600 dark:text-gray-300">
                             Customers dan data pendukung pelanggan.
@@ -122,7 +128,7 @@
             <h3 class="text-base font-semibold text-amber-900 dark:text-amber-100">Catatan Penting</h3>
             <ul class="mt-4 list-disc space-y-2 pl-5 text-sm leading-6 text-amber-900 dark:text-amber-100">
                 <li>Jika dropdown relasi error tabel tidak ditemukan, jalankan <span class="font-mono">php artisan migrate</span>.</li>
-                <li>Jika cabang berbeda jenis usaha, pilih Branch yang sesuai saat membuat Categories, Products, Warehouses, Dining Tables, Kitchen Stations, dan dokumen operasional.</li>
+                <li>Jika cabang berbeda jenis usaha, switch context Branch terlebih dulu, lalu buat Categories, Products, Warehouses, Dining Tables, Kitchen Stations, dan dokumen operasional.</li>
                 <li>Jika ingin data demo lengkap dari awal, gunakan <span class="font-mono">php artisan migrate:fresh --seed</span>.</li>
                 <li>Detail item dokumen masih dapat ditingkatkan dengan Relation Manager Filament pada tahap lanjutan.</li>
             </ul>

@@ -2,16 +2,16 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Spatie\Permission\Models\Role as SpatieRole;
 
-class Role extends Model
+class Role extends SpatieRole
 {
     protected $fillable = [
         'business_id',
         'branch_id',
         'name',
+        'guard_name',
         'slug',
         'is_system',
     ];
@@ -33,13 +33,8 @@ class Role extends Model
         return $this->belongsTo(Branch::class);
     }
 
-    public function permissions(): BelongsToMany
+    public function getPermissionClass(): string
     {
-        return $this->belongsToMany(Permission::class)->withTimestamps();
-    }
-
-    public function users(): BelongsToMany
-    {
-        return $this->belongsToMany(User::class)->withPivot(['business_id', 'branch_id'])->withTimestamps();
+        return Permission::class;
     }
 }

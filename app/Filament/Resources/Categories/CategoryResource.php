@@ -31,8 +31,11 @@ class CategoryResource extends Resource
     {
         $query = parent::getEloquentQuery();
         $businessId = TenantContext::businessId();
+        $branchId = TenantContext::branchId();
 
-        return $query->when($businessId, fn (Builder $query) => $query->where('business_id', $businessId));
+        return $query
+            ->when($businessId, fn (Builder $query) => $query->where('business_id', $businessId))
+            ->when($branchId, fn (Builder $query) => $query->where('branch_id', $branchId));
     }
 
     public static function form(Schema $schema): Schema

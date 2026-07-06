@@ -5,9 +5,12 @@ namespace Tests\Feature\Foundation;
 use App\Models\AuditLog;
 use App\Models\Branch;
 use App\Models\Business;
+use App\Models\Role;
 use App\Models\User;
 use Database\Seeders\KawiFoundationSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 use Tests\TestCase;
 
 class AuthAndTenantTest extends TestCase
@@ -82,5 +85,75 @@ class AuthAndTenantTest extends TestCase
 
         $this->assertSame(1, AuditLog::query()->where('action', 'logout')->count());
         $this->assertDatabaseMissing('personal_access_tokens', ['name' => 'logout-test']);
+    }
+
+    public function test_owner_can_switch_business_branch_context(): void
+    {
+        $this->seed(KawiFoundationSeeder::class);
+
+        $user = User::query()->where('email', 'owner@kawi.test')->firstOrFail();
+        $business = Business::query()->where('name', 'KAWI Demo Business')->firstOrFail();
+        $branch = Branch::query()->create([
+            'business_id' => $business->id,
+            'uuid' => (string) Str::uuid(),
+            'name' => 'Cabang Kedua',
+            'code' => 'BR2',
+        ]);
+
+        $this->actingAs($user, 'sanctum')
+            ->postJson('/api/auth/context', [
+                'business_id' => $business->id,
+                'branch_id' => $branch->id,
+            ])
+            ->assertOk()
+            ->assertJsonPath('business.id', $business->id)
+            ->assertJsonPath('branch.id', $branch->id);
+
+        $this->assertSame($branch->id, $user->fresh()->current_branch_id);
+        $this->assertDatabaseHas('audit_logs', ['action' => 'auth.context_switched']);
+    }
+
+    public function test_branch_scoped_user_cannot_select_unassigned_branch(): void
+    {
+        $this->seed(KawiFoundationSeeder::class);
+
+        $business = Business::query()->where('name', 'KAWI Demo Business')->firstOrFail();
+        $allowedBranch = Branch::query()->where('business_id', $business->id)->firstOrFail();
+        $blockedBranch = Branch::query()->create([
+            'business_id' => $business->id,
+            'uuid' => (string) Str::uuid(),
+            'name' => 'Cabang Terlarang',
+            'code' => 'NOPE',
+        ]);
+        $cashierRole = Role::query()->where('business_id', $business->id)->where('slug', 'cashier')->firstOrFail();
+        $cashier = User::query()->create([
+            'name' => 'Branch Cashier',
+            'email' => 'branch-cashier@kawi.test',
+            'password' => Hash::make('password'),
+            'current_business_id' => $business->id,
+            'current_branch_id' => $allowedBranch->id,
+        ]);
+        $cashier->businesses()->syncWithoutDetaching([$business->id => ['is_owner' => false]]);
+        $cashier->roles()->syncWithoutDetaching([
+            $cashierRole->id => [
+                'business_id' => $business->id,
+                'branch_id' => $allowedBranch->id,
+            ],
+        ]);
+
+        $this->actingAs($cashier, 'sanctum')
+            ->postJson('/api/auth/context', [
+                'business_id' => $business->id,
+                'branch_id' => $blockedBranch->id,
+            ])
+            ->assertForbidden();
+
+        $this->actingAs($cashier, 'sanctum')
+            ->withHeaders([
+                'X-Business-Id' => $business->uuid,
+                'X-Branch-Id' => $blockedBranch->uuid,
+            ])
+            ->getJson('/api/auth/me')
+            ->assertForbidden();
     }
 }

@@ -14,13 +14,16 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
+use Spatie\Permission\Traits\HasRoles;
 
 #[Fillable(['name', 'email', 'password', 'current_business_id', 'current_branch_id'])]
 #[Hidden(['password', 'remember_token'])]
 class User extends Authenticatable implements FilamentUser
 {
     /** @use HasFactory<UserFactory> */
-    use HasApiTokens, HasFactory, Notifiable;
+    use HasApiTokens, HasFactory, HasRoles, Notifiable {
+        HasRoles::roles as spatieRoles;
+    }
 
     /**
      * Get the attributes that should be cast.
@@ -42,7 +45,9 @@ class User extends Authenticatable implements FilamentUser
 
     public function roles(): BelongsToMany
     {
-        return $this->belongsToMany(Role::class)->withPivot(['business_id', 'branch_id'])->withTimestamps();
+        return $this->morphToMany(Role::class, 'model', 'model_has_roles', 'model_id', 'role_id')
+            ->withPivot(['business_id', 'branch_id'])
+            ->withTimestamps();
     }
 
     public function currentBusiness(): BelongsTo
@@ -57,26 +62,72 @@ class User extends Authenticatable implements FilamentUser
 
     public function belongsToBusiness(int $businessId): bool
     {
-        return $this->businesses()->whereKey($businessId)->exists();
+        return $this->isPlatformSuperAdmin() || $this->businesses()->whereKey($businessId)->exists();
     }
 
     public function canAccessPanel(Panel $panel): bool
     {
-        return $this->businesses()->exists();
+        return $this->isPlatformSuperAdmin() || $this->businesses()->exists();
+    }
+
+    public function isPlatformSuperAdmin(): bool
+    {
+        return $this->roles()->where('slug', 'platform-super-admin')->exists();
+    }
+
+    public function isBusinessOwner(int $businessId): bool
+    {
+        return $this->businesses()
+            ->whereKey($businessId)
+            ->wherePivot('is_owner', true)
+            ->exists();
+    }
+
+    public function hasBusinessLevelRole(int $businessId): bool
+    {
+        return $this->roles()
+            ->where(function ($query) use ($businessId): void {
+                $query->whereNull('model_has_roles.business_id')
+                    ->orWhere('model_has_roles.business_id', $businessId);
+            })
+            ->whereNull('model_has_roles.branch_id')
+            ->exists();
+    }
+
+    public function canAccessBranchContext(int $businessId, ?int $branchId): bool
+    {
+        if ($this->isPlatformSuperAdmin()) {
+            return true;
+        }
+
+        if (! $this->businesses()->whereKey($businessId)->exists()) {
+            return false;
+        }
+
+        if ($branchId === null) {
+            return $this->isBusinessOwner($businessId) || $this->hasBusinessLevelRole($businessId);
+        }
+
+        return $this->isBusinessOwner($businessId)
+            || $this->hasBusinessLevelRole($businessId)
+            || $this->roles()
+                ->where('model_has_roles.business_id', $businessId)
+                ->where('model_has_roles.branch_id', $branchId)
+                ->exists();
     }
 
     public function canInTenant(string $permission, int $businessId, ?int $branchId = null): bool
     {
         return $this->roles()
             ->where(function ($query) use ($businessId): void {
-                $query->whereNull('role_user.business_id')
-                    ->orWhere('role_user.business_id', $businessId);
+                $query->whereNull('model_has_roles.business_id')
+                    ->orWhere('model_has_roles.business_id', $businessId);
             })
             ->where(function ($query) use ($branchId): void {
-                $query->whereNull('role_user.branch_id');
+                $query->whereNull('model_has_roles.branch_id');
 
                 if ($branchId !== null) {
-                    $query->orWhere('role_user.branch_id', $branchId);
+                    $query->orWhere('model_has_roles.branch_id', $branchId);
                 }
             })
             ->whereHas('permissions', fn ($query) => $query->where('name', $permission))

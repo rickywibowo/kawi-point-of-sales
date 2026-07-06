@@ -2,7 +2,6 @@
 
 namespace App\Filament\Resources\Warehouses\Schemas;
 
-use App\Filament\Support\BranchOptions;
 use App\Filament\Support\TenantContext;
 use Filament\Forms\Components\Hidden;
 use Filament\Forms\Components\Select;
@@ -19,13 +18,8 @@ class WarehouseForm
                 Hidden::make('business_id')
                     ->default(fn () => TenantContext::businessId())
                     ->required(),
-                Select::make('branch_id')
-                    ->label('Branch')
-                    ->options(fn () => BranchOptions::forCurrentBusiness())
-                    ->default(fn () => TenantContext::branchId())
-                    ->searchable()
-                    ->preload()
-                    ->required(),
+                Hidden::make('branch_id')
+                    ->default(fn () => TenantContext::branchId()),
                 TextInput::make('name')
                     ->required(),
                 TextInput::make('code')

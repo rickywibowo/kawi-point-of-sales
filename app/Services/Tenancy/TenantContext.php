@@ -31,6 +31,12 @@ class TenantContext
             if (! $branch) {
                 throw new HttpException(403, 'Branch context is not accessible.');
             }
+        } elseif ($user->currentBranch?->business_id === $business->id) {
+            $branch = $user->currentBranch;
+        }
+
+        if (! $user->canAccessBranchContext($business->id, $branch?->id)) {
+            throw new HttpException(403, 'Branch context is not accessible.');
         }
 
         return [$business, $branch];

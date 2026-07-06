@@ -96,13 +96,13 @@ class KawiFoundationSeeder extends Seeder
         );
 
         $permissions = collect(self::PERMISSIONS)->mapWithKeys(
-            fn (string $name) => [$name => Permission::query()->firstOrCreate(['name' => $name])],
+            fn (string $name) => [$name => Permission::query()->firstOrCreate(['name' => $name, 'guard_name' => 'web'])],
         );
 
         $roles = collect(self::ROLE_PERMISSIONS)->mapWithKeys(function (array $rolePermissions, string $slug) use ($business, $permissions) {
             $role = Role::query()->firstOrCreate(
                 ['business_id' => $business->id, 'branch_id' => null, 'slug' => $slug],
-                ['name' => str($slug)->replace('-', ' ')->title()->toString(), 'is_system' => true],
+                ['name' => str($slug)->replace('-', ' ')->title()->toString(), 'guard_name' => 'web', 'is_system' => true],
             );
 
             $role->permissions()->sync($permissions->only($rolePermissions)->pluck('id')->all());

@@ -14,6 +14,7 @@ export const useFoundationStore = defineStore('foundation', {
         user: null,
         isLoadingSession: false,
         loginError: null,
+        contexts: [],
     }),
 
     actions: {
@@ -33,7 +34,8 @@ export const useFoundationStore = defineStore('foundation', {
                 });
 
                 setApiToken(response.token);
-                const business = response.user?.businesses?.[0];
+                const contexts = response.contexts ?? response.user?.businesses ?? [];
+                const business = contexts[0];
                 const branch = business?.branches?.[0];
 
                 setTenantContext({
@@ -59,6 +61,7 @@ export const useFoundationStore = defineStore('foundation', {
             try {
                 const response = await apiGet('/auth/me');
                 this.user = response.user;
+                this.contexts = response.contexts ?? [];
                 this.cashier = response.user?.name ?? this.cashier;
                 this.business = response.business?.name ?? this.business;
                 this.branch = response.branch?.name ?? this.branch;
@@ -71,6 +74,22 @@ export const useFoundationStore = defineStore('foundation', {
             } finally {
                 this.isLoadingSession = false;
             }
+        },
+
+        async switchContext(businessId, branchId = null) {
+            const response = await apiPost('/auth/context', {
+                business_id: businessId,
+                branch_id: branchId,
+            });
+
+            setTenantContext({
+                businessId: response.business?.uuid,
+                branchId: response.branch?.uuid,
+            });
+
+            await this.loadSession();
+
+            return response;
         },
 
         async logout() {
