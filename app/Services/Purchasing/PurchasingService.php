@@ -35,9 +35,11 @@ class PurchasingService
     {
         $this->assertSupplier($business->id, $data['supplier_id']);
         $this->assertWarehouse($business->id, $data['warehouse_id'] ?? null);
+        $warehouse = ! empty($data['warehouse_id']) ? Warehouse::query()->where('business_id', $business->id)->whereKey($data['warehouse_id'])->first() : null;
+        $productBranchId = $branchId ?? $warehouse?->branch_id;
 
         foreach ($data['items'] as $index => $item) {
-            $this->assertProduct($business->id, $item['product_id'], "items.$index.product_id");
+            $this->assertProduct($business->id, $productBranchId, $item['product_id'], "items.$index.product_id");
         }
 
         return DB::transaction(function () use ($business, $branchId, $data, $request): PurchaseOrder {
@@ -91,7 +93,7 @@ class PurchasingService
         $warehouse = $this->assertWarehouse($business->id, $data['warehouse_id']);
 
         foreach ($data['items'] as $index => $item) {
-            $this->assertProduct($business->id, $item['product_id'], "items.$index.product_id");
+            $this->assertProduct($business->id, $branchId ?? $warehouse->branch_id, $item['product_id'], "items.$index.product_id");
         }
 
         return DB::transaction(function () use ($business, $branchId, $warehouse, $data, $request): GoodsReceipt {
@@ -162,7 +164,7 @@ class PurchasingService
         }
 
         foreach ($data['items'] as $index => $item) {
-            $this->assertProduct($business->id, $item['product_id'], "items.$index.product_id");
+            $this->assertProduct($business->id, $branchId ?? $receipt->branch_id, $item['product_id'], "items.$index.product_id");
             $this->assertReceiptItem($receipt, $item, $index);
         }
 
@@ -424,10 +426,10 @@ class PurchasingService
         return $warehouse;
     }
 
-    private function assertProduct(int $businessId, int $productId, string $field): void
+    private function assertProduct(int $businessId, ?int $branchId, int $productId, string $field): void
     {
-        if (! Product::query()->forBusiness($businessId)->whereKey($productId)->exists()) {
-            throw ValidationException::withMessages([$field => ['The selected product is outside the active business.']]);
+        if (! Product::query()->forBusiness($businessId)->forBranch($branchId)->whereKey($productId)->exists()) {
+            throw ValidationException::withMessages([$field => ['The selected product is outside the active branch.']]);
         }
     }
 

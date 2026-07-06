@@ -27,6 +27,10 @@ class CategoriesTable
                     ->label('Parent')
                     ->searchable()
                     ->placeholder('-'),
+                TextColumn::make('branch.name')
+                    ->label('Branch')
+                    ->searchable()
+                    ->toggleable(),
                 TextColumn::make('slug')
                     ->searchable(),
                 TextColumn::make('sort_order')

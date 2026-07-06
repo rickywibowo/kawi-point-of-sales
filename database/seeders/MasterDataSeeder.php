@@ -39,17 +39,17 @@ class MasterDataSeeder extends Seeder
         );
 
         $food = Category::query()->firstOrCreate(
-            ['business_id' => $business->id, 'slug' => 'makanan'],
+            ['business_id' => $business->id, 'branch_id' => $branch->id, 'slug' => 'makanan'],
             ['name' => 'Makanan', 'sort_order' => 1],
         );
 
         $beverage = Category::query()->firstOrCreate(
-            ['business_id' => $business->id, 'slug' => 'minuman'],
+            ['business_id' => $business->id, 'branch_id' => $branch->id, 'slug' => 'minuman'],
             ['name' => 'Minuman', 'sort_order' => 2],
         );
 
         Category::query()->firstOrCreate(
-            ['business_id' => $business->id, 'slug' => 'kopi'],
+            ['business_id' => $business->id, 'branch_id' => $branch->id, 'slug' => 'kopi'],
             ['parent_id' => $beverage->id, 'name' => 'Kopi', 'sort_order' => 1],
         );
 
@@ -64,7 +64,7 @@ class MasterDataSeeder extends Seeder
         );
 
         $riceBowl = Product::query()->firstOrCreate(
-            ['business_id' => $business->id, 'sku' => 'KAWI-RICE-001'],
+            ['business_id' => $business->id, 'branch_id' => $branch->id, 'sku' => 'KAWI-RICE-001'],
             [
                 'uuid' => (string) Str::uuid(),
                 'category_id' => $food->id,
@@ -80,7 +80,7 @@ class MasterDataSeeder extends Seeder
         );
 
         $icedCoffee = Product::query()->firstOrCreate(
-            ['business_id' => $business->id, 'sku' => 'KAWI-COFFEE-001'],
+            ['business_id' => $business->id, 'branch_id' => $branch->id, 'sku' => 'KAWI-COFFEE-001'],
             [
                 'uuid' => (string) Str::uuid(),
                 'category_id' => $beverage->id,

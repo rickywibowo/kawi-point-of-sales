@@ -108,9 +108,10 @@ Status: in progress.
 - CRUD header inventory, production, purchasing, payable, dan supplier payment tersedia.
 - Halaman Help / Cara Pakai tersedia langsung di Filament.
 - CRUD perusahaan/pusat dan cabang/outlet tersedia di Administration.
+- Kategori dan produk dapat berbeda per cabang/outlet.
 - Vue tetap difokuskan untuk layar operasional POS.
 
-Tahap terkait: 69, 70, 71, 72, 73.
+Tahap terkait: 69, 70, 71, 72, 73, 74.
 
 ## Release Lokal
 

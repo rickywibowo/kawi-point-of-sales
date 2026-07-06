@@ -15,6 +15,7 @@ class Product extends Model
 
     protected $fillable = [
         'business_id',
+        'branch_id',
         'category_id',
         'unit_of_measure_id',
         'tax_id',
@@ -43,6 +44,16 @@ class Product extends Model
     public function category(): BelongsTo
     {
         return $this->belongsTo(Category::class);
+    }
+
+    public function branch(): BelongsTo
+    {
+        return $this->belongsTo(Branch::class);
+    }
+
+    public function scopeForBranch($query, ?int $branchId)
+    {
+        return $branchId ? $query->where('branch_id', $branchId) : $query;
     }
 
     public function unitOfMeasure(): BelongsTo

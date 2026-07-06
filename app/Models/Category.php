@@ -14,6 +14,7 @@ class Category extends Model
 
     protected $fillable = [
         'business_id',
+        'branch_id',
         'parent_id',
         'name',
         'slug',
@@ -48,6 +49,16 @@ class Category extends Model
     public function parent(): BelongsTo
     {
         return $this->belongsTo(Category::class, 'parent_id');
+    }
+
+    public function branch(): BelongsTo
+    {
+        return $this->belongsTo(Branch::class);
+    }
+
+    public function scopeForBranch($query, ?int $branchId)
+    {
+        return $branchId ? $query->where('branch_id', $branchId) : $query;
     }
 
     public function children(): HasMany

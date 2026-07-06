@@ -389,12 +389,13 @@ class PosService
         foreach ($inputItems as $index => $input) {
             $product = Product::query()
                 ->forBusiness($businessId)
+                ->forBranch($branchId)
                 ->with('tax')
                 ->whereKey($input['product_id'])
                 ->first();
 
             if (! $product) {
-                throw ValidationException::withMessages(["items.$index.product_id" => ['The selected product is outside the active business.']]);
+                throw ValidationException::withMessages(["items.$index.product_id" => ['The selected product is outside the active branch.']]);
             }
 
             $quantity = (float) $input['quantity'];

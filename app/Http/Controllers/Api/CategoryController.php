@@ -13,6 +13,7 @@ class CategoryController extends Controller
     {
         $category = $service->createCategory(
             $request->attributes->get('business'),
+            $request->attributes->get('branch'),
             $request->validated(),
             $request,
         );
@@ -24,6 +25,7 @@ class CategoryController extends Controller
     {
         $service->deleteCategory(
             $request->attributes->get('business'),
+            $request->attributes->get('branch'),
             $category,
             $request,
         );

@@ -13,6 +13,7 @@ class ProductController extends Controller
     {
         $product = $service->createProduct(
             $request->attributes->get('business'),
+            $request->attributes->get('branch'),
             $request->validated(),
             $request,
         );

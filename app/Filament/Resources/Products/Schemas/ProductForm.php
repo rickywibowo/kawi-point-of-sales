@@ -22,10 +22,13 @@ class ProductForm
                 Hidden::make('business_id')
                     ->default(fn () => TenantContext::businessId())
                     ->required(),
+                Hidden::make('branch_id')
+                    ->default(fn () => TenantContext::branchId()),
                 Select::make('category_id')
                     ->label('Category')
                     ->options(fn () => Category::query()
                         ->where('business_id', TenantContext::businessId())
+                        ->when(TenantContext::branchId(), fn ($query, $branchId) => $query->where('branch_id', $branchId))
                         ->orderBy('name')
                         ->pluck('name', 'id'))
                     ->searchable()
@@ -50,6 +53,7 @@ class ProductForm
                     ->label('Kitchen Station')
                     ->options(fn () => KitchenStation::query()
                         ->where('business_id', TenantContext::businessId())
+                        ->when(TenantContext::branchId(), fn ($query, $branchId) => $query->where('branch_id', $branchId))
                         ->orderBy('name')
                         ->pluck('name', 'id'))
                     ->searchable()

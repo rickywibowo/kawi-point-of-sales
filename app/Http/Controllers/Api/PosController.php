@@ -36,6 +36,7 @@ class PosController extends Controller
                 ->first(),
             'products' => Product::query()
                 ->forBusiness($business->id)
+                ->forBranch($branch->id)
                 ->with(['category', 'tax', 'branchPrices', 'modifierGroups.modifiers'])
                 ->where('is_active', true)
                 ->orderBy('name')

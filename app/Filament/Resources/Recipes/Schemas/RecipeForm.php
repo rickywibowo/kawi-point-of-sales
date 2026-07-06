@@ -24,6 +24,7 @@ class RecipeForm
                     ->label('Output Product')
                     ->options(fn () => Product::query()
                         ->where('business_id', TenantContext::businessId())
+                        ->when(TenantContext::branchId(), fn ($query, $branchId) => $query->where('branch_id', $branchId))
                         ->orderBy('name')
                         ->pluck('name', 'id'))
                     ->searchable()

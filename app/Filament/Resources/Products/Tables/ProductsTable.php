@@ -30,6 +30,10 @@ class ProductsTable
                 TextColumn::make('category.name')
                     ->searchable()
                     ->placeholder('-'),
+                TextColumn::make('branch.name')
+                    ->label('Branch')
+                    ->searchable()
+                    ->toggleable(),
                 TextColumn::make('type')
                     ->badge()
                     ->searchable(),

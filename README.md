@@ -129,6 +129,8 @@ php artisan migrate:fresh --seed
 
 Listing kategori juga tampil di workspace modul `Produk`. Untuk menghapus kategori, gunakan action `Delete Category`. Kategori yang masih memiliki produk atau child category tidak bisa dihapus.
 
+Kategori dan produk sekarang mengikuti cabang aktif. Jika cabang berbeda jenis usaha, buat kategori dan produk dari cabang tersebut agar katalog POS tidak bercampur dengan cabang lain.
+
 Panduan cepat juga tersedia di modul `Help` pada dashboard.
 
 ## Verifikasi

@@ -3,6 +3,7 @@
 namespace App\Services\MasterData;
 
 use App\Models\BranchProductPrice;
+use App\Models\Branch;
 use App\Models\Business;
 use App\Models\Category;
 use App\Models\Product;
@@ -18,11 +19,12 @@ class MasterDataService
     {
     }
 
-    public function createCategory(Business $business, array $data, Request $request): Category
+    public function createCategory(Business $business, ?Branch $branch, array $data, Request $request): Category
     {
         if (! empty($data['parent_id'])) {
             $parentExists = Category::query()
                 ->forBusiness($business->id)
+                ->forBranch($branch?->id)
                 ->whereKey($data['parent_id'])
                 ->exists();
 
@@ -33,9 +35,10 @@ class MasterDataService
             }
         }
 
-        return DB::transaction(function () use ($business, $data, $request): Category {
+        return DB::transaction(function () use ($business, $branch, $data, $request): Category {
             $category = Category::query()->create([
                 'business_id' => $business->id,
+                'branch_id' => $branch?->id,
                 'parent_id' => $data['parent_id'] ?? null,
                 'name' => $data['name'],
                 'slug' => $data['slug'] ?? Str::slug($data['name']),
@@ -49,9 +52,9 @@ class MasterDataService
         });
     }
 
-    public function createProduct(Business $business, array $data, Request $request): Product
+    public function createProduct(Business $business, ?Branch $branch, array $data, Request $request): Product
     {
-        $this->assertBusinessEntity(Category::class, $business->id, $data['category_id'] ?? null, 'category_id');
+        $this->assertBranchEntity(Category::class, $business->id, $branch?->id, $data['category_id'] ?? null, 'category_id');
         $this->assertBusinessEntity(\App\Models\UnitOfMeasure::class, $business->id, $data['unit_of_measure_id'] ?? null, 'unit_of_measure_id');
         $this->assertBusinessEntity(\App\Models\Tax::class, $business->id, $data['tax_id'] ?? null, 'tax_id');
         $this->assertKitchenStation($business->id, $data['kitchen_station_id'] ?? null);
@@ -69,9 +72,10 @@ class MasterDataService
             }
         }
 
-        return DB::transaction(function () use ($business, $data, $request): Product {
+        return DB::transaction(function () use ($business, $branch, $data, $request): Product {
             $product = Product::query()->create([
                 'business_id' => $business->id,
+                'branch_id' => $branch?->id,
                 'category_id' => $data['category_id'] ?? null,
                 'unit_of_measure_id' => $data['unit_of_measure_id'] ?? null,
                 'tax_id' => $data['tax_id'] ?? null,
@@ -104,10 +108,11 @@ class MasterDataService
         });
     }
 
-    public function deleteCategory(Business $business, int $categoryId, Request $request): void
+    public function deleteCategory(Business $business, ?Branch $branch, int $categoryId, Request $request): void
     {
         $category = Category::query()
             ->forBusiness($business->id)
+            ->forBranch($branch?->id)
             ->whereKey($categoryId)
             ->first();
 
@@ -136,6 +141,25 @@ class MasterDataService
         if (! $exists) {
             throw ValidationException::withMessages([
                 $field => ['The selected value is outside the active business.'],
+            ]);
+        }
+    }
+
+    private function assertBranchEntity(string $model, int $businessId, ?int $branchId, ?int $id, string $field): void
+    {
+        if ($id === null) {
+            return;
+        }
+
+        $exists = $model::query()
+            ->forBusiness($businessId)
+            ->when($branchId, fn ($query) => $query->where('branch_id', $branchId))
+            ->whereKey($id)
+            ->exists();
+
+        if (! $exists) {
+            throw ValidationException::withMessages([
+                $field => ['The selected value is outside the active branch.'],
             ]);
         }
     }

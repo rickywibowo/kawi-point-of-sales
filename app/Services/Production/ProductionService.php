@@ -33,12 +33,13 @@ class ProductionService
 
         $recipe = Recipe::query()
             ->forBusiness($business->id)
+            ->whereHas('product', fn ($query) => $query->where('branch_id', $warehouse->branch_id))
             ->whereKey($data['recipe_id'])
             ->with(['product', 'items.ingredientProduct'])
             ->first();
 
         if (! $recipe) {
-            throw ValidationException::withMessages(['recipe_id' => ['The selected recipe is outside the active business.']]);
+            throw ValidationException::withMessages(['recipe_id' => ['The selected recipe is outside the active branch.']]);
         }
 
         return DB::transaction(function () use ($business, $warehouse, $recipe, $data, $request): ProductionOrder {

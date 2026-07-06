@@ -24,12 +24,12 @@ class InventoryService
     {
     }
 
-    public function createRecipe(Business $business, array $data, Request $request): Recipe
+    public function createRecipe(Business $business, ?int $branchId, array $data, Request $request): Recipe
     {
-        $this->assertBusinessProduct($business->id, $data['product_id'], 'product_id');
+        $this->assertBusinessProduct($business->id, $branchId, $data['product_id'], 'product_id');
 
         foreach ($data['items'] as $index => $item) {
-            $this->assertBusinessProduct($business->id, $item['ingredient_product_id'], "items.$index.ingredient_product_id");
+            $this->assertBusinessProduct($business->id, $branchId, $item['ingredient_product_id'], "items.$index.ingredient_product_id");
         }
 
         return DB::transaction(function () use ($business, $data, $request): Recipe {
@@ -86,7 +86,7 @@ class InventoryService
         }
 
         foreach ($data['items'] as $index => $item) {
-            $this->assertBusinessProduct($business->id, $item['product_id'], "items.$index.product_id");
+            $this->assertBusinessProduct($business->id, $branchId ?? $warehouse->branch_id, $item['product_id'], "items.$index.product_id");
         }
 
         return DB::transaction(function () use ($business, $branchId, $warehouse, $data, $request): StockAdjustment {
@@ -144,7 +144,7 @@ class InventoryService
         $toWarehouse = $this->warehouseInBusiness($business->id, $data['to_warehouse_id'], 'to_warehouse_id');
 
         foreach ($data['items'] as $index => $item) {
-            $this->assertBusinessProduct($business->id, $item['product_id'], "items.$index.product_id");
+            $this->assertBusinessProduct($business->id, $fromWarehouse->branch_id, $item['product_id'], "items.$index.product_id");
         }
 
         return DB::transaction(function () use ($business, $fromWarehouse, $toWarehouse, $data, $request): StockTransfer {
@@ -217,7 +217,7 @@ class InventoryService
         $warehouse = $this->warehouseInBusiness($business->id, $data['warehouse_id'], 'warehouse_id');
 
         foreach ($data['items'] as $index => $item) {
-            $this->assertBusinessProduct($business->id, $item['product_id'], "items.$index.product_id");
+            $this->assertBusinessProduct($business->id, $warehouse->branch_id, $item['product_id'], "items.$index.product_id");
         }
 
         return DB::transaction(function () use ($business, $warehouse, $data, $request): StockOpname {
@@ -328,12 +328,16 @@ class InventoryService
         ]);
     }
 
-    private function assertBusinessProduct(int $businessId, int $productId, string $field): void
+    private function assertBusinessProduct(int $businessId, ?int $branchId, int $productId, string $field): void
     {
-        $exists = Product::query()->forBusiness($businessId)->whereKey($productId)->exists();
+        $exists = Product::query()
+            ->forBusiness($businessId)
+            ->forBranch($branchId)
+            ->whereKey($productId)
+            ->exists();
 
         if (! $exists) {
-            throw ValidationException::withMessages([$field => ['The selected product is outside the active business.']]);
+            throw ValidationException::withMessages([$field => ['The selected product is outside the active branch.']]);
         }
     }
 

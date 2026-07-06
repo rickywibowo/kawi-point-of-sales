@@ -13,6 +13,7 @@ class RecipeController extends Controller
     {
         $recipe = $service->createRecipe(
             $request->attributes->get('business'),
+            $request->attributes->get('branch')?->id,
             $request->validated(),
             $request,
         );

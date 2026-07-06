@@ -873,6 +873,17 @@ Status: complete.
 - Audit CRUD Filament yang sudah ada dan belum dibuat ditulis di dokumentasi tahap.
 - Dokumentasi Tahap 73 dibuat.
 
+### Tahap 74 - Branch Specific Product and Category
+
+Status: complete.
+
+- Kategori dan produk diberi `branch_id`.
+- Unique slug kategori dan SKU/barcode produk menjadi per business + branch.
+- API master data dan POS memfilter kategori/produk sesuai branch aktif.
+- Filament Categories dan Products memfilter dan membuat data sesuai branch aktif.
+- Validasi POS, inventory, purchasing, dan production diperketat agar product sesuai branch transaksi.
+- Dokumentasi Tahap 74 dibuat.
+
 ## Cara Track Mundur
 
 - Setiap tahap disimpan dalam commit terpisah.
