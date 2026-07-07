@@ -109,6 +109,17 @@ Status: complete.
 - Added tests for demo user creation, role assignment, business/outlet scoping, owner access, and active context options.
 - Filament panel access now allows valid KAWI POS RBAC roles and rejects users without a role.
 
+## Filament Header Context Selector
+
+Status: complete.
+
+- Added compact business/outlet selector to the Filament topbar near the user menu.
+- Header selector validates business and outlet access before updating session context.
+- Changing business clears the previous outlet and auto-selects the outlet when only one is available.
+- Filament middleware now auto-selects context for users with exactly one accessible business and outlet.
+- Users with multiple available contexts still use manual selection through the header or Active Business / Outlet page.
+- Active Business / Outlet page remains as fallback/manual context page.
+
 ## Not In Baseline Yet
 
 - Product/category.

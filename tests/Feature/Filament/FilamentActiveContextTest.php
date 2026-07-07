@@ -66,15 +66,34 @@ class FilamentActiveContextTest extends TestCase
         $this->assertFalse($user->canAccessPanel(Filament::getPanel('admin')));
     }
 
-    public function test_demo_user_without_context_is_redirected_to_manage_active_context(): void
+    public function test_demo_user_without_context_is_auto_selected_and_can_continue_to_admin(): void
     {
         $this->seed(DatabaseSeeder::class);
 
         $user = User::query()->where('email', 'admin.kcf@kawipos.local')->firstOrFail();
+        $business = Business::query()->where('code', 'KCF')->firstOrFail();
+        $outlet = Branch::query()->where('business_id', $business->id)->where('code', 'KCF-01')->firstOrFail();
 
         $this->actingAs($user)
             ->get('/admin')
-            ->assertRedirect(route('filament.admin.pages.manage-active-context'));
+            ->assertOk()
+            ->assertSessionHas('active_business_id', $business->id)
+            ->assertSessionHas('active_outlet_id', $outlet->id);
+    }
+
+    public function test_cashier_wg_without_context_is_auto_selected_and_can_continue_to_admin(): void
+    {
+        $this->seed(DatabaseSeeder::class);
+
+        $user = User::query()->where('email', 'cashier.wg@kawipos.local')->firstOrFail();
+        $business = Business::query()->where('code', 'WG')->firstOrFail();
+        $outlet = Branch::query()->where('business_id', $business->id)->where('code', 'WG-01')->firstOrFail();
+
+        $this->actingAs($user)
+            ->get('/admin')
+            ->assertOk()
+            ->assertSessionHas('active_business_id', $business->id)
+            ->assertSessionHas('active_outlet_id', $outlet->id);
     }
 
     public function test_owner_can_select_kcf_context(): void
@@ -144,7 +163,7 @@ class FilamentActiveContextTest extends TestCase
             ->assertSessionMissing('active_outlet_id');
     }
 
-    public function test_user_without_context_is_redirected_to_manage_active_context(): void
+    public function test_owner_with_multiple_businesses_is_not_auto_selected_to_arbitrary_business(): void
     {
         $this->seed(DatabaseSeeder::class);
         $user = User::query()->where('email', 'owner@kawipos.local')->firstOrFail();
@@ -152,6 +171,74 @@ class FilamentActiveContextTest extends TestCase
         $this->actingAs($user)
             ->get('/admin')
             ->assertRedirect(route('filament.admin.pages.manage-active-context'));
+    }
+
+    public function test_owner_can_change_business_from_header(): void
+    {
+        $this->seed(DatabaseSeeder::class);
+
+        $user = User::query()->where('email', 'owner@kawipos.local')->firstOrFail();
+        $business = Business::query()->where('code', 'WG')->firstOrFail();
+        $outlet = Branch::query()->where('business_id', $business->id)->where('code', 'WG-01')->firstOrFail();
+
+        $this->actingAs($user)
+            ->from('/admin')
+            ->post(route('filament.active-context.header-switch'), [
+                'business_id' => $business->id,
+            ])
+            ->assertRedirect('/admin')
+            ->assertSessionHas('active_business_id', $business->id)
+            ->assertSessionHas('active_outlet_id', $outlet->id);
+    }
+
+    public function test_header_outlet_options_are_filtered_by_selected_business(): void
+    {
+        $this->seed(DatabaseSeeder::class);
+
+        $user = User::query()->where('email', 'owner@kawipos.local')->firstOrFail();
+        $business = Business::query()->where('code', 'KCF')->firstOrFail();
+        $outlet = Branch::query()->where('business_id', $business->id)->where('code', 'KCF-01')->firstOrFail();
+
+        $this->actingAs($user)
+            ->withSession([
+                'active_business_id' => $business->id,
+                'active_outlet_id' => $outlet->id,
+            ])
+            ->get('/admin')
+            ->assertOk()
+            ->assertSee('KCF-01')
+            ->assertDontSee('WG-01')
+            ->assertDontSee('LBY-01');
+    }
+
+    public function test_user_cannot_select_inaccessible_business_from_header(): void
+    {
+        $this->seed(DatabaseSeeder::class);
+
+        $user = User::query()->where('email', 'admin.kcf@kawipos.local')->firstOrFail();
+        $business = Business::query()->where('code', 'WG')->firstOrFail();
+
+        $this->actingAs($user)
+            ->post(route('filament.active-context.header-switch'), [
+                'business_id' => $business->id,
+            ])
+            ->assertForbidden();
+    }
+
+    public function test_user_cannot_select_inaccessible_outlet_from_header(): void
+    {
+        $this->seed(DatabaseSeeder::class);
+
+        $user = User::query()->where('email', 'admin.kcf@kawipos.local')->firstOrFail();
+        $business = Business::query()->where('code', 'KCF')->firstOrFail();
+        $outlet = Branch::query()->where('code', 'WG-01')->firstOrFail();
+
+        $this->actingAs($user)
+            ->post(route('filament.active-context.header-switch'), [
+                'business_id' => $business->id,
+                'outlet_id' => $outlet->id,
+            ])
+            ->assertForbidden();
     }
 
     private function assertOwnerCanSelect(string $businessCode, string $outletCode): void

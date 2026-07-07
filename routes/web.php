@@ -1,10 +1,11 @@
 <?php
 
-use Illuminate\Support\Facades\Route;
 use App\Models\Branch;
 use App\Models\Business;
 use App\Services\Audit\AuditLogger;
+use App\Services\Tenancy\FilamentActiveContextManager;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
     return view('welcome');
@@ -13,6 +14,24 @@ Route::get('/', function () {
 Route::post('/admin/context', function (Request $request, AuditLogger $audit) {
     return redirect()->route('filament.admin.pages.manage-active-context');
 })->middleware(['web', 'auth'])->name('filament.context.switch');
+
+Route::post('/admin/header-active-context', function (Request $request, FilamentActiveContextManager $context) {
+    $data = $request->validate([
+        'business_id' => ['required', 'integer'],
+        'outlet_id' => ['nullable', 'integer'],
+    ]);
+
+    $businessId = (int) $data['business_id'];
+    $outletId = isset($data['outlet_id']) ? (int) $data['outlet_id'] : null;
+
+    if ($outletId) {
+        $context->switchOutlet($request->user(), $businessId, $outletId);
+    } else {
+        $context->switchBusiness($request->user(), $businessId);
+    }
+
+    return back();
+})->middleware(['web', 'auth'])->name('filament.active-context.header-switch');
 
 Route::post('/admin/active-context', function (Request $request, AuditLogger $audit) {
     $request->validate([
