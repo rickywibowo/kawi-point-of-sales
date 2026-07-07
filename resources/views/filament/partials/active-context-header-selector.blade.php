@@ -19,11 +19,11 @@
 @endphp
 
 @if ($user && count($contexts) > 0)
-    <div class="hidden items-center gap-2 md:flex">
-        <details class="group relative">
+    <div class="hidden min-w-0 shrink-0 flex-nowrap items-center gap-2 whitespace-nowrap md:flex">
+        <details class="group relative shrink-0">
             <summary class="flex cursor-pointer list-none items-center focus:outline-none">
-                <x-filament::badge color="primary" class="max-w-56 shadow-sm ring-1 ring-primary-200 transition hover:bg-primary-100 dark:ring-primary-800">
-                    <span class="flex min-w-0 items-center gap-2">
+                <x-filament::badge color="primary" class="w-48 max-w-48 shadow-sm ring-1 ring-primary-200 transition hover:bg-primary-100 dark:ring-primary-800 xl:w-56 xl:max-w-56">
+                    <span class="flex min-w-0 max-w-full items-center gap-2">
                         <span class="h-1.5 w-1.5 shrink-0 rounded-full bg-primary-600 dark:bg-primary-300"></span>
                         <span class="truncate">{{ $activeBusiness['name'] ?? 'Select' }}</span>
                         <span class="shrink-0 text-primary-500 transition group-open:rotate-180 dark:text-primary-300">v</span>
@@ -50,10 +50,10 @@
             </div>
         </details>
 
-        <details class="group relative">
+        <details class="group relative shrink-0">
             <summary class="flex cursor-pointer list-none items-center focus:outline-none">
-                <x-filament::badge color="gray" class="max-w-48 shadow-sm ring-1 ring-gray-200 transition hover:bg-gray-100 dark:ring-gray-700">
-                    <span class="flex min-w-0 items-center gap-2">
+                <x-filament::badge color="gray" class="w-36 max-w-36 shadow-sm ring-1 ring-gray-200 transition hover:bg-gray-100 dark:ring-gray-700 xl:w-44 xl:max-w-44">
+                    <span class="flex min-w-0 max-w-full items-center gap-2">
                         <span class="h-1.5 w-1.5 shrink-0 rounded-full bg-gray-500 dark:bg-gray-300"></span>
                         <span class="truncate">{{ $activeOutlet ? $shortOutletName($activeOutlet, $activeBusiness) : 'Select' }}</span>
                         <span class="shrink-0 text-gray-400 transition group-open:rotate-180">v</span>
