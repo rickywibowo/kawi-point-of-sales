@@ -6,10 +6,12 @@ use App\Models\Concerns\BelongsToBusiness;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Validation\ValidationException;
 
 class Account extends Model
 {
-    use BelongsToBusiness;
+    use BelongsToBusiness, SoftDeletes;
 
     protected $fillable = [
         'business_id',
@@ -19,12 +21,36 @@ class Account extends Model
         'type',
         'normal_balance',
         'is_cash',
+        'is_cash_account',
+        'is_system',
         'is_active',
     ];
 
     protected function casts(): array
     {
-        return ['is_cash' => 'boolean', 'is_active' => 'boolean'];
+        return [
+            'is_cash' => 'boolean',
+            'is_cash_account' => 'boolean',
+            'is_system' => 'boolean',
+            'is_active' => 'boolean',
+        ];
+    }
+
+    protected static function booted(): void
+    {
+        static::saving(function (Account $account): void {
+            if (! $account->parent_id) {
+                return;
+            }
+
+            $parentBusinessId = Account::query()->whereKey($account->parent_id)->value('business_id');
+
+            if ((int) $parentBusinessId !== (int) $account->business_id) {
+                throw ValidationException::withMessages([
+                    'parent_id' => 'Parent account must belong to the same business.',
+                ]);
+            }
+        });
     }
 
     public function parent(): BelongsTo
@@ -40,5 +66,10 @@ class Account extends Model
     public function journalLines(): HasMany
     {
         return $this->hasMany(JournalLine::class);
+    }
+
+    public function outletAccountMappings(): HasMany
+    {
+        return $this->hasMany(OutletAccountMapping::class);
     }
 }

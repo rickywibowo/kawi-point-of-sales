@@ -954,6 +954,21 @@ Status: complete.
 - Resource `Businesses` dibatasi ke business yang accessible oleh user.
 - Dokumentasi Tahap 79 dibuat.
 
+### Tahap 80 - Modern Accounting Foundation
+
+Status: complete.
+
+- Fondasi accounting modern dibuat dengan arah Laravel + Filament first.
+- COA/accounts discope per business, sedangkan outlet/branch dipakai sebagai dimensi accounting.
+- Migration additive menambahkan `is_cash_account`, `is_system`, soft delete account, `outlet_id`, `entry_date`, `reference_no`, dan `journal_entry_lines`.
+- Tabel `outlet_account_mappings` dibuat untuk mapping kas/bank/QRIS/selisih kas per outlet.
+- Model accounting diberi guard agar parent account, mapping account, dan journal line tidak lintas business.
+- Resource Filament Accounting ditambahkan: Chart of Accounts, Outlet Account Mappings, dan Journal Entries.
+- Journal entry draft dapat dibuat dan hanya bisa dipost jika debit-credit valid dan balance.
+- `AccountSeeder` dibuat untuk COA modern dan default mapping outlet di semua business existing.
+- Service accounting lama dibuat kompatibel dengan kode dan tipe akun modern.
+- Dokumentasi Tahap 80 dibuat.
+
 ## Cara Track Mundur
 
 - Setiap tahap disimpan dalam commit terpisah.

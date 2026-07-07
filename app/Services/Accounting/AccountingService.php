@@ -17,9 +17,7 @@ use Illuminate\Validation\ValidationException;
 
 class AccountingService
 {
-    public function __construct(private readonly AuditLogger $audit)
-    {
-    }
+    public function __construct(private readonly AuditLogger $audit) {}
 
     public function postJournal(Business $business, ?int $branchId, array $data, ?Request $request = null): JournalEntry
     {
@@ -165,8 +163,8 @@ class AccountingService
     public function profitAndLoss(int $businessId): array
     {
         $trialBalance = $this->trialBalance($businessId);
-        $revenue = $trialBalance->where('type', 'revenue')->sum('balance');
-        $expenses = $trialBalance->whereIn('type', ['expense', 'cost_of_goods_sold'])->sum('balance');
+        $revenue = $trialBalance->whereIn('type', ['income', 'revenue', 'other_income'])->sum('balance');
+        $expenses = $trialBalance->whereIn('type', ['expense', 'cogs', 'cost_of_goods_sold', 'other_expense'])->sum('balance');
 
         return [
             'revenue' => round($revenue, 2),
@@ -262,7 +260,9 @@ class AccountingService
     public function cashFlow(int $businessId, ?string $dateFrom = null, ?string $dateTo = null): array
     {
         $cashLines = JournalLine::query()
-            ->whereHas('account', fn ($query) => $query->forBusiness($businessId)->where('is_cash', true))
+            ->whereHas('account', fn ($query) => $query
+                ->forBusiness($businessId)
+                ->where(fn ($query) => $query->where('is_cash', true)->orWhere('is_cash_account', true)))
             ->whereHas('journalEntry', function ($query) use ($businessId, $dateFrom, $dateTo): void {
                 $query->where('business_id', $businessId)->where('status', 'posted');
 
@@ -299,13 +299,13 @@ class AccountingService
         $accounts = Account::query()->forBusiness($businessId)->get()->keyBy('code');
 
         return [
-            'cash' => $accounts['1100'],
-            'inventory' => $accounts['1300'],
-            'input_tax' => $accounts['1400'],
-            'accounts_payable' => $accounts['2100'],
-            'output_tax' => $accounts['2200'],
-            'sales' => $accounts['4100'],
-            'cogs' => $accounts['5100'],
+            'cash' => $accounts['1100'] ?? $accounts['1-1000'],
+            'inventory' => $accounts['1300'] ?? $accounts['1-1100'],
+            'input_tax' => $accounts['1400'] ?? $accounts['1-1020'],
+            'accounts_payable' => $accounts['2100'] ?? $accounts['2-1000'],
+            'output_tax' => $accounts['2200'] ?? $accounts['2-1000'],
+            'sales' => $accounts['4100'] ?? $accounts['4-1000'],
+            'cogs' => $accounts['5100'] ?? $accounts['5-1000'],
         ];
     }
 
@@ -344,7 +344,7 @@ class AccountingService
     {
         return Account::query()
             ->forBusiness($businessId)
-            ->where('is_cash', true)
+            ->where(fn ($query) => $query->where('is_cash', true)->orWhere('is_cash_account', true))
             ->pluck('code')
             ->all();
     }

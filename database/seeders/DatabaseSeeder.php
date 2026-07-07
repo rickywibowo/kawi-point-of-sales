@@ -18,6 +18,7 @@ class DatabaseSeeder extends Seeder
             RolePermissionSeeder::class,
             BusinessSeeder::class,
             OutletSeeder::class,
+            AccountSeeder::class,
             DefaultUserSeeder::class,
         ]);
 
