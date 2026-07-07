@@ -206,7 +206,10 @@ class FilamentActiveContextTest extends TestCase
             ])
             ->get('/admin')
             ->assertOk()
-            ->assertSee('KCF-01')
+            ->assertSee('Kawi Chinese Food')
+            ->assertSee('Main Outlet')
+            ->assertDontSee('Kawi Chinese Food - Main Outlet')
+            ->assertDontSee('KCF-01')
             ->assertDontSee('WG-01')
             ->assertDontSee('LBY-01');
     }
