@@ -21,6 +21,7 @@ class DatabaseSeeder extends Seeder
             UnitSeeder::class,
             AccountSeeder::class,
             DefaultUserSeeder::class,
+            RbacDemoUserSeeder::class,
         ]);
 
         // Legacy demo seeders were removed from the active baseline after Stage 80.

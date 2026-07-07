@@ -98,6 +98,16 @@ Status: complete.
 - DatabaseSeeder now calls UnitSeeder after OutletSeeder.
 - Added Unit Master tests for seeding, active business scoping, context auto-fill, missing context redirect, and required name.
 
+## RBAC Demo Users
+
+Status: complete.
+
+- Added RbacDemoUserSeeder for demo admin, cashier, warehouse, and accounting users.
+- Demo users are scoped to their assigned business and outlet through `business_user` and `outlet_user`.
+- Demo users receive the matching Spatie role.
+- DatabaseSeeder calls RbacDemoUserSeeder after DefaultUserSeeder.
+- Added tests for demo user creation, role assignment, business/outlet scoping, owner access, and active context options.
+
 ## Not In Baseline Yet
 
 - Product/category.
