@@ -21,9 +21,14 @@
 @if ($user && count($contexts) > 0)
     <div class="hidden items-center gap-2 md:flex">
         <details class="group relative">
-            <summary class="flex h-8 cursor-pointer list-none items-center gap-1 rounded-full border border-gray-200 bg-white px-3 text-xs font-semibold text-gray-800 shadow-sm transition hover:border-primary-300 hover:bg-primary-50 focus:outline-none focus:ring-2 focus:ring-primary-500 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:hover:border-primary-700 dark:hover:bg-primary-950/40">
-                <span class="max-w-44 truncate">{{ $activeBusiness['name'] ?? 'Select' }}</span>
-                <span class="text-gray-400 transition group-open:rotate-180">v</span>
+            <summary class="flex cursor-pointer list-none items-center focus:outline-none">
+                <x-filament::badge color="primary" class="max-w-56 shadow-sm ring-1 ring-primary-200 transition hover:bg-primary-100 dark:ring-primary-800">
+                    <span class="flex min-w-0 items-center gap-2">
+                        <span class="h-1.5 w-1.5 shrink-0 rounded-full bg-primary-600 dark:bg-primary-300"></span>
+                        <span class="truncate">{{ $activeBusiness['name'] ?? 'Select' }}</span>
+                        <span class="shrink-0 text-primary-500 transition group-open:rotate-180 dark:text-primary-300">v</span>
+                    </span>
+                </x-filament::badge>
             </summary>
 
             <div class="absolute right-0 z-50 mt-2 w-64 overflow-hidden rounded-lg border border-gray-200 bg-white p-1 shadow-lg dark:border-gray-700 dark:bg-gray-900">
@@ -46,9 +51,14 @@
         </details>
 
         <details class="group relative">
-            <summary class="flex h-8 cursor-pointer list-none items-center gap-1 rounded-full border border-gray-200 bg-white px-3 text-xs font-semibold text-gray-800 shadow-sm transition hover:border-primary-300 hover:bg-primary-50 focus:outline-none focus:ring-2 focus:ring-primary-500 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:hover:border-primary-700 dark:hover:bg-primary-950/40">
-                <span class="max-w-36 truncate">{{ $activeOutlet ? $shortOutletName($activeOutlet, $activeBusiness) : 'Select' }}</span>
-                <span class="text-gray-400 transition group-open:rotate-180">v</span>
+            <summary class="flex cursor-pointer list-none items-center focus:outline-none">
+                <x-filament::badge color="gray" class="max-w-48 shadow-sm ring-1 ring-gray-200 transition hover:bg-gray-100 dark:ring-gray-700">
+                    <span class="flex min-w-0 items-center gap-2">
+                        <span class="h-1.5 w-1.5 shrink-0 rounded-full bg-gray-500 dark:bg-gray-300"></span>
+                        <span class="truncate">{{ $activeOutlet ? $shortOutletName($activeOutlet, $activeBusiness) : 'Select' }}</span>
+                        <span class="shrink-0 text-gray-400 transition group-open:rotate-180">v</span>
+                    </span>
+                </x-filament::badge>
             </summary>
 
             <div class="absolute right-0 z-50 mt-2 w-56 overflow-hidden rounded-lg border border-gray-200 bg-white p-1 shadow-lg dark:border-gray-700 dark:bg-gray-900">
