@@ -14,6 +14,8 @@ class Business extends Model
 
     protected $fillable = [
         'uuid',
+        'code',
+        'type',
         'name',
         'legal_name',
         'tax_number',

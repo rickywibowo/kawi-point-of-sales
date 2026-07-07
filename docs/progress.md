@@ -910,6 +910,20 @@ Status: complete.
 - Form Filament branch-level kembali otomatis mengikuti branch context aktif.
 - Dokumentasi Tahap 76 dibuat.
 
+### Tahap 77 - Initial Master Data Seeders
+
+Status: complete.
+
+- Kolom `code` dan `type` ditambahkan ke `businesses`.
+- Pivot `outlet_user` ditambahkan untuk relasi user ke outlet/branch.
+- Seeder awal dibuat terpisah: RolePermissionSeeder, BusinessSeeder, OutletSeeder, dan DefaultUserSeeder.
+- DatabaseSeeder memanggil seed awal dalam urutan role/permission, business, outlet, lalu user.
+- Seed awal membuat 3 business, 3 outlet, 5 role Spatie, 8 permission, dan default owner user.
+- Owner user dihubungkan ke semua business melalui `business_user` dan semua outlet melalui `outlet_user`.
+- Seeder aman dijalankan berulang tanpa menggandakan data.
+- Data demo produk/inventory/sales lama hanya dipanggil saat environment `testing`, bukan saat seed normal.
+- Dokumentasi Tahap 77 dibuat.
+
 ## Cara Track Mundur
 
 - Setiap tahap disimpan dalam commit terpisah.

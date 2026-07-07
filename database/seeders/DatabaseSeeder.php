@@ -14,12 +14,23 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        $this->call(KawiFoundationSeeder::class);
-        $this->call(AccountingSeeder::class);
-        $this->call(MasterDataSeeder::class);
-        $this->call(InventorySeeder::class);
-        $this->call(PosSeeder::class);
-        $this->call(PurchasingSeeder::class);
-        $this->call(OfflineSeeder::class);
+        $this->call([
+            RolePermissionSeeder::class,
+            BusinessSeeder::class,
+            OutletSeeder::class,
+            DefaultUserSeeder::class,
+        ]);
+
+        if ($this->container->environment('testing')) {
+            $this->call([
+                KawiFoundationSeeder::class,
+                AccountingSeeder::class,
+                MasterDataSeeder::class,
+                InventorySeeder::class,
+                PosSeeder::class,
+                PurchasingSeeder::class,
+                OfflineSeeder::class,
+            ]);
+        }
     }
 }

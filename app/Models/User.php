@@ -43,6 +43,11 @@ class User extends Authenticatable implements FilamentUser
         return $this->belongsToMany(Business::class)->withPivot('is_owner')->withTimestamps();
     }
 
+    public function outlets(): BelongsToMany
+    {
+        return $this->belongsToMany(Branch::class, 'outlet_user')->withTimestamps();
+    }
+
     public function roles(): BelongsToMany
     {
         return $this->morphToMany(Role::class, 'model', 'model_has_roles', 'model_id', 'role_id')
