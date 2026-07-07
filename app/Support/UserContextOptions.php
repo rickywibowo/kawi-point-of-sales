@@ -10,26 +10,17 @@ class UserContextOptions
 {
     public static function forUser(User $user): array
     {
-        $businesses = $user->isPlatformSuperAdmin()
-            ? Business::query()->where('is_active', true)->with('branches')->orderBy('name')->get()
-            : $user->businesses()->where('is_active', true)->with('branches')->orderBy('name')->get();
+        $businesses = $user->businesses()
+            ->where('is_active', true)
+            ->with(['branches' => fn ($query) => $query
+                ->where('is_active', true)
+                ->whereHas('users', fn ($query) => $query->whereKey($user->id))
+                ->orderBy('name')])
+            ->orderBy('name')
+            ->get();
 
-        return $businesses->map(function (Business $business) use ($user): array {
-            $allBranches = $user->isPlatformSuperAdmin()
-                || $user->isBusinessOwner($business->id)
-                || $user->hasBusinessLevelRole($business->id);
-
-            $allowedBranchIds = $allBranches
-                ? null
-                : $user->roles()
-                    ->where('model_has_roles.business_id', $business->id)
-                    ->whereNotNull('model_has_roles.branch_id')
-                    ->pluck('model_has_roles.branch_id')
-                    ->unique()
-                    ->values();
-
+        return $businesses->map(function (Business $business): array {
             $branches = $business->branches
-                ->when($allowedBranchIds !== null, fn ($branches) => $branches->whereIn('id', $allowedBranchIds))
                 ->values()
                 ->map(fn (Branch $branch): array => [
                     'id' => $branch->id,
@@ -42,10 +33,10 @@ class UserContextOptions
                 'id' => $business->id,
                 'uuid' => $business->uuid,
                 'name' => $business->name,
-                'can_select_all_branches' => $allBranches,
+                'can_select_all_branches' => false,
                 'branches' => $branches,
             ];
-        })->values()->all();
+        })->filter(fn (array $business) => count($business['branches']) > 0)->values()->all();
     }
 
     public static function selectOptions(User $user): array

@@ -13,6 +13,7 @@ use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 use UnitEnum;
 
 class BusinessResource extends Resource
@@ -24,6 +25,16 @@ class BusinessResource extends Resource
     protected static ?string $navigationLabel = 'Businesses';
 
     protected static string|UnitEnum|null $navigationGroup = 'Administration';
+
+    public static function getEloquentQuery(): Builder
+    {
+        $query = parent::getEloquentQuery();
+        $user = auth()->user();
+
+        return $user
+            ? $query->whereHas('users', fn (Builder $query) => $query->whereKey($user->id))
+            : $query->whereRaw('1 = 0');
+    }
 
     public static function form(Schema $schema): Schema
     {

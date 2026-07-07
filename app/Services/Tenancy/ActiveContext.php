@@ -45,4 +45,9 @@ class ActiveContext
     {
         return $this->outletId() !== null;
     }
+
+    public function clear(): void
+    {
+        $this->request->session()->forget(['active_business_id', 'active_outlet_id']);
+    }
 }

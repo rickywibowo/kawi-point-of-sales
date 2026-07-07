@@ -11,31 +11,32 @@ Route::get('/', function () {
 });
 
 Route::post('/admin/context', function (Request $request, AuditLogger $audit) {
+    return redirect()->route('filament.admin.pages.manage-active-context');
+})->middleware(['web', 'auth'])->name('filament.context.switch');
+
+Route::post('/admin/active-context', function (Request $request, AuditLogger $audit) {
     $request->validate([
-        'context' => ['required', 'string'],
+        'business_id' => ['required', 'integer'],
+        'outlet_id' => ['required', 'integer'],
     ]);
 
-    $parts = explode(':', $request->string('context')->toString(), 2);
-    abort_unless(count($parts) === 2, 422, 'Invalid context.');
-
-    $businessId = (int) $parts[0];
-    $branchId = (int) $parts[1];
+    $businessId = (int) $request->integer('business_id');
+    $branchId = (int) $request->integer('outlet_id');
     $user = $request->user();
     $business = Business::query()->whereKey($businessId)->where('is_active', true)->first();
     $branch = Branch::query()->where('business_id', $businessId)->whereKey($branchId)->where('is_active', true)->first();
 
     abort_unless($user && $business && $branch, 422, 'Invalid context.');
-    abort_unless($user->canAccessBranchContext($businessId, $branchId), 403, 'Selected context is not accessible.');
+    abort_unless($user->businesses()->whereKey($businessId)->exists(), 403, 'Selected business is not accessible.');
+    abort_unless($user->outlets()->whereKey($branchId)->exists(), 403, 'Selected outlet is not accessible.');
 
-    $user->forceFill([
-        'current_business_id' => $businessId,
-        'current_branch_id' => $branchId,
-    ])->save();
+    $request->session()->put('active_business_id', $businessId);
+    $request->session()->put('active_outlet_id', $branchId);
 
     $audit->record('auth.context_switched', $user, after: [
         'business_id' => $businessId,
-        'branch_id' => $branchId,
+        'outlet_id' => $branchId,
     ], request: $request);
 
-    return redirect()->route('filament.admin.pages.context')->with('status', 'Context berhasil diganti.');
-})->middleware(['web', 'auth'])->name('filament.context.switch');
+    return redirect()->route('filament.admin.pages.manage-active-context')->with('status', 'Active context berhasil diganti.');
+})->middleware(['web', 'auth'])->name('filament.active-context.switch');

@@ -937,6 +937,23 @@ Status: complete.
 - Guidance route masa depan ditulis: master data business-scoped memakai `active.business`, operasional outlet-scoped memakai `active.outlet`.
 - Dokumentasi Tahap 78 dibuat.
 
+### Tahap 79 - Filament Active Business and Outlet Context
+
+Status: complete.
+
+- Pengembangan frontend Vue/Nuxt dipause; arah proyek difokuskan ke Laravel + Filament.
+- Halaman Filament `ManageActiveContext` dibuat untuk memilih active business dan active outlet.
+- Menu `Administration > Active Business / Outlet` ditambahkan.
+- Pilihan business hanya berasal dari `business_user`; pilihan outlet hanya berasal dari `outlet_user`.
+- Outlet dropdown difilter berdasarkan business yang dipilih dan hanya outlet aktif yang muncul.
+- Context Filament disimpan di session `active_business_id` dan `active_outlet_id`.
+- Middleware Filament memastikan user sudah memiliki context valid setelah login.
+- Context invalid dibersihkan dari session dan user diarahkan ulang ke halaman context.
+- Helper `ActiveContext` ditambah method `clear()`.
+- Filament `TenantContext` membaca active context session agar resource otomatis memakai business/outlet aktif.
+- Resource `Businesses` dibatasi ke business yang accessible oleh user.
+- Dokumentasi Tahap 79 dibuat.
+
 ## Cara Track Mundur
 
 - Setiap tahap disimpan dalam commit terpisah.
