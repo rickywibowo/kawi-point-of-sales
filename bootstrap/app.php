@@ -16,6 +16,8 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'tenant' => \App\Http\Middleware\EnsureTenantContext::class,
             'permission' => \App\Http\Middleware\EnsurePermission::class,
+            'active.business' => \App\Http\Middleware\EnsureActiveBusinessContext::class,
+            'active.outlet' => \App\Http\Middleware\EnsureActiveOutletContext::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

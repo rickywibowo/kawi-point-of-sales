@@ -924,6 +924,19 @@ Status: complete.
 - Data demo produk/inventory/sales lama hanya dipanggil saat environment `testing`, bukan saat seed normal.
 - Dokumentasi Tahap 77 dibuat.
 
+### Tahap 78 - Active Business and Outlet Context
+
+Status: complete.
+
+- Endpoint `GET /api/me/context-options` dibuat untuk menampilkan business/outlet yang accessible oleh user.
+- Endpoint `POST /api/me/active-context` dibuat untuk menyimpan active business/outlet ke session.
+- Endpoint `GET /api/me/active-context` dan `DELETE /api/me/active-context` dibuat untuk membaca dan menghapus context aktif.
+- Middleware `active.business` dan `active.outlet` ditambahkan.
+- Service `ActiveContext` dibuat untuk membaca active business/outlet dari session.
+- Validasi context memakai `business_user`, `outlet_user`, status aktif, dan ownership outlet terhadap business.
+- Guidance route masa depan ditulis: master data business-scoped memakai `active.business`, operasional outlet-scoped memakai `active.outlet`.
+- Dokumentasi Tahap 78 dibuat.
+
 ## Cara Track Mundur
 
 - Setiap tahap disimpan dalam commit terpisah.

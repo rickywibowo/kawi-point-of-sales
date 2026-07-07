@@ -12,6 +12,7 @@ use App\Http\Controllers\Api\HeldTransactionController;
 use App\Http\Controllers\Api\InventoryController;
 use App\Http\Controllers\Api\KitchenTicketController;
 use App\Http\Controllers\Api\MasterDataController;
+use App\Http\Controllers\Api\MeContextController;
 use App\Http\Controllers\Api\OfflineSyncController;
 use App\Http\Controllers\Api\OperationalExpenseController;
 use App\Http\Controllers\Api\PaymentSettlementController;
@@ -33,6 +34,7 @@ use App\Http\Controllers\Api\StockOpnameController;
 use App\Http\Controllers\Api\StockTransferController;
 use App\Http\Controllers\Api\SupplierPaymentController;
 use App\Http\Controllers\Api\UserAccessController;
+use Illuminate\Session\Middleware\StartSession;
 use Illuminate\Support\Facades\Route;
 
 Route::post('/auth/login', [AuthController::class, 'login']);
@@ -41,6 +43,13 @@ Route::get('/health', HealthController::class);
 Route::middleware('auth:sanctum')->group(function (): void {
     Route::get('/auth/contexts', [AuthController::class, 'contexts']);
     Route::post('/auth/context', [AuthController::class, 'switchContext']);
+});
+
+Route::middleware(['auth:sanctum', StartSession::class])->group(function (): void {
+    Route::get('/me/context-options', [MeContextController::class, 'options']);
+    Route::get('/me/active-context', [MeContextController::class, 'show']);
+    Route::post('/me/active-context', [MeContextController::class, 'store']);
+    Route::delete('/me/active-context', [MeContextController::class, 'destroy']);
 });
 
 Route::middleware(['auth:sanctum', 'tenant'])->group(function (): void {
