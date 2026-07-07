@@ -6,6 +6,7 @@ use App\Models\Branch;
 use App\Models\Business;
 use App\Models\User;
 use Database\Seeders\DatabaseSeeder;
+use Filament\Facades\Filament;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
 use Tests\TestCase;
@@ -13,6 +14,68 @@ use Tests\TestCase;
 class FilamentActiveContextTest extends TestCase
 {
     use RefreshDatabase;
+
+    public function test_owner_can_access_filament(): void
+    {
+        $this->seed(DatabaseSeeder::class);
+
+        $this->assertUserCanAccessFilament('owner@kawipos.local');
+    }
+
+    public function test_admin_kcf_can_access_filament(): void
+    {
+        $this->seed(DatabaseSeeder::class);
+
+        $this->assertUserCanAccessFilament('admin.kcf@kawipos.local');
+    }
+
+    public function test_cashier_kcf_can_access_filament(): void
+    {
+        $this->seed(DatabaseSeeder::class);
+
+        $this->assertUserCanAccessFilament('cashier.kcf@kawipos.local');
+    }
+
+    public function test_warehouse_kcf_can_access_filament(): void
+    {
+        $this->seed(DatabaseSeeder::class);
+
+        $this->assertUserCanAccessFilament('warehouse.kcf@kawipos.local');
+    }
+
+    public function test_accounting_kcf_can_access_filament(): void
+    {
+        $this->seed(DatabaseSeeder::class);
+
+        $this->assertUserCanAccessFilament('accounting.kcf@kawipos.local');
+    }
+
+    public function test_user_without_role_cannot_access_filament(): void
+    {
+        $this->seed(DatabaseSeeder::class);
+
+        $business = Business::query()->where('code', 'KCF')->firstOrFail();
+        $user = User::query()->create([
+            'name' => 'No Role User',
+            'email' => 'no-role@kawipos.local',
+            'password' => Hash::make('password'),
+        ]);
+
+        $user->businesses()->attach($business->id);
+
+        $this->assertFalse($user->canAccessPanel(Filament::getPanel('admin')));
+    }
+
+    public function test_demo_user_without_context_is_redirected_to_manage_active_context(): void
+    {
+        $this->seed(DatabaseSeeder::class);
+
+        $user = User::query()->where('email', 'admin.kcf@kawipos.local')->firstOrFail();
+
+        $this->actingAs($user)
+            ->get('/admin')
+            ->assertRedirect(route('filament.admin.pages.manage-active-context'));
+    }
 
     public function test_owner_can_select_kcf_context(): void
     {
@@ -105,6 +168,13 @@ class FilamentActiveContextTest extends TestCase
             ->assertRedirect(route('filament.admin.pages.manage-active-context'))
             ->assertSessionHas('active_business_id', $business->id)
             ->assertSessionHas('active_outlet_id', $outlet->id);
+    }
+
+    private function assertUserCanAccessFilament(string $email): void
+    {
+        $user = User::query()->where('email', $email)->firstOrFail();
+
+        $this->assertTrue($user->canAccessPanel(Filament::getPanel('admin')));
     }
 
     private function limitedUser(): User

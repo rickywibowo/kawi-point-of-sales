@@ -6,11 +6,11 @@ namespace App\Models;
 use Database\Factories\UserFactory;
 use Filament\Models\Contracts\FilamentUser;
 use Filament\Panel;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
@@ -20,6 +20,14 @@ use Spatie\Permission\Traits\HasRoles;
 #[Hidden(['password', 'remember_token'])]
 class User extends Authenticatable implements FilamentUser
 {
+    private const FILAMENT_ACCESS_ROLES = [
+        'owner',
+        'admin',
+        'cashier',
+        'warehouse',
+        'accounting',
+    ];
+
     /** @use HasFactory<UserFactory> */
     use HasApiTokens, HasFactory, HasRoles, Notifiable {
         HasRoles::roles as spatieRoles;
@@ -72,7 +80,15 @@ class User extends Authenticatable implements FilamentUser
 
     public function canAccessPanel(Panel $panel): bool
     {
-        return $this->isPlatformSuperAdmin() || $this->businesses()->exists();
+        return $this->isPlatformSuperAdmin()
+            || ($this->hasFilamentAccessRole() && $this->businesses()->exists());
+    }
+
+    public function hasFilamentAccessRole(): bool
+    {
+        return $this->roles()
+            ->whereIn('slug', self::FILAMENT_ACCESS_ROLES)
+            ->exists();
     }
 
     public function isPlatformSuperAdmin(): bool

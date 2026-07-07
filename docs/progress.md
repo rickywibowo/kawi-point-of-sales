@@ -107,6 +107,7 @@ Status: complete.
 - Demo users receive the matching Spatie role.
 - DatabaseSeeder calls RbacDemoUserSeeder after DefaultUserSeeder.
 - Added tests for demo user creation, role assignment, business/outlet scoping, owner access, and active context options.
+- Filament panel access now allows valid KAWI POS RBAC roles and rejects users without a role.
 
 ## Not In Baseline Yet
 
