@@ -7,6 +7,8 @@ use App\Models\Business;
 use App\Models\User;
 use Database\Seeders\DatabaseSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
 use Tests\TestCase;
 
 class RbacDemoUserSeederTest extends TestCase
@@ -50,6 +52,25 @@ class RbacDemoUserSeederTest extends TestCase
                 "{$demoUser['email']} should have {$demoUser['role']} role.",
             );
         }
+    }
+
+    public function test_admin_kcf_password_is_valid_after_seeding(): void
+    {
+        $this->seed(DatabaseSeeder::class);
+
+        $user = User::query()->where('email', 'admin.kcf@kawipos.local')->firstOrFail();
+
+        $this->assertTrue(Hash::check('password', $user->password));
+    }
+
+    public function test_admin_kcf_can_authenticate_successfully(): void
+    {
+        $this->seed(DatabaseSeeder::class);
+
+        $this->assertTrue(Auth::attempt([
+            'email' => 'admin.kcf@kawipos.local',
+            'password' => 'password',
+        ]));
     }
 
     public function test_each_demo_user_is_attached_only_to_the_correct_business(): void
