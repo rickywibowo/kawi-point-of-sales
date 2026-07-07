@@ -18,6 +18,7 @@ Status: active.
 - Spatie RBAC seeders and default owner user.
 - ActiveContext service and API.
 - Filament active business/outlet context page.
+- Unit Master.
 - Accounting:
   - Chart of Accounts.
   - Outlet Account Mappings.
@@ -71,7 +72,7 @@ Status: complete.
 - Added AccountSeeder for baseline COA and outlet mappings.
 - Added tests for accounting foundation.
 
-## Stage 81 - Conservative Legacy Cleanup
+## Conservative Legacy Cleanup
 
 Status: complete.
 
@@ -83,6 +84,19 @@ Status: complete.
 - Updated Help and release docs to reflect the current Filament-first baseline.
 - Kept current business, branch/outlet, RBAC, active context, audit, user access, and Stage 80 accounting foundation.
 - Deep runtime/schema pruning for legacy controllers, services, models, migrations, and Vue assets is deferred to a dedicated pass because it can affect existing databases and composer/npm build wiring.
+
+## Stage 81 - Unit Master
+
+Status: complete.
+
+- Added business-scoped `units` table with soft deletes.
+- Added Unit model.
+- Added Filament Master Data > Units resource.
+- Unit forms auto-fill `business_id` from active business context.
+- Unit listing is scoped to active business.
+- Added UnitSeeder for Porsi, Pcs, Gram, Kilogram, Mililiter, and Liter per business.
+- DatabaseSeeder now calls UnitSeeder after OutletSeeder.
+- Added Unit Master tests for seeding, active business scoping, context auto-fill, missing context redirect, and required name.
 
 ## Not In Baseline Yet
 

@@ -37,6 +37,7 @@ Password: password
 
 - Businesses
 - Branches/outlets
+- Units
 - Spatie RBAC seeders
 - Default owner user
 - Active business/outlet context API

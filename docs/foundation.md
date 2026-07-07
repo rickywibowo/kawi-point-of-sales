@@ -43,6 +43,7 @@ Active baseline resources:
 
 - Businesses
 - Branches
+- Units
 - Chart of Accounts
 - Outlet Account Mappings
 - Journal Entries

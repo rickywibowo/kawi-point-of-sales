@@ -41,11 +41,17 @@
 
         <section class="rounded-lg border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-900">
             <h3 class="text-base font-semibold text-gray-950 dark:text-white">Menu Aktif</h3>
-            <div class="mt-4 grid gap-4 lg:grid-cols-3">
+            <div class="mt-4 grid gap-4 lg:grid-cols-4">
                 <div class="rounded-md bg-gray-50 p-4 dark:bg-gray-800">
                     <p class="font-semibold text-gray-950 dark:text-white">Administration</p>
                     <p class="mt-2 text-sm leading-6 text-gray-600 dark:text-gray-300">
                         Businesses, Branches, dan Active Business / Outlet.
+                    </p>
+                </div>
+                <div class="rounded-md bg-gray-50 p-4 dark:bg-gray-800">
+                    <p class="font-semibold text-gray-950 dark:text-white">Master Data</p>
+                    <p class="mt-2 text-sm leading-6 text-gray-600 dark:text-gray-300">
+                        Units untuk satuan produk dan bahan per business aktif.
                     </p>
                 </div>
                 <div class="rounded-md bg-gray-50 p-4 dark:bg-gray-800">
@@ -67,6 +73,7 @@
             <h3 class="text-base font-semibold text-amber-900 dark:text-amber-100">Catatan Baseline</h3>
             <ul class="mt-4 list-disc space-y-2 pl-5 text-sm leading-6 text-amber-900 dark:text-amber-100">
                 <li>COA dibuat per business melalui AccountSeeder.</li>
+                <li>Unit dasar dibuat per business melalui UnitSeeder.</li>
                 <li>Outlet dipakai sebagai dimensi accounting melalui journal entry dan outlet account mapping.</li>
                 <li>Product, category, sales, inventory, recipe, purchasing, dan expense belum dibuat ulang pada baseline ini.</li>
                 <li>Jika dropdown kosong, pastikan active context sudah dipilih dan seeder sudah dijalankan.</li>
