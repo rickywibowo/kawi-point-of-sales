@@ -4,7 +4,7 @@ Status: complete.
 
 ## Ringkasan
 
-Tahap ini menambahkan seed awal untuk multi-business dan multi-outlet KAWI POS tanpa membuat data produk, inventory, sales, recipe, atau accounting.
+Tahap ini menambahkan seed awal untuk multi-business dan multi-outlet KAWI POS tanpa membuat data produk, inventory, sales, atau recipe.
 
 ## Perubahan
 
@@ -17,7 +17,7 @@ Tahap ini menambahkan seed awal untuk multi-business dan multi-outlet KAWI POS t
   - `OutletSeeder`
   - `DefaultUserSeeder`
 - `DatabaseSeeder` sekarang memanggil seed awal dalam urutan role/permission, business, outlet, lalu user.
-- Data demo lama untuk produk/inventory/sales tetap hanya dipanggil saat environment `testing` agar test historis tetap berjalan.
+- Data demo lama untuk produk/inventory/sales sudah dikeluarkan dari baseline aktif.
 - Seeder memakai `updateOrCreate` dan `syncWithoutDetaching` agar aman dijalankan berulang.
 
 ## Data Awal

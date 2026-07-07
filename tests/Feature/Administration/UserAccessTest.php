@@ -32,7 +32,7 @@ class UserAccessTest extends TestCase
     {
         $this->seed(DatabaseSeeder::class);
         [$owner, $business, $branch] = $this->context();
-        $cashierRole = Role::query()->where('business_id', $business->id)->where('slug', 'cashier')->firstOrFail();
+        $cashierRole = Role::query()->whereNull('business_id')->where('slug', 'cashier')->firstOrFail();
 
         $this->actingAs($owner, 'sanctum')
             ->withHeader('X-Business-Id', $business->uuid)
@@ -52,7 +52,7 @@ class UserAccessTest extends TestCase
 
         $this->assertTrue(Hash::check('password123', $cashier->password));
         $this->assertTrue($cashier->belongsToBusiness($business->id));
-        $this->assertTrue($cashier->canInTenant('sales.create', $business->id, $branch->id));
+        $this->assertTrue($cashier->canInTenant('manage sales', $business->id, $branch->id));
         $this->assertDatabaseHas('audit_logs', ['action' => 'user.invited']);
     }
 
@@ -60,7 +60,7 @@ class UserAccessTest extends TestCase
     {
         $this->seed(DatabaseSeeder::class);
         [$owner, $business, $branch] = $this->context();
-        $accountantRole = Role::query()->where('business_id', $business->id)->where('slug', 'accountant')->firstOrFail();
+        $accountantRole = Role::query()->whereNull('business_id')->where('slug', 'accounting')->firstOrFail();
         $user = User::query()->create([
             'name' => 'Accountant User',
             'email' => 'accountant@kawi.test',
@@ -77,7 +77,7 @@ class UserAccessTest extends TestCase
             ])
             ->assertOk();
 
-        $this->assertTrue($user->fresh()->canInTenant('accounting.manage', $business->id, $branch->id));
+        $this->assertTrue($user->fresh()->canInTenant('manage expense', $business->id, $branch->id));
         $this->assertDatabaseHas('audit_logs', ['action' => 'role.assigned']);
     }
 
@@ -119,9 +119,9 @@ class UserAccessTest extends TestCase
 
     private function context(): array
     {
-        $owner = User::query()->where('email', 'owner@kawi.test')->firstOrFail();
-        $business = Business::query()->where('name', 'KAWI Demo Business')->firstOrFail();
-        $branch = Branch::query()->where('business_id', $business->id)->where('code', 'MAIN')->firstOrFail();
+        $owner = User::query()->where('email', 'owner@kawipos.local')->firstOrFail();
+        $business = Business::query()->where('code', 'KCF')->firstOrFail();
+        $branch = Branch::query()->where('business_id', $business->id)->where('code', 'KCF-01')->firstOrFail();
 
         return [$owner, $business, $branch];
     }

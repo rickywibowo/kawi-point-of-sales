@@ -7,7 +7,7 @@ use App\Models\Branch;
 use App\Models\Business;
 use App\Models\Role;
 use App\Models\User;
-use Database\Seeders\KawiFoundationSeeder;
+use Database\Seeders\DatabaseSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
@@ -19,10 +19,10 @@ class AuthAndTenantTest extends TestCase
 
     public function test_user_can_login_with_sanctum_token(): void
     {
-        $this->seed(KawiFoundationSeeder::class);
+        $this->seed(DatabaseSeeder::class);
 
         $response = $this->postJson('/api/auth/login', [
-            'email' => 'owner@kawi.test',
+            'email' => 'owner@kawipos.local',
             'password' => 'password',
             'device_name' => 'feature-test',
         ]);
@@ -37,9 +37,9 @@ class AuthAndTenantTest extends TestCase
 
     public function test_tenant_middleware_rejects_business_outside_membership(): void
     {
-        $this->seed(KawiFoundationSeeder::class);
+        $this->seed(DatabaseSeeder::class);
 
-        $user = User::query()->where('email', 'owner@kawi.test')->firstOrFail();
+        $user = User::query()->where('email', 'owner@kawipos.local')->firstOrFail();
         $outsideBusiness = Business::query()->create(['name' => 'Outside Tenant']);
 
         $this->actingAs($user, 'sanctum')
@@ -50,10 +50,10 @@ class AuthAndTenantTest extends TestCase
 
     public function test_permission_middleware_allows_role_permission_in_tenant_scope(): void
     {
-        $this->seed(KawiFoundationSeeder::class);
+        $this->seed(DatabaseSeeder::class);
 
-        $user = User::query()->where('email', 'owner@kawi.test')->firstOrFail();
-        $business = Business::query()->where('name', 'KAWI Demo Business')->firstOrFail();
+        $user = User::query()->where('email', 'owner@kawipos.local')->firstOrFail();
+        $business = Business::query()->where('code', 'KCF')->firstOrFail();
         $branch = Branch::query()->where('business_id', $business->id)->firstOrFail();
 
         $this->actingAs($user, 'sanctum')
@@ -61,22 +61,22 @@ class AuthAndTenantTest extends TestCase
                 'X-Business-Id' => $business->uuid,
                 'X-Branch-Id' => $branch->uuid,
             ])
-            ->getJson('/api/foundation/permissions/reports')
+            ->getJson('/api/user-access')
             ->assertOk()
-            ->assertJson(['allowed' => true]);
+            ->assertJsonStructure(['users', 'roles', 'permissions', 'branches']);
     }
 
     public function test_logout_records_audit_log_and_revokes_current_token(): void
     {
-        $this->seed(KawiFoundationSeeder::class);
+        $this->seed(DatabaseSeeder::class);
 
         $login = $this->postJson('/api/auth/login', [
-            'email' => 'owner@kawi.test',
+            'email' => 'owner@kawipos.local',
             'password' => 'password',
             'device_name' => 'logout-test',
         ])->json();
 
-        $business = Business::query()->where('name', 'KAWI Demo Business')->firstOrFail();
+        $business = Business::query()->where('code', 'KCF')->firstOrFail();
 
         $this->withToken($login['token'])
             ->withHeader('X-Business-Id', $business->uuid)
@@ -89,10 +89,10 @@ class AuthAndTenantTest extends TestCase
 
     public function test_owner_can_switch_business_branch_context(): void
     {
-        $this->seed(KawiFoundationSeeder::class);
+        $this->seed(DatabaseSeeder::class);
 
-        $user = User::query()->where('email', 'owner@kawi.test')->firstOrFail();
-        $business = Business::query()->where('name', 'KAWI Demo Business')->firstOrFail();
+        $user = User::query()->where('email', 'owner@kawipos.local')->firstOrFail();
+        $business = Business::query()->where('code', 'KCF')->firstOrFail();
         $branch = Branch::query()->create([
             'business_id' => $business->id,
             'uuid' => (string) Str::uuid(),
@@ -115,9 +115,9 @@ class AuthAndTenantTest extends TestCase
 
     public function test_branch_scoped_user_cannot_select_unassigned_branch(): void
     {
-        $this->seed(KawiFoundationSeeder::class);
+        $this->seed(DatabaseSeeder::class);
 
-        $business = Business::query()->where('name', 'KAWI Demo Business')->firstOrFail();
+        $business = Business::query()->where('code', 'KCF')->firstOrFail();
         $allowedBranch = Branch::query()->where('business_id', $business->id)->firstOrFail();
         $blockedBranch = Branch::query()->create([
             'business_id' => $business->id,
@@ -125,7 +125,7 @@ class AuthAndTenantTest extends TestCase
             'name' => 'Cabang Terlarang',
             'code' => 'NOPE',
         ]);
-        $cashierRole = Role::query()->where('business_id', $business->id)->where('slug', 'cashier')->firstOrFail();
+        $cashierRole = Role::query()->whereNull('business_id')->where('slug', 'cashier')->firstOrFail();
         $cashier = User::query()->create([
             'name' => 'Branch Cashier',
             'email' => 'branch-cashier@kawi.test',

@@ -4,10 +4,8 @@ namespace App\Services\Accounting;
 
 use App\Models\Account;
 use App\Models\Business;
-use App\Models\GoodsReceipt;
 use App\Models\JournalEntry;
 use App\Models\JournalLine;
-use App\Models\Sale;
 use App\Services\Audit\AuditLogger;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
@@ -70,71 +68,6 @@ class AccountingService
 
             return $journal;
         });
-    }
-
-    public function postSaleJournal(Sale $sale, ?Request $request = null): JournalEntry
-    {
-        $business = Business::query()->findOrFail($sale->business_id);
-
-        if ($this->journalExists(Sale::class, $sale->id)) {
-            return JournalEntry::query()->where('source_type', Sale::class)->where('source_id', $sale->id)->firstOrFail();
-        }
-
-        $accounts = $this->accounts($sale->business_id);
-        $sale->loadMissing('items.product');
-        $cogs = $sale->items->sum(fn ($item) => (float) $item->quantity * (float) $item->product?->cost_price);
-        $revenue = (float) $sale->subtotal - (float) $sale->discount_total + (float) $sale->service_charge_total + (float) $sale->delivery_fee_total;
-
-        $lines = [
-            ['account_id' => $accounts['cash']->id, 'debit' => (float) $sale->paid_total, 'credit' => 0, 'description' => 'Kas penjualan '.$sale->sale_number],
-            ['account_id' => $accounts['sales']->id, 'debit' => 0, 'credit' => $revenue, 'description' => 'Penjualan '.$sale->sale_number],
-        ];
-
-        if ((float) $sale->tax_total > 0) {
-            $lines[] = ['account_id' => $accounts['output_tax']->id, 'debit' => 0, 'credit' => (float) $sale->tax_total, 'description' => 'Pajak keluaran '.$sale->sale_number];
-        }
-
-        if ($cogs > 0) {
-            $lines[] = ['account_id' => $accounts['cogs']->id, 'debit' => $cogs, 'credit' => 0, 'description' => 'HPP '.$sale->sale_number];
-            $lines[] = ['account_id' => $accounts['inventory']->id, 'debit' => 0, 'credit' => $cogs, 'description' => 'Persediaan keluar '.$sale->sale_number];
-        }
-
-        return $this->postJournal($business, $sale->branch_id, [
-            'journal_number' => 'JE-SALE-'.$sale->sale_number,
-            'journal_date' => $sale->sold_at?->toDateString() ?? now()->toDateString(),
-            'source_type' => Sale::class,
-            'source_id' => $sale->id,
-            'description' => 'Auto journal sale '.$sale->sale_number,
-            'lines' => $this->normalizeBalancedLines($lines),
-        ], $request);
-    }
-
-    public function postGoodsReceiptJournal(GoodsReceipt $receipt, ?Request $request = null): JournalEntry
-    {
-        $business = Business::query()->findOrFail($receipt->business_id);
-
-        if ($this->journalExists(GoodsReceipt::class, $receipt->id)) {
-            return JournalEntry::query()->where('source_type', GoodsReceipt::class)->where('source_id', $receipt->id)->firstOrFail();
-        }
-
-        $accounts = $this->accounts($receipt->business_id);
-        $lines = [
-            ['account_id' => $accounts['inventory']->id, 'debit' => (float) $receipt->subtotal, 'credit' => 0, 'description' => 'Persediaan masuk '.$receipt->receipt_number],
-            ['account_id' => $accounts['accounts_payable']->id, 'debit' => 0, 'credit' => (float) $receipt->grand_total, 'description' => 'Utang supplier '.$receipt->receipt_number],
-        ];
-
-        if ((float) $receipt->tax_total > 0) {
-            $lines[] = ['account_id' => $accounts['input_tax']->id, 'debit' => (float) $receipt->tax_total, 'credit' => 0, 'description' => 'Pajak masukan '.$receipt->receipt_number];
-        }
-
-        return $this->postJournal($business, $receipt->branch_id, [
-            'journal_number' => 'JE-GR-'.$receipt->receipt_number,
-            'journal_date' => $receipt->received_date?->toDateString() ?? now()->toDateString(),
-            'source_type' => GoodsReceipt::class,
-            'source_id' => $receipt->id,
-            'description' => 'Auto journal goods receipt '.$receipt->receipt_number,
-            'lines' => $this->normalizeBalancedLines($lines),
-        ], $request);
     }
 
     public function trialBalance(int $businessId): Collection
@@ -292,34 +225,6 @@ class AccountingService
             ],
             'ending_cash_balance' => round($this->trialBalance($businessId)->whereIn('code', $this->cashAccountCodes($businessId))->sum('balance'), 2),
         ];
-    }
-
-    private function accounts(int $businessId): array
-    {
-        $accounts = Account::query()->forBusiness($businessId)->get()->keyBy('code');
-
-        return [
-            'cash' => $accounts['1100'] ?? $accounts['1-1000'],
-            'inventory' => $accounts['1300'] ?? $accounts['1-1100'],
-            'input_tax' => $accounts['1400'] ?? $accounts['1-1020'],
-            'accounts_payable' => $accounts['2100'] ?? $accounts['2-1000'],
-            'output_tax' => $accounts['2200'] ?? $accounts['2-1000'],
-            'sales' => $accounts['4100'] ?? $accounts['4-1000'],
-            'cogs' => $accounts['5100'] ?? $accounts['5-1000'],
-        ];
-    }
-
-    private function journalExists(string $sourceType, int $sourceId): bool
-    {
-        return JournalEntry::query()->where('source_type', $sourceType)->where('source_id', $sourceId)->exists();
-    }
-
-    private function normalizeBalancedLines(array $lines): array
-    {
-        return collect($lines)
-            ->filter(fn (array $line) => round((float) $line['debit'] + (float) $line['credit'], 2) > 0)
-            ->values()
-            ->all();
     }
 
     private function statementSection(Collection $trialBalance, array $types): array

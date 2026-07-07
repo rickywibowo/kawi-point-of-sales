@@ -22,16 +22,6 @@ class DatabaseSeeder extends Seeder
             DefaultUserSeeder::class,
         ]);
 
-        if ($this->container->environment('testing')) {
-            $this->call([
-                KawiFoundationSeeder::class,
-                AccountingSeeder::class,
-                MasterDataSeeder::class,
-                InventorySeeder::class,
-                PosSeeder::class,
-                PurchasingSeeder::class,
-                OfflineSeeder::class,
-            ]);
-        }
+        // Legacy demo seeders were removed from the active baseline after Stage 80.
     }
 }

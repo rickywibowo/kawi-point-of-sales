@@ -4,7 +4,7 @@ Status: complete.
 
 ## Ringkasan
 
-Tahap ini memindahkan fondasi RBAC ke Spatie Laravel Permission dan menambahkan pemilihan business/branch sebagai context session. Dengan pola ini, user memilih business dan branch terlebih dulu, lalu form Product, Category, dan CRUD branch-level otomatis memakai context aktif.
+Tahap ini memindahkan fondasi RBAC ke Spatie Laravel Permission dan menambahkan pemilihan business/branch sebagai context session. Dengan pola ini, user memilih business dan branch terlebih dulu, lalu resource Filament aktif otomatis memakai context tersebut.
 
 ## Perubahan
 
@@ -36,7 +36,7 @@ Tahap ini memindahkan fondasi RBAC ke Spatie Laravel Permission dan menambahkan 
 2. Ambil pilihan context dari response login atau `GET /api/auth/contexts`.
 3. Pilih context dengan `POST /api/auth/context`.
 4. Untuk back office, buka `Administration > Context` atau `/admin/context`, lalu pilih business/branch aktif.
-5. Setelah context tersimpan, buka Filament atau dashboard; Product, Category, Warehouse, dan dokumen branch-level otomatis memakai branch aktif.
+5. Setelah context tersimpan, buka Filament; resource baseline otomatis memakai branch aktif.
 
 ## Verifikasi
 

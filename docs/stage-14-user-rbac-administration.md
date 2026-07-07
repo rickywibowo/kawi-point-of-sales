@@ -53,9 +53,10 @@ Audit action:
 
 ## Frontend
 
-Store demo:
+Current baseline:
 
-- `resources/js/stores/userAccess.js`
+- API remains available for user access administration.
+- Vue/Nuxt user access UI is paused.
 
 Dashboard awal menampilkan panel User Access:
 

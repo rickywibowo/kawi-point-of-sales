@@ -55,9 +55,10 @@ Event sensitif yang ditonjolkan:
 
 ## Frontend
 
-Store demo:
+Current baseline:
 
-- `resources/js/stores/audit.js`
+- API remains available for audit log review.
+- Vue/Nuxt audit UI is paused.
 
 Dashboard awal menampilkan panel Audit Review:
 

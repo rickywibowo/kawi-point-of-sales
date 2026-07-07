@@ -6,7 +6,6 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Accounting\StoreJournalEntryRequest;
 use App\Models\Account;
 use App\Models\JournalEntry;
-use App\Models\OperationalExpense;
 use App\Services\Accounting\AccountingService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -24,12 +23,6 @@ class AccountingController extends Controller
                 ->forTenant($business->id, $branch?->id)
                 ->with('lines.account')
                 ->latest('journal_date')
-                ->limit(50)
-                ->get(),
-            'operational_expenses' => OperationalExpense::query()
-                ->forTenant($business->id, $branch?->id)
-                ->with(['account', 'cashAccount'])
-                ->latest('expense_date')
                 ->limit(50)
                 ->get(),
             'trial_balance' => $accounting->trialBalance($business->id),

@@ -1,38 +1,10 @@
 <?php
 
-use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\AccountingController;
 use App\Http\Controllers\Api\AuditLogController;
-use App\Http\Controllers\Api\CashierShiftController;
-use App\Http\Controllers\Api\CategoryController;
-use App\Http\Controllers\Api\CustomerController;
-use App\Http\Controllers\Api\DeliveryOrderController;
-use App\Http\Controllers\Api\DiningTableController;
-use App\Http\Controllers\Api\HeldTransactionController;
-use App\Http\Controllers\Api\InventoryController;
-use App\Http\Controllers\Api\KitchenTicketController;
-use App\Http\Controllers\Api\MasterDataController;
-use App\Http\Controllers\Api\MeContextController;
-use App\Http\Controllers\Api\OfflineSyncController;
-use App\Http\Controllers\Api\OperationalExpenseController;
-use App\Http\Controllers\Api\PaymentSettlementController;
-use App\Http\Controllers\Api\PaymentProviderImportController;
-use App\Http\Controllers\Api\PosController;
-use App\Http\Controllers\Api\ProductController;
-use App\Http\Controllers\Api\PromotionController;
-use App\Http\Controllers\Api\ProductionController;
-use App\Http\Controllers\Api\GoodsReceiptController;
+use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\HealthController;
-use App\Http\Controllers\Api\PurchaseOrderController;
-use App\Http\Controllers\Api\PurchaseReturnController;
-use App\Http\Controllers\Api\PurchasingController;
-use App\Http\Controllers\Api\RecipeController;
-use App\Http\Controllers\Api\ReportController;
-use App\Http\Controllers\Api\SaleController;
-use App\Http\Controllers\Api\StockAdjustmentController;
-use App\Http\Controllers\Api\StockOpnameController;
-use App\Http\Controllers\Api\StockTransferController;
-use App\Http\Controllers\Api\SupplierPaymentController;
+use App\Http\Controllers\Api\MeContextController;
 use App\Http\Controllers\Api\UserAccessController;
 use Illuminate\Session\Middleware\StartSession;
 use Illuminate\Support\Facades\Route;
@@ -56,9 +28,6 @@ Route::middleware(['auth:sanctum', 'tenant'])->group(function (): void {
     Route::get('/auth/me', [AuthController::class, 'me']);
     Route::post('/auth/logout', [AuthController::class, 'logout']);
 
-    Route::get('/foundation/permissions/reports', fn () => response()->json(['allowed' => true]))
-        ->middleware('permission:reports.view');
-
     Route::get('/user-access', [UserAccessController::class, 'index'])
         ->middleware('permission:users.manage');
     Route::post('/user-access/users', [UserAccessController::class, 'store'])
@@ -68,116 +37,8 @@ Route::middleware(['auth:sanctum', 'tenant'])->group(function (): void {
     Route::get('/audit-logs', [AuditLogController::class, 'index'])
         ->middleware('permission:users.manage');
 
-    Route::get('/master-data', [MasterDataController::class, 'index'])
-        ->middleware('permission:inventory.view');
-    Route::post('/categories', [CategoryController::class, 'store'])
-        ->middleware('permission:inventory.adjust');
-    Route::delete('/categories/{category}', [CategoryController::class, 'destroy'])
-        ->middleware('permission:inventory.adjust');
-    Route::post('/products', [ProductController::class, 'store'])
-        ->middleware('permission:inventory.adjust');
-    Route::get('/customers', [CustomerController::class, 'index'])
-        ->middleware('permission:sales.create');
-    Route::post('/customers', [CustomerController::class, 'store'])
-        ->middleware('permission:sales.create');
-    Route::get('/customers/{customer}', [CustomerController::class, 'show'])
-        ->middleware('permission:sales.create');
-    Route::patch('/customers/{customer}', [CustomerController::class, 'update'])
-        ->middleware('permission:sales.create');
-    Route::post('/customers/{customer}/loyalty-transactions', [CustomerController::class, 'loyalty'])
-        ->middleware('permission:sales.create');
-
-    Route::get('/inventory', [InventoryController::class, 'index'])
-        ->middleware('permission:inventory.view');
-    Route::post('/recipes', [RecipeController::class, 'store'])
-        ->middleware('permission:inventory.adjust');
-    Route::post('/stock-adjustments', [StockAdjustmentController::class, 'store'])
-        ->middleware('permission:inventory.adjust');
-    Route::post('/stock-transfers', [StockTransferController::class, 'store'])
-        ->middleware('permission:inventory.adjust');
-    Route::post('/stock-opnames', [StockOpnameController::class, 'store'])
-        ->middleware('permission:inventory.adjust');
-    Route::post('/production-orders', [ProductionController::class, 'store'])
-        ->middleware('permission:inventory.adjust');
-
-    Route::get('/pos', [PosController::class, 'index'])
-        ->middleware('permission:sales.create');
-    Route::post('/dining-tables', [DiningTableController::class, 'store'])
-        ->middleware('permission:sales.create');
-    Route::patch('/dining-tables/{table}/status', [DiningTableController::class, 'updateStatus'])
-        ->middleware('permission:sales.create');
-    Route::post('/dining-tables/{table}/reservations', [DiningTableController::class, 'reserve'])
-        ->middleware('permission:sales.create');
-    Route::patch('/table-reservations/{reservation}/cancel', [DiningTableController::class, 'cancelReservation'])
-        ->middleware('permission:sales.create');
-    Route::patch('/table-reservations/{reservation}/seat', [DiningTableController::class, 'seatReservation'])
-        ->middleware('permission:sales.create');
-    Route::post('/promotions', [PromotionController::class, 'store'])
-        ->middleware('permission:sales.create');
-    Route::post('/cashier-shifts', [CashierShiftController::class, 'store'])
-        ->middleware('permission:sales.create');
-    Route::post('/cashier-shifts/{shift}/close', [CashierShiftController::class, 'close'])
-        ->middleware('permission:sales.create');
-    Route::post('/cashier-shifts/{shift}/cash-movements', [CashierShiftController::class, 'cashMovement'])
-        ->middleware('permission:sales.create');
-    Route::post('/sales', [SaleController::class, 'store'])
-        ->middleware('permission:sales.create');
-    Route::post('/sales/{sale}/void', [SaleController::class, 'void'])
-        ->middleware('permission:sales.void');
-    Route::post('/sales/{sale}/refund', [SaleController::class, 'refund'])
-        ->middleware('permission:sales.refund');
-    Route::get('/sales/{sale}/receipt', [SaleController::class, 'receipt'])
-        ->middleware('permission:sales.create');
-    Route::post('/held-transactions', [HeldTransactionController::class, 'store'])
-        ->middleware('permission:sales.create');
-    Route::get('/kitchen-tickets', [KitchenTicketController::class, 'index'])
-        ->middleware('permission:sales.create');
-    Route::post('/kitchen-stations', [KitchenTicketController::class, 'storeStation'])
-        ->middleware('permission:sales.create');
-    Route::get('/kitchen-tickets/{ticket}/slip', [KitchenTicketController::class, 'slip'])
-        ->middleware('permission:sales.create');
-    Route::patch('/kitchen-tickets/{ticket}/status', [KitchenTicketController::class, 'updateStatus'])
-        ->middleware('permission:sales.create');
-    Route::patch('/kitchen-ticket-items/{item}/status', [KitchenTicketController::class, 'updateItemStatus'])
-        ->middleware('permission:sales.create');
-    Route::get('/delivery-orders', [DeliveryOrderController::class, 'index'])
-        ->middleware('permission:sales.create');
-    Route::patch('/delivery-orders/{delivery}/status', [DeliveryOrderController::class, 'updateStatus'])
-        ->middleware('permission:sales.create');
-
-    Route::get('/purchasing', [PurchasingController::class, 'index'])
-        ->middleware('permission:purchases.manage');
-    Route::post('/purchase-orders', [PurchaseOrderController::class, 'store'])
-        ->middleware('permission:purchases.manage');
-    Route::post('/purchase-orders/{purchaseOrder}/approve', [PurchaseOrderController::class, 'approve'])
-        ->middleware('permission:purchases.manage');
-    Route::post('/goods-receipts', [GoodsReceiptController::class, 'store'])
-        ->middleware('permission:purchases.manage');
-    Route::post('/purchase-returns', [PurchaseReturnController::class, 'store'])
-        ->middleware('permission:purchases.manage');
-    Route::post('/supplier-payables/{payable}/payments', [SupplierPaymentController::class, 'store'])
-        ->middleware('permission:purchases.manage');
-
     Route::get('/accounting', [AccountingController::class, 'index'])
         ->middleware('permission:accounting.manage');
     Route::post('/journal-entries', [AccountingController::class, 'store'])
         ->middleware('permission:accounting.manage');
-    Route::post('/operational-expenses', [OperationalExpenseController::class, 'store'])
-        ->middleware('permission:accounting.manage');
-    Route::get('/payment-settlements', [PaymentSettlementController::class, 'index'])
-        ->middleware('permission:accounting.manage');
-    Route::post('/payment-settlements', [PaymentSettlementController::class, 'store'])
-        ->middleware('permission:accounting.manage');
-    Route::get('/payment-provider-imports', [PaymentProviderImportController::class, 'index'])
-        ->middleware('permission:accounting.manage');
-    Route::post('/payment-provider-imports', [PaymentProviderImportController::class, 'store'])
-        ->middleware('permission:accounting.manage');
-
-    Route::post('/offline/sales/sync', [OfflineSyncController::class, 'syncSales'])
-        ->middleware('permission:sales.create');
-    Route::get('/offline/conflicts', [OfflineSyncController::class, 'conflicts'])
-        ->middleware('permission:sales.create');
-
-    Route::get('/reports', [ReportController::class, 'index'])
-        ->middleware('permission:reports.view');
 });
